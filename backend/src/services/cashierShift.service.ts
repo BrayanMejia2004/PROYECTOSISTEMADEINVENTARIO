@@ -113,7 +113,7 @@ export const closeShift = async (input: CloseShiftInput) => {
   shift.totalProfit = summary.totalProfit;
   shift.totalEntries = totalEntries;
   shift.totalExits = totalExits;
-  shift.closingBalance = shift.openingBalance + summary.cashTotal + totalEntries - totalExits;
+  shift.closingBalance = shift.openingBalance + summary.totalRevenue + totalEntries - totalExits;
   shift.closedAt = new Date();
   shift.status = 'closed';
 

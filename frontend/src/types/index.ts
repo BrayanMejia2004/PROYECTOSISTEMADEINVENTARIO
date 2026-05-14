@@ -12,6 +12,10 @@ export interface Tenant {
   id: string;
   name: string;
   slug: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  nit?: string;
   isActive: boolean;
 }
 
@@ -104,8 +108,16 @@ export interface Sale {
   tax: number;
   discount: number;
   total: number;
-  paymentMethod: 'cash' | 'card' | 'transfer';
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
   status: 'completed' | 'cancelled' | 'refunded' | 'pending' | 'partial';
+  transferReference?: string;
+  transferAmount?: number;
+  transferBank?: string;
+  cardBank?: string;
+  cardReference?: string;
+  exchangeFromSaleId?: string;
+  exchangeCredit?: number;
+  availableExchangeCredit?: number;
   createdAt: string;
 }
 

@@ -19,14 +19,24 @@ const createSaleSchema = z.object({
   items: z.array(saleItemSchema).min(1, 'At least one item is required'),
   tax: z.number().min(0).optional(),
   discount: z.number().min(0).optional(),
-  paymentMethod: z.enum(['cash', 'card', 'transfer']),
+  paymentMethod: z.enum(['cash', 'card', 'transfer', 'exchange']).optional(),
+  transferReference: z.string().optional(),
+  transferAmount: z.number().min(0).optional(),
+  transferBank: z.string().optional(),
+  cardBank: z.string().optional(),
+  cardReference: z.string().optional(),
+  exchangeFromSaleId: z.string().optional(),
+  exchangeCredit: z.number().min(0).optional(),
 });
 
 router.use(authenticate, resolveTenantMiddleware);
 
+router.get('/transfers', checkPermission('sales:read', true), saleController.getTransferSales);
 router.get('/summary', checkPermission('sales:read', true), saleController.getSalesSummary);
 router.get('/', checkPermission('sales:read', true), saleController.getSales);
+router.get('/by-number/:saleNumber', checkPermission('sales:read', true), saleController.getSaleByNumber);
 router.post('/', checkPermission('sales:create', true), validate(createSaleSchema), saleController.createSale);
+router.get('/:id/pdf', checkPermission('sales:read', true), saleController.getSalePdf);
 router.get('/:id', checkPermission('sales:read', true), saleController.getSale);
 router.post('/:id/refund', checkPermission('sales:refund', true), saleController.refundSale);
 

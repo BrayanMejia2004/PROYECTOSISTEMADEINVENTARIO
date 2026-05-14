@@ -6,6 +6,7 @@ interface UpdateTenantSettingsInput {
   email?: string;
   phone?: string;
   address?: string;
+  nit?: string;
 }
 
 export const getTenantSettings = async (tenantId: string) => {

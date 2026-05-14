@@ -24,7 +24,14 @@ interface CreateSaleInput {
   items: SaleItemInput[];
   tax?: number;
   discount?: number;
-  paymentMethod: 'cash' | 'card' | 'transfer';
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
+  transferReference?: string;
+  transferAmount?: number;
+  transferBank?: string;
+  cardBank?: string;
+  cardReference?: string;
+  exchangeFromSaleId?: string;
+  exchangeCredit?: number;
 }
 
 interface GetSalesFilters {
@@ -75,6 +82,48 @@ export const createSale = async (input: CreateSaleInput) => {
 
   try {
     const saleNumber = await generateSaleNumber(input.tenantId);
+
+    let preSubtotal = 0;
+    for (const item of input.items) {
+      preSubtotal += item.quantity * item.unitPrice;
+    }
+    const preTax = input.tax || 0;
+    const preDiscount = input.discount || 0;
+    const preTotal = preSubtotal + preTax - preDiscount;
+
+    if (input.exchangeFromSaleId) {
+      const originalSale = await Sale.findOne({
+        _id: input.exchangeFromSaleId,
+        tenantId: input.tenantId,
+      }).session(session);
+
+      if (!originalSale) throw ApiError.notFound('Venta original no encontrada');
+      if (originalSale.status !== 'refunded')
+        throw ApiError.badRequest('La venta original debe estar devuelta antes de hacer un intercambio');
+
+      const usedAgg = await Sale.aggregate([
+        { $match: { exchangeFromSaleId: originalSale._id, tenantId: input.tenantId } },
+        { $group: { _id: null, total: { $sum: '$exchangeCredit' } } },
+      ]).session(session);
+      const usedCredit = usedAgg[0]?.total || 0;
+      const availableCredit = originalSale.total - usedCredit;
+
+      if ((input.exchangeCredit || 0) > availableCredit)
+        throw ApiError.badRequest(
+          `Crédito insuficiente. Disponible: $${availableCredit.toLocaleString('es-CO')}`
+        );
+
+      if (preTotal < (input.exchangeCredit || 0))
+        throw ApiError.badRequest('El total de la venta debe ser mayor o igual al crédito de intercambio');
+
+      if (preTotal > (input.exchangeCredit || 0)) {
+        if (!input.paymentMethod || input.paymentMethod === 'exchange') {
+          throw ApiError.badRequest(
+            `El excedente de $${(preTotal - (input.exchangeCredit || 0)).toLocaleString('es-CO')} requiere un método de pago`
+          );
+        }
+      }
+    }
 
     let subtotal = 0;
     const saleItems: any[] = [];
@@ -139,8 +188,15 @@ export const createSale = async (input: CreateSaleInput) => {
       tax,
       discount,
       total,
-      paymentMethod: input.paymentMethod,
+      paymentMethod: input.exchangeFromSaleId && total <= (input.exchangeCredit || 0) ? 'exchange' : input.paymentMethod,
       status: 'completed',
+      transferReference: input.transferReference,
+      transferAmount: input.transferAmount,
+      transferBank: input.transferBank,
+      cardBank: input.cardBank,
+      cardReference: input.cardReference,
+      exchangeFromSaleId: input.exchangeFromSaleId,
+      exchangeCredit: input.exchangeCredit || 0,
     });
 
     await sale.save({ session });
@@ -225,10 +281,11 @@ export const getSalesSummary = async (tenantId: string, branchId?: string) => {
 
   const [salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg] = await Promise.all([
     Sale.countDocuments({ ...matchToday, status: 'completed' }),
-    Sale.countDocuments({ ...matchTenant, status: 'cancelled' }),
+    Sale.countDocuments({ ...matchTenant, status: { $in: ['cancelled', 'refunded'] } }),
     Sale.aggregate([
       { $match: { ...matchToday, status: 'completed' } },
-      { $group: { _id: null, totalRevenue: { $sum: '$total' }, totalSales: { $sum: 1 } } },
+      { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
+      { $group: { _id: null, totalRevenue: { $sum: '$effectiveTotal' }, totalSales: { $sum: 1 } } },
     ]),
     Sale.aggregate([
       { $match: { ...matchToday, status: 'completed' } },
@@ -237,7 +294,8 @@ export const getSalesSummary = async (tenantId: string, branchId?: string) => {
     ]),
     Sale.aggregate([
       { $match: { ...matchToday, status: 'completed' } },
-      { $group: { _id: '$paymentMethod', total: { $sum: '$total' }, count: { $sum: 1 } } },
+      { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
+      { $group: { _id: '$paymentMethod', total: { $sum: '$effectiveTotal' }, count: { $sum: 1 } } },
     ]),
     Sale.aggregate([
       { $match: { ...matchToday, status: 'completed' } },
@@ -308,12 +366,47 @@ export const getSaleById = async (saleId: string, tenantId: string, branchId?: s
   return saleObj as any;
 };
 
+export const getSaleByNumber = async (saleNumber: string, tenantId: string, branchId?: string) => {
+  const query: any = { saleNumber, tenantId };
+  if (branchId) query.branchId = branchId;
+  const sale = await Sale.findOne(query);
+  if (!sale) throw ApiError.notFound('Sale not found');
+
+  const saleObj = sale.toObject() as Record<string, any>;
+  try {
+    const user = await User.findById(sale.userId).select('firstName lastName');
+    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId;
+  } catch {
+    saleObj.userName = sale.userId;
+  }
+
+  const usedAgg = await Sale.aggregate([
+    { $match: { exchangeFromSaleId: sale._id.toString(), tenantId } },
+    { $group: { _id: null, total: { $sum: '$exchangeCredit' } } },
+  ]);
+  const usedCredit = usedAgg[0]?.total || 0;
+  saleObj.availableExchangeCredit = sale.total - usedCredit;
+
+  return saleObj as any;
+};
+
+export const getTransferSales = async (tenantId: string, branchId?: string) => {
+  const query: any = { tenantId, paymentMethod: 'transfer' };
+  if (branchId) query.branchId = branchId;
+
+  const sales = await Sale.find(query).sort({ createdAt: -1 }).lean();
+  const enriched = await enrichWithUserNames(sales);
+  return enriched;
+};
+
 export const refundSale = async (saleId: string, tenantId: string, branchId: string) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const sale = await Sale.findOne({ _id: saleId, tenantId, branchId }).session(session);
+    const query: any = { _id: saleId, tenantId };
+    if (branchId) query.branchId = branchId;
+    const sale = await Sale.findOne(query).session(session);
     if (!sale) throw ApiError.notFound('Sale not found');
     if (sale.status !== 'completed') throw ApiError.badRequest('Only completed sales can be refunded');
 

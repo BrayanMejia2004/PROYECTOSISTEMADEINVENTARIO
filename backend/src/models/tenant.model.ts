@@ -6,6 +6,7 @@ export interface ITenant extends Document {
   email: string;
   phone?: string;
   address?: string;
+  nit?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +37,10 @@ const TenantSchema = new Schema<ITenant>(
       trim: true,
     },
     address: {
+      type: String,
+      trim: true,
+    },
+    nit: {
       type: String,
       trim: true,
     },

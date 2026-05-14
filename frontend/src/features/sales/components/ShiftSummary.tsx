@@ -25,6 +25,14 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
               <span className="text-brand-muted">Ventas efectivo</span>
               <span className="font-semibold text-brand-text">{formatCurrency(summary.cashTotal)}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-brand-muted">Ventas tarjeta</span>
+              <span className="font-semibold text-brand-text">{formatCurrency(summary.cardTotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-brand-muted">Ventas transferencia</span>
+              <span className="font-semibold text-brand-text">{formatCurrency(summary.transferTotal)}</span>
+            </div>
             <div className="flex justify-between text-green-600">
               <span>Entradas</span>
               <span className="font-semibold">+{formatCurrency(shift.totalEntries)}</span>
@@ -35,7 +43,9 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
             </div>
             <div className="border-t border-gray-100 pt-2 flex justify-between">
               <span className="font-semibold text-brand-text">Total</span>
-              <span className="font-bold text-lg text-brand">{formatCurrency(shift.currentTotal)}</span>
+              <span className="font-bold text-lg text-brand">
+                {formatCurrency(shift.openingBalance + summary.cashTotal + summary.cardTotal + summary.transferTotal + shift.totalEntries - shift.totalExits)}
+              </span>
             </div>
           </div>
         </div>
@@ -122,7 +132,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
               <span className="font-semibold text-brand-text">{formatCurrency(summary.avgTicket)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-brand-muted">Canceladas</span>
+              <span className="text-brand-muted">Devueltas</span>
               <span className="font-semibold text-red-500">{summary.cancelledCount}</span>
             </div>
             <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100 text-xs text-brand-muted">

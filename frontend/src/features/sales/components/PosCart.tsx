@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { CartItem } from '../types';
 import { formatCurrency } from '../../../lib/utils';
 import { PosCustomerSelect } from './PosCustomerSelect';
+import { PaymentModal } from './PaymentModal';
 import { useAuth } from '../../../hooks/useAuth';
-import { Trash2, ShoppingCart, Minus, Plus, CreditCard, Banknote, Building2, Store, User } from 'lucide-react';
+import { Trash2, ShoppingCart, Minus, Plus, CreditCard, Banknote, Building2, Store, User, AlertCircle, RotateCcw } from 'lucide-react';
 
 const PAYMENT_METHODS = [
   { value: 'cash' as const, label: 'Efectivo', icon: Banknote },
   { value: 'card' as const, label: 'Tarjeta', icon: CreditCard },
   { value: 'transfer' as const, label: 'Transferencia', icon: Building2 },
+  { value: 'exchange' as const, label: 'Intercambio', icon: RotateCcw },
 ];
 
 interface PosCartProps {
@@ -18,7 +20,14 @@ interface PosCartProps {
   onCheckout: (data: {
     customerName?: string;
     customerPhone?: string;
-    paymentMethod: 'cash' | 'card' | 'transfer';
+    paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
+    transferReference?: string;
+    transferBank?: string;
+    transferAmount?: number;
+    cardBank?: string;
+    cardReference?: string;
+    exchangeFromSaleId?: string;
+    exchangeCredit?: number;
   }) => void;
   total: number;
   isPending?: boolean;
@@ -27,14 +36,34 @@ interface PosCartProps {
 export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, total, isPending }: PosCartProps) => {
   const { user, tenant } = useAuth();
   const [selectedCustomer, setSelectedCustomer] = useState<{ name: string; phone?: string } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'exchange'>('cash');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const handleCheckout = () => {
+  const handleCheckout = (paymentData: {
+    amountReceived: number; change: number;
+    transferReference?: string; transferBank?: string; transferAmount?: number;
+    cardBank?: string; cardReference?: string;
+    exchangeFromSaleId?: string; exchangeCredit?: number;
+    paymentMethod?: 'cash' | 'card' | 'transfer' | 'exchange';
+  }) => {
+    const pm = paymentData.exchangeFromSaleId ? (paymentData.paymentMethod || 'exchange') : paymentMethod;
     onCheckout({
       customerName: selectedCustomer?.name,
       customerPhone: selectedCustomer?.phone,
-      paymentMethod,
+      paymentMethod: pm,
+      ...(pm === 'transfer' ? {
+        transferReference: paymentData.transferReference,
+        transferBank: paymentData.transferBank,
+        transferAmount: paymentData.transferAmount,
+      } : {}),
+      ...(pm === 'card' ? {
+        cardBank: paymentData.cardBank,
+        cardReference: paymentData.cardReference,
+      } : {}),
+      exchangeFromSaleId: paymentData.exchangeFromSaleId,
+      exchangeCredit: paymentData.exchangeCredit,
     });
+    setShowPaymentModal(false);
   };
 
   return (
@@ -151,9 +180,16 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
             </span>
           </div>
 
+          {!selectedCustomer && items.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-700">Selecciona un cliente para poder cobrar</p>
+            </div>
+          )}
+
           <button
-            onClick={handleCheckout}
-            disabled={isPending || items.length === 0}
+            onClick={() => setShowPaymentModal(true)}
+            disabled={isPending || items.length === 0 || !selectedCustomer}
             className="w-full bg-brand text-white py-3 rounded-xl hover:bg-brand-dark transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isPending ? (
@@ -169,6 +205,16 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
             )}
           </button>
         </div>
+      )}
+
+      {showPaymentModal && (
+        <PaymentModal
+          total={total}
+          paymentMethod={paymentMethod}
+          onConfirm={(data) => handleCheckout(data)}
+          onCancel={() => setShowPaymentModal(false)}
+          isPending={isPending}
+        />
       )}
     </div>
   );

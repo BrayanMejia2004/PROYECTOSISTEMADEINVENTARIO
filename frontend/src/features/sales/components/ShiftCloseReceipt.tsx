@@ -115,8 +115,8 @@ export const ShiftCloseReceipt = ({ data, userName, tenantName, onClose }: Shift
                   <span>{formatCurrency(data.openingBalance)}</span>
                 </div>
                 <div className="flex justify-between text-brand-muted">
-                  <span>+ Ventas Efectivo</span>
-                  <span>{formatCurrency(data.totalCash)}</span>
+                  <span>+ Ventas día</span>
+                  <span>{formatCurrency(data.totalSales)}</span>
                 </div>
                 <div className="flex justify-between text-green-600">
                   <span>+ Entradas</span>

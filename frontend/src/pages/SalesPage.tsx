@@ -16,10 +16,11 @@ const STATUS_LABELS: Record<string, string> = {
   partial: 'Parcial',
 };
 
-const PAYMENT_ICONS: Record<string, string> = {
-  cash: '💵',
-  card: '💳',
-  transfer: '🏦',
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: 'Efectivo',
+  card: 'Tarjeta',
+  transfer: 'Transferencia',
+  exchange: 'Intercambio',
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -125,7 +126,7 @@ export const SalesPage = () => {
                       <td className="px-6 py-4 text-sm text-brand-muted whitespace-nowrap">{formatDate(sale.createdAt)}</td>
                       <td className="px-6 py-4 text-sm text-brand-muted max-w-[140px] truncate">{sale.customerName || '—'}</td>
                       <td className="px-6 py-4 text-sm text-brand-muted">{sale.items?.length ?? 0}</td>
-                      <td className="px-6 py-4 text-sm text-brand-muted">{PAYMENT_ICONS[sale.paymentMethod] || ''} {sale.paymentMethod}</td>
+                      <td className="px-6 py-4 text-sm text-brand-muted">{PAYMENT_LABELS[sale.paymentMethod] || sale.paymentMethod}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-brand-text text-right">{formatCurrency(sale.total)}</td>
                       <td className="px-6 py-4"><StatusBadge status={sale.status} /></td>
                       <td className="px-6 py-4 text-right">

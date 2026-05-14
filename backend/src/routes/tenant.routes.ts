@@ -13,6 +13,7 @@ const updateSettingsSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  nit: z.string().optional(),
 });
 
 router.use(authenticate, resolveTenantMiddleware);

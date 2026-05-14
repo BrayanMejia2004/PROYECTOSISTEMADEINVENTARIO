@@ -40,6 +40,7 @@ export const SettingsPage = () => {
         email: tenant.data.email,
         phone: tenant.data.phone,
         address: tenant.data.address,
+        nit: tenant.data.nit,
       });
     }
   }, [tenant?.data, resetTenant]);
@@ -157,6 +158,10 @@ export const SettingsPage = () => {
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Email</label>
                 <input {...registerTenant('email')} type="email" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                 {tenantErrors.email && <p className="text-red-500 text-xs mt-1">{tenantErrors.email.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1.5">NIT</label>
+                <input {...registerTenant('nit')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="12345678-9" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>

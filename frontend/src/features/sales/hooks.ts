@@ -103,4 +103,13 @@ export const useCreateMovement = () => {
   });
 };
 
+export const useSaleByNumber = (saleNumber: string | null) => {
+  return useQuery({
+    queryKey: ['sales', 'by-number', saleNumber],
+    queryFn: () => salesApi.getSaleByNumber(saleNumber!),
+    enabled: !!saleNumber,
+    retry: false,
+  });
+};
+
 export { useProducts } from '../inventory/hooks';

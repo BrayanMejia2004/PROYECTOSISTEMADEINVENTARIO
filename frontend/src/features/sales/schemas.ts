@@ -12,6 +12,11 @@ export const saleSchema = z.object({
   tax: z.number().min(0).default(0),
   discount: z.number().min(0).default(0),
   paymentMethod: z.enum(['cash', 'card', 'transfer']),
+  transferReference: z.string().optional(),
+  transferBank: z.string().optional(),
+  transferAmount: z.number().min(0).optional(),
+  cardBank: z.string().optional(),
+  cardReference: z.string().optional(),
 });
 
 export type SaleForm = z.infer<typeof saleSchema>;

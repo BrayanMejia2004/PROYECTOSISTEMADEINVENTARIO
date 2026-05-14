@@ -55,9 +55,10 @@ export const getProducts = async (options: GetProductsOptions) => {
   }
 
   if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
-      { $text: { $search: search } },
-      { sku: { $regex: `^${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, $options: 'i' } },
+      { name: { $regex: escaped, $options: 'i' } },
+      { sku: { $regex: `^${escaped}`, $options: 'i' } },
     ];
   }
   if (departmentId) query.departmentId = departmentId;

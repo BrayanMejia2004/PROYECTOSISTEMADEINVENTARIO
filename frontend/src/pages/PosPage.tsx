@@ -28,7 +28,18 @@ export const PosPage = () => {
   const handleUpdateQuantity = updateQuantity;
   const handleRemoveItem = removeItem;
 
-  const handleCheckout = (data: { customerName?: string; customerPhone?: string; paymentMethod: 'cash' | 'card' | 'transfer' }) => {
+  const handleCheckout = (data: {
+    customerName?: string;
+    customerPhone?: string;
+    paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
+    transferReference?: string;
+    transferBank?: string;
+    transferAmount?: number;
+    cardBank?: string;
+    cardReference?: string;
+    exchangeFromSaleId?: string;
+    exchangeCredit?: number;
+  }) => {
     createSale(
       {
         items: cartItems.map((item) => ({
@@ -40,6 +51,13 @@ export const PosPage = () => {
         tax: 0,
         customerName: data.customerName,
         customerPhone: data.customerPhone,
+        transferReference: data.transferReference,
+        transferBank: data.transferBank,
+        transferAmount: data.transferAmount,
+        cardBank: data.cardBank,
+        cardReference: data.cardReference,
+        exchangeFromSaleId: data.exchangeFromSaleId,
+        exchangeCredit: data.exchangeCredit,
       },
       {
         onSuccess: (res) => {

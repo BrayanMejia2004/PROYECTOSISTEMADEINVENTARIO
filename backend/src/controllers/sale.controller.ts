@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
+import Branch from '../models/branch.model';
 import * as saleService from '../services/sale.service';
+import { generateSalePdf } from '../services/pdf.service';
 import { sendSuccess, sendPaginated } from '../utils/ApiResponse';
 import { AuthRequest } from '../types/express';
 
@@ -64,6 +66,29 @@ export const getSale = async (req: AuthRequest, res: Response, next: NextFunctio
   }
 };
 
+export const getSaleByNumber = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const sale = await saleService.getSaleByNumber(
+      req.params.saleNumber,
+      req.user!.tenantId,
+      req.user!.branchId
+    );
+    sendSuccess(res, 'Sale retrieved', sale);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getTransferSales = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const branchId = req.user!.role === 'owner' ? undefined : req.user!.branchId;
+    const sales = await saleService.getTransferSales(req.user!.tenantId, branchId);
+    sendSuccess(res, 'Transfer sales retrieved', sales);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const refundSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const sale = await saleService.refundSale(
@@ -72,6 +97,45 @@ export const refundSale = async (req: AuthRequest, res: Response, next: NextFunc
       req.user!.branchId!
     );
     sendSuccess(res, 'Sale refunded', sale);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSalePdf = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const [sale, branch] = await Promise.all([
+      saleService.getSaleById(req.params.id, req.user!.tenantId, req.user!.branchId),
+      req.user!.branchId ? Branch.findById(req.user!.branchId).select('name') : Promise.resolve(null),
+    ]);
+
+    const pdfBuffer = await generateSalePdf({
+      saleNumber: sale.saleNumber,
+      createdAt: new Date(sale.createdAt),
+      customerName: sale.customerName,
+      userName: sale.userName,
+      items: sale.items,
+      subtotal: sale.subtotal,
+      discount: sale.discount,
+      tax: sale.tax,
+      total: sale.total,
+      paymentMethod: sale.paymentMethod,
+      transferReference: sale.transferReference,
+      transferBank: sale.transferBank,
+      transferAmount: sale.transferAmount,
+      cardBank: sale.cardBank,
+      cardReference: sale.cardReference,
+      tenantName: req.tenant!.name,
+      tenantNit: req.tenant!.nit,
+      tenantEmail: req.tenant!.email,
+      tenantPhone: req.tenant!.phone,
+      tenantAddress: req.tenant!.address,
+      branchName: branch?.name || 'Sucursal no especificada',
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${sale.saleNumber}.pdf"`);
+    res.send(pdfBuffer);
   } catch (error) {
     next(error);
   }

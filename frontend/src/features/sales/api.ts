@@ -36,6 +36,13 @@ export const getSale = async (id: string): Promise<ApiResponse<Sale>> => {
   return data;
 };
 
+export const getSalePdf = async (id: string): Promise<Blob> => {
+  const { data } = await api.get<Blob>(`${ENDPOINTS.SALES}/${id}/pdf`, {
+    responseType: 'blob',
+  });
+  return data;
+};
+
 export const createSale = async (input: any): Promise<ApiResponse<Sale>> => {
   const { data } = await api.post<ApiResponse<Sale>>(ENDPOINTS.SALES, input);
   return data;
@@ -43,6 +50,11 @@ export const createSale = async (input: any): Promise<ApiResponse<Sale>> => {
 
 export const refundSale = async (id: string): Promise<ApiResponse<Sale>> => {
   const { data } = await api.post<ApiResponse<Sale>>(`${ENDPOINTS.SALES}/${id}/refund`);
+  return data;
+};
+
+export const getSaleByNumber = async (saleNumber: string): Promise<ApiResponse<Sale>> => {
+  const { data } = await api.get<ApiResponse<Sale>>(`${ENDPOINTS.SALES}/by-number/${saleNumber}`);
   return data;
 };
 

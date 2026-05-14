@@ -130,41 +130,61 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {products.map((product: any) => {
               const outOfStock = (product.stock ?? 0) <= 0;
+              const stockLevel = (product.stock ?? 0) <= 0 ? 'empty' : (product.stock ?? 0) <= product.minStock ? 'low' : 'ok';
+              const stockColors = {
+                empty: 'bg-red-50 text-red-600 border-red-200',
+                low: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                ok: 'bg-green-50 text-green-700 border-green-200',
+              };
               return (
                 <button
                   key={product._id}
                   onClick={() => !outOfStock && handleAddToCart(product)}
                   disabled={outOfStock}
-                  className={`group relative bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-left transition-all duration-150 ${
+                  className={`group relative bg-white rounded-xl border border-gray-100 shadow-sm p-2.5 text-left transition-all duration-150 flex flex-col ${
                     outOfStock
                       ? 'opacity-40 cursor-not-allowed'
                       : 'hover:shadow-md hover:border-brand/30 hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]'
                   }`}
                 >
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-sm font-medium text-brand-text leading-tight line-clamp-2">
+                  <div className="w-full aspect-[4/3] rounded-lg bg-gray-50 mb-2.5 overflow-hidden">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.currentTarget;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-200"><path d="M16.5 9.4 7.55 4.24a1 1 0 0 0-1.1 0L2 6.5M16.5 9.4l5.5 3.1M16.5 9.4V4.5M7.55 4.24 2 6.5M2 6.5l5.5 9.4M2 6.5v7.6l5.5 3.1m0 0 5.5-3.1m0 0L18.5 13M12.5 17.6V10"/></svg></div>';
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-8 h-8 text-gray-200" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
+                    <p className="text-base font-semibold text-brand-text leading-snug line-clamp-2">
                       {product.name}
                     </p>
-                    <p className="text-lg font-bold text-brand">
+                    <p className="text-base font-bold text-brand">
                       {formatCurrency(product.price)}
                     </p>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-                          (product.stock ?? 0) <= 0
-                            ? 'bg-red-50 text-red-600'
-                            : (product.stock ?? 0) <= product.minStock
-                            ? 'bg-yellow-50 text-yellow-700'
-                            : 'bg-green-50 text-green-700'
-                        }`}
-                      >
-                        S: {product.stock ?? 0}
-                      </span>
+                    <div className="flex items-center gap-1.5 mt-auto pt-1">
+                      <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${stockColors[stockLevel]}`}>
+                        <Package className="w-3 h-3" />
+                        {product.stock ?? 0} uds
+                      </div>
                     </div>
                   </div>
                   {!outOfStock && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-brand/10 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:scale-90 transition-all">
-                      <Plus className="w-3.5 h-3.5 text-brand" />
+                    <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-brand group-active:scale-90 transition-all">
+                      <Plus className="w-4 h-4 text-brand group-hover:text-white" />
                     </div>
                   )}
                 </button>

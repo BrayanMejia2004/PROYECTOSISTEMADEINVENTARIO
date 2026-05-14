@@ -21,6 +21,10 @@ export const resolveTenant = async (req: AuthRequest, res: Response, next: NextF
       _id: tenant._id.toString(),
       slug: tenant.slug,
       name: tenant.name,
+      email: tenant.email,
+      phone: tenant.phone,
+      address: tenant.address,
+      nit: tenant.nit,
       isActive: tenant.isActive,
     };
 

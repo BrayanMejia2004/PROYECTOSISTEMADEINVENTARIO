@@ -53,7 +53,7 @@ export const SalesSummaryCards = () => {
         iconColor="text-yellow-600"
       />
       <Card
-        label="Anuladas"
+        label="Devueltas"
         value={String(s?.cancelledCount ?? 0)}
         icon={<XCircle className="w-5 h-5" />}
         bgColor="bg-red-50"

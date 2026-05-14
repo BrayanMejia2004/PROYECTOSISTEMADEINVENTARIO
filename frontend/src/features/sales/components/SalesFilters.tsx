@@ -77,10 +77,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
               >
                 <option value="">Todos</option>
                 <option value="completed">Completada</option>
-                <option value="cancelled">Anulada</option>
                 <option value="refunded">Devuelta</option>
-                <option value="pending">Pendiente</option>
-                <option value="partial">Parcial</option>
               </select>
             </div>
             <div>
@@ -94,6 +91,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
                 <option value="cash">Efectivo</option>
                 <option value="card">Tarjeta</option>
                 <option value="transfer">Transferencia</option>
+                <option value="exchange">Intercambio</option>
               </select>
             </div>
             <div>

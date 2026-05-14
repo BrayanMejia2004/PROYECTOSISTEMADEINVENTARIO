@@ -5,6 +5,7 @@ export const tenantSettingsSchema = z.object({
   email: z.string().email('Email inválido').optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  nit: z.string().optional(),
 });
 
 export const branchSchema = z.object({

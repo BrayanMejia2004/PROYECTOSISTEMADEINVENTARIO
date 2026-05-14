@@ -22,8 +22,15 @@ export interface ISale extends Document {
   tax: number;
   discount: number;
   total: number;
-  paymentMethod: 'cash' | 'card' | 'transfer';
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
   status: 'completed' | 'cancelled' | 'refunded' | 'pending' | 'partial';
+  transferReference?: string;
+  transferAmount?: number;
+  transferBank?: string;
+  cardBank?: string;
+  cardReference?: string;
+  exchangeFromSaleId?: string;
+  exchangeCredit?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,7 +63,7 @@ const SaleSchema = new Schema<ISale>(
     total: { type: Number, required: true, min: 0 },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'card', 'transfer'],
+      enum: ['cash', 'card', 'transfer', 'exchange'],
       required: true,
     },
     status: {
@@ -64,6 +71,13 @@ const SaleSchema = new Schema<ISale>(
       enum: ['completed', 'cancelled', 'refunded', 'pending', 'partial'],
       default: 'completed',
     },
+    transferReference: { type: String, trim: true },
+    transferAmount: { type: Number, min: 0 },
+    transferBank: { type: String, trim: true },
+    cardBank: { type: String, trim: true },
+    cardReference: { type: String, trim: true },
+    exchangeFromSaleId: { type: String, index: true },
+    exchangeCredit: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

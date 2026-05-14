@@ -3,4 +3,5 @@ export interface TenantSettings {
   email: string;
   phone?: string;
   address?: string;
+  nit?: string;
 }
