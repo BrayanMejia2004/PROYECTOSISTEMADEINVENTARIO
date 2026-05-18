@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatCurrency } from '../../../lib/utils';
+import { NumberInput } from '../../../components/ui/NumberInput';
 import { Banknote, X, ArrowRight, CheckCircle, Hash, RotateCcw, Search, AlertCircle, Loader2 } from 'lucide-react';
 import { useSaleByNumber } from '../hooks';
 import { Sale } from '../../../types';
@@ -317,7 +318,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
               <p className="text-xs text-brand-muted">{methodLabel}</p>
             </div>
           </div>
-          <button onClick={onCancel} className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-gray-100 transition-colors">
+          <button onClick={onCancel} className="p-2.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-gray-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -336,20 +337,19 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
                 <label className="text-sm font-medium text-brand-text">{paymentLabel}</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-brand-muted">$</span>
-                  <input
+                  <NumberInput
                     ref={inputRef}
-                    type="number"
-                    step="0.01"
+                    value={amountReceived}
+                    onChange={(v) => setAmountReceived(v === '' ? 0 : v)}
                     min={0}
-                    value={amountReceived || ''}
-                    onChange={(e) => setAmountReceived(parseFloat(e.target.value) || 0)}
+                    decimals={2}
                     disabled={!isCash || isPending}
                     className={`w-full pl-9 pr-4 py-3 text-xl font-bold text-brand-text tabular-nums rounded-xl border outline-none transition-all ${
                       amountReceived < total && isCash
                         ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-200'
                         : 'border-gray-200 bg-white focus:border-brand focus:ring-2 focus:ring-brand/20'
                     } ${!isCash ? 'bg-gray-50 text-brand-muted' : ''}`}
-                    placeholder="0.00"
+                    placeholder="0,00"
                   />
                 </div>
                 {isCash && amountReceived < total && (

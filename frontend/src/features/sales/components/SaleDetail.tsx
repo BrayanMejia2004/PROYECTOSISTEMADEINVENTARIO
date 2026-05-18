@@ -53,7 +53,7 @@ export const SaleDetail = ({ sale, onClose, onAction }: SaleDetailProps) => {
               <h3 className="text-lg font-sans font-bold text-brand-text">{sale.saleNumber}</h3>
               <p className="text-sm text-brand-muted">{formatDateTime(sale.createdAt)}</p>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text">
+            <button onClick={onClose} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -178,14 +178,14 @@ export const SaleDetail = ({ sale, onClose, onAction }: SaleDetailProps) => {
                 <button
                   onClick={handleRefund}
                   disabled={isRefunding}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-3 rounded-lg border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors disabled:opacity-50"
                 >
                   <RotateCcw className="w-4 h-4" />
                   {isRefunding ? 'Devolviendo...' : 'Devolver'}
                 </button>
                 <button
                   onClick={handleDownloadPdf}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-brand-muted text-sm font-medium hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-3 rounded-lg border border-gray-200 text-brand-muted text-sm font-medium hover:bg-gray-50 transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   PDF

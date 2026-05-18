@@ -58,7 +58,7 @@ export const RegisterTenantPage = () => {
                 </label>
                 <input
                   {...register('firstName')}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
                 />
                 {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
               </div>
@@ -68,7 +68,7 @@ export const RegisterTenantPage = () => {
                 </label>
                 <input
                   {...register('lastName')}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
                 />
                 {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
               </div>
@@ -80,7 +80,7 @@ export const RegisterTenantPage = () => {
               </label>
               <input
                 {...register('tenantName')}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.tenantName && <p className="text-red-500 text-xs mt-1">{errors.tenantName.message}</p>}
             </div>
@@ -92,7 +92,7 @@ export const RegisterTenantPage = () => {
               <input
                 {...register('tenantSlug')}
                 placeholder="mi-empresa"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.tenantSlug && <p className="text-red-500 text-xs mt-1">{errors.tenantSlug.message}</p>}
             </div>
@@ -104,7 +104,7 @@ export const RegisterTenantPage = () => {
               <input
                 {...register('email')}
                 type="email"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
@@ -116,7 +116,7 @@ export const RegisterTenantPage = () => {
               <input
                 {...register('password')}
                 type="password"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
@@ -124,7 +124,7 @@ export const RegisterTenantPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-brand text-white py-2.5 rounded-lg hover:bg-brand-dark transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-brand text-white py-3 rounded-lg hover:bg-brand-dark transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Registrando...' : 'Registrar'}
             </button>

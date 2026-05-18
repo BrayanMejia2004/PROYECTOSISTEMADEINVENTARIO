@@ -5,7 +5,7 @@ import { useProducts } from '../features/inventory/hooks';
 import { useSales } from '../features/sales/hooks';
 import { useAuth } from '../hooks/useAuth';
 import { useCajas, useCartSummary } from '../context/CartContext';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatNumber } from '../lib/utils';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage = () => {
@@ -88,13 +88,13 @@ export const DashboardPage = () => {
         <StatCard
           icon={<Package className="w-5 h-5" />}
           label="Productos registrados"
-          value={productsLoading ? '...' : totalProducts}
+          value={productsLoading ? '...' : formatNumber(totalProducts)}
           sublabel="Total en inventario"
         />
         <StatCard
           icon={<AlertTriangle className="w-5 h-5" />}
           label="Productos con stock bajo"
-          value={productsLoading ? '...' : lowStock}
+          value={productsLoading ? '...' : formatNumber(lowStock)}
           sublabel="Requieren reposición"
           trend={lowStock > 0 ? { value: 'Atención', positive: false } : { value: 'OK', positive: true }}
         />

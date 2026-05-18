@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useProducts } from '../hooks';
 import { getProductByBarcode } from '../../../features/inventory/api';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatNumber } from '../../../lib/utils';
 import { CartItem } from '../types';
 import { Search, Barcode, Plus, Package, Loader2 } from 'lucide-react';
 
@@ -80,7 +80,7 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
             placeholder="Buscar por nombre o SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
           />
         </div>
 
@@ -93,7 +93,7 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
             value={barcode}
             onChange={(e) => setBarcode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleBarcodeSearch(); }}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all font-mono"
+            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all font-mono"
             autoFocus
           />
           {barcodeFeedback && (
@@ -178,7 +178,7 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
                     <div className="flex items-center gap-1.5 mt-auto pt-1">
                       <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${stockColors[stockLevel]}`}>
                         <Package className="w-3 h-3" />
-                        {product.stock ?? 0} uds
+                        {formatNumber(product.stock ?? 0)} uds
                       </div>
                     </div>
                   </div>

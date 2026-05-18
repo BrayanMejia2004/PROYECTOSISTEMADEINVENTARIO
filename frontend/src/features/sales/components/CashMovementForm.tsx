@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { NumberInput } from '../../../components/ui/NumberInput';
 
 interface CashMovementFormProps {
   onSubmit: (data: { type: 'entry' | 'exit'; amount: number; reason: string }) => void;
@@ -23,7 +24,7 @@ export const CashMovementForm = ({ onSubmit, onClose, isPending }: CashMovementF
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-sans font-semibold text-brand-text">Registrar Movimiento</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} className="p-2.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-gray-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -61,13 +62,12 @@ export const CashMovementForm = ({ onSubmit, onClose, isPending }: CashMovementF
 
           <div>
             <label className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-1.5 block">Monto</label>
-            <input
-              type="number"
-              min="1"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+            <NumberInput
+              value={amount === '' ? '' : Number(amount)}
+              onChange={(v) => setAmount(v === '' ? '' : String(v))}
+              min={1}
               placeholder="0"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-lg font-semibold text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-lg font-semibold text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               autoFocus
             />
           </div>

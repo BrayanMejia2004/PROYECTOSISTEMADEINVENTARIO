@@ -91,12 +91,12 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
             onChange={(e) => { setSearch(e.target.value); setShowDropdown(true); }}
             onFocus={() => setShowDropdown(true)}
             placeholder="Buscar cliente..."
-            className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
+            className="w-full pl-8 pr-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
           />
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-brand-muted hover:text-brand hover:border-brand/40 hover:bg-brand/5 transition-all"
+          className="flex items-center gap-1.5 px-3 py-3 rounded-lg border border-dashed border-gray-300 text-sm text-brand-muted hover:text-brand hover:border-brand/40 hover:bg-brand/5 transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
           Crear
@@ -134,7 +134,7 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nombre del cliente"
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
+            className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
             autoFocus
           />
           <input
@@ -142,19 +142,19 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
             value={newPhone}
             onChange={(e) => setNewPhone(e.target.value)}
             placeholder="Teléfono (opcional)"
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
+            className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
           />
           <div className="flex gap-2">
             <button
               onClick={handleCreate}
               disabled={isCreating || !newName.trim()}
-              className="flex-1 bg-brand text-white py-2 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-brand text-white py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCreating ? 'Creando...' : 'Guardar'}
             </button>
             <button
               onClick={() => setShowCreateForm(false)}
-              className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text transition-colors"
+              className="px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text transition-colors"
             >
               Cancelar
             </button>

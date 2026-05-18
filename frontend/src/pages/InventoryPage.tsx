@@ -32,12 +32,12 @@ export const InventoryPage = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-sans font-bold text-brand-text">Inventario</h1>
           <p className="text-sm text-brand-muted mt-1">Gestiona tus productos y stock</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap gap-2">
           {hasPermission('inventory:create') && !isOwner && (
             <>
               <button
@@ -74,7 +74,7 @@ export const InventoryPage = () => {
             <select
               value={selectedBranchId || ''}
               onChange={(e) => setSelectedBranchId(e.target.value || undefined)}
-              className="flex-1 max-w-xs px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+              className="flex-1 max-w-xs px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
             >
               <option value="">Seleccionar sucursal</option>
               {branches?.data?.map((b: any) => (

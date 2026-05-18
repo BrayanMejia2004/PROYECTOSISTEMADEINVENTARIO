@@ -45,7 +45,7 @@ export const SaleReceipt = ({ sale, onClose }: SaleReceiptProps) => {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-gray-100 transition-colors"
+            className="p-2.5 rounded-lg text-brand-muted hover:text-brand-text hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

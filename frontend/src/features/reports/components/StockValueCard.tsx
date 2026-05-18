@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getInventoryReport } from '../api';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatNumber } from '../../../lib/utils';
 import { Package } from 'lucide-react';
 
 export const StockValueCard = () => {
@@ -37,7 +37,7 @@ export const StockValueCard = () => {
         </div>
       </div>
       <p className="text-2xl font-sans font-bold text-brand-text">{formatCurrency(totalValue)}</p>
-      <p className="text-xs text-brand-muted mt-2">{totalItems} productos en total</p>
+      <p className="text-xs text-brand-muted mt-2">{formatNumber(totalItems)} productos en total</p>
     </div>
   );
 };

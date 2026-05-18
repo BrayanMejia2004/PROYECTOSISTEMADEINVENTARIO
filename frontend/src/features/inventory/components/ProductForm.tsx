@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductForm } from '../schemas';
 import { useCreateProduct, useUpdateProduct, useProduct, useInitializeStock } from '../hooks';
@@ -7,6 +7,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Package, DollarSign, FileText, Box } from 'lucide-react';
+import { NumberInput } from '../../../components/ui/NumberInput';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
 
@@ -29,6 +30,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
     watch,
@@ -45,9 +47,6 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const price = watch('price');
 
   const manualPrice = useRef(false);
-
-  const { onChange: pfRHFOnChange, ...pfReg } = register('profitPercent', { valueAsNumber: true });
-  const { onChange: prRHFOnChange, ...prReg } = register('price', { valueAsNumber: true });
 
   const calculatedPrice = useMemo(() => {
     if (costPrice > 0 && profitPercent > 0) {
@@ -138,7 +137,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     pendingFormData.current = null;
   };
 
-  const inputClass = "w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
+  const inputClass = "w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
   const labelClass = "block text-sm font-medium text-brand-text mb-1.5";
   const req = (label: string) => <>{label} <span className="text-red-400">*</span></>;
 
@@ -216,26 +215,36 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>{req('Precio Costo')}</label>
-              <input {...register('costPrice', { valueAsNumber: true })} type="number" step="0.01" className={inputClass} />
+              <Controller name="costPrice" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} decimals={2} className={inputClass} />
+              )} />
               {errors.costPrice && <p className="text-red-500 text-xs mt-1">{errors.costPrice.message}</p>}
             </div>
             <div>
               <label className={labelClass}>{req('Ganancia %')}</label>
-              <input {...pfReg} type="number" min={0} max={100} step="0.1" className={inputClass} placeholder="Ej: 20" onChange={(e) => { pfRHFOnChange(e); manualPrice.current = false; }} />
+              <Controller name="profitPercent" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => { field.onChange(v === '' ? undefined : v); if (v !== '') manualPrice.current = false; }} min={0} max={100} decimals={1} className={inputClass} placeholder="Ej: 20" />
+              )} />
               {errors.profitPercent && <p className="text-red-500 text-xs mt-1">{errors.profitPercent.message}</p>}
             </div>
             <div>
               <label className={labelClass}>{req('Precio Venta')}</label>
-              <input {...prReg} type="number" step="0.01" className={inputClass} onChange={(e) => { prRHFOnChange(e); const v = parseFloat(e.target.value); if (!isNaN(v) && v > 0 && costPrice > 0) { manualPrice.current = true; const cp = Math.round((1 - costPrice / v) * 100 * 10) / 10; setValue('profitPercent', Math.min(100, Math.max(0, cp))); } }} />
+              <Controller name="price" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => { field.onChange(v === '' ? undefined : v); if (v !== '' && v > 0 && costPrice > 0) { manualPrice.current = true; const cp = Math.round((1 - costPrice / v) * 100 * 10) / 10; setValue('profitPercent', Math.min(100, Math.max(0, cp))); } }} decimals={2} className={inputClass} />
+              )} />
               {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
             </div>
             <div>
               <label className={labelClass}>Precio Mayoreo</label>
-              <input {...register('wholesalePrice', { setValueAs: (v) => v === '' ? undefined : Number(v) })} type="number" step="0.01" className={inputClass} />
+              <Controller name="wholesalePrice" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} decimals={2} className={inputClass} />
+              )} />
             </div>
             <div>
               <label className={labelClass}>Precio Especial</label>
-              <input {...register('specialPrice', { setValueAs: (v) => v === '' ? undefined : Number(v) })} type="number" step="0.01" className={inputClass} />
+              <Controller name="specialPrice" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} decimals={2} className={inputClass} />
+              )} />
             </div>
           </div>
         </div>
@@ -254,7 +263,9 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
             {applyTax && (
               <div className="max-w-xs">
                 <label className={labelClass}>Porcentaje IVA (%)</label>
-                <input {...register('taxPercentage', { setValueAs: (v) => v === '' ? undefined : Number(v) })} type="number" min={0} max={100} step="0.01" className={inputClass} />
+                <Controller name="taxPercentage" control={control} render={({ field }) => (
+                  <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} max={100} decimals={2} className={inputClass} />
+                )} />
               </div>
             )}
           </div>
@@ -269,16 +280,22 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
               <label className={labelClass}>{req('Stock Inicial')}</label>
-              <input {...register('stock', { valueAsNumber: true })} type="number" min={0} className={inputClass} />
+              <Controller name="stock" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
+              )} />
               {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>}
             </div>
             <div>
               <label className={labelClass}>Stock Mínimo</label>
-              <input {...register('minStock', { setValueAs: (v) => v === '' ? undefined : Number(v) })} type="number" min={0} className={inputClass} />
+              <Controller name="minStock" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
+              )} />
             </div>
             <div>
               <label className={labelClass}>Stock Máximo</label>
-              <input {...register('maxStock', { setValueAs: (v) => v === '' ? undefined : Number(v) })} type="number" min={0} className={inputClass} />
+              <Controller name="maxStock" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
+              )} />
             </div>
             <div>
               <label className={labelClass}>{req('Unidad de Medida')}</label>
@@ -306,7 +323,9 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
           {allowsDiscount && (
             <div className="max-w-xs mb-4">
               <label className={labelClass}>Descuento Máximo (%)</label>
-              <input {...register('maxDiscount', { setValueAs: (v) => v === '' ? undefined : Number(v) })} type="number" min={0} max={100} step="0.01" className={inputClass} />
+              <Controller name="maxDiscount" control={control} render={({ field }) => (
+                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} max={100} decimals={2} className={inputClass} />
+              )} />
             </div>
           )}
         </div>

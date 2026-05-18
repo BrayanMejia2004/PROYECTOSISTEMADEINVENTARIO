@@ -119,18 +119,18 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
                 <button
                   onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
                   disabled={item.quantity <= 1}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Minus className="w-4 h-4" />
                 </button>
                 <span className="w-8 text-center text-sm font-semibold text-brand-text tabular-nums">
                   {item.quantity}
                 </span>
                 <button
                   onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                 </button>
               </div>
 
@@ -140,9 +140,9 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
 
               <button
                 onClick={() => onRemoveItem(item.productId)}
-                className="p-1.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                className="p-2.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))

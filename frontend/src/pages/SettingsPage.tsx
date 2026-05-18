@@ -151,29 +151,29 @@ export const SettingsPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
-                <input {...registerTenant('name')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                <input {...registerTenant('name')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                 {tenantErrors.name && <p className="text-red-500 text-xs mt-1">{tenantErrors.name.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Email</label>
-                <input {...registerTenant('email')} type="email" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                <input {...registerTenant('email')} type="email" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                 {tenantErrors.email && <p className="text-red-500 text-xs mt-1">{tenantErrors.email.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">NIT</label>
-                <input {...registerTenant('nit')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="12345678-9" />
+                <input {...registerTenant('nit')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="12345678-9" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-                <input {...registerTenant('phone')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                <input {...registerTenant('phone')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
-                <input {...registerTenant('address')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                <input {...registerTenant('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
               </div>
             </div>
             <div className="flex justify-end">
-              <button type="submit" disabled={isUpdatingTenant} className="bg-brand text-white px-5 py-2.5 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
+              <button type="submit" disabled={isUpdatingTenant} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
                 {isUpdatingTenant ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
@@ -208,20 +208,20 @@ export const SettingsPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
-                  <input {...registerBranch('name')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                  <input {...registerBranch('name')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                   {branchErrors.name && <p className="text-red-500 text-xs mt-1">{branchErrors.name.message}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
-                  <input {...registerBranch('address')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                  <input {...registerBranch('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-                  <input {...registerBranch('phone')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                  <input {...registerBranch('phone')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                 </div>
               </div>
               <div className="flex justify-end pt-2">
-                <button type="submit" disabled={isCreatingBranch || isUpdatingBranch} className="bg-brand text-white px-5 py-2.5 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
+                <button type="submit" disabled={isCreatingBranch || isUpdatingBranch} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
                   Guardar
                 </button>
               </div>
@@ -262,14 +262,14 @@ export const SettingsPage = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleEditBranch(branch)}
-                              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
+                              className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
                               title="Editar"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteBranch(branch._id, branch.name)}
-                              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-600"
+                              className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-600"
                               title="Eliminar"
                             >
                               <Trash2 className="w-4 h-4" />

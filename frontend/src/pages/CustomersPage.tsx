@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { customerSchema, type CustomerForm } from '../features/customers/schemas';
-import { formatDate, formatCurrency } from '../lib/utils';
+import { formatDate, formatCurrency, formatNumber } from '../lib/utils';
 import { Plus, Users, X, Pencil, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { SuccessToast } from '../components/ui/SuccessToast';
@@ -99,7 +99,7 @@ export const CustomersPage = () => {
         </div>
         <button
           onClick={() => { if (showForm) handleCancel(); else setShowForm(true); }}
-          className="inline-flex items-center gap-2 bg-brand text-white px-4 py-2.5 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-brand text-white px-4 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium"
         >
           {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           {showForm ? 'Cancelar' : 'Nuevo Cliente'}
@@ -114,29 +114,29 @@ export const CustomersPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
-              <input {...register('name')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              <input {...register('name')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-              <input {...register('phone')} type="tel" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              <input {...register('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1.5">Email</label>
-              <input {...register('email')} type="email" className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              <input {...register('email')} type="email" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
-              <input {...register('address')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              <input {...register('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1.5">RFC</label>
-              <input {...register('taxId')} className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              <input {...register('taxId')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-2.5 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
+            <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
               {isCreating || isUpdating ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
@@ -153,7 +153,7 @@ export const CustomersPage = () => {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Buscar cliente..."
-              className="pl-9 pr-4 py-1.5 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all w-56"
+              className="pl-9 pr-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all w-full sm:w-56"
             />
           </div>
         </div>
@@ -181,15 +181,15 @@ export const CustomersPage = () => {
                     <td className="px-6 py-4 text-sm font-medium text-brand-text">{customer.name}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{customer.phone || '—'}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{customer.email || '—'}</td>
-                    <td className="px-6 py-4 text-sm text-center text-brand-muted">{customer.totalPurchases}</td>
+                    <td className="px-6 py-4 text-sm text-center text-brand-muted">{formatNumber(customer.totalPurchases)}</td>
                     <td className="px-6 py-4 text-sm text-right font-medium text-brand-text">{formatCurrency(customer.totalSpent)}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{customer.lastPurchaseDate ? formatDate(customer.lastPurchaseDate) : '—'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleEdit(customer)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text" title="Editar">
+                        <button onClick={() => handleEdit(customer)} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text" title="Editar">
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(customer)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500" title="Eliminar">
+                        <button onClick={() => handleDelete(customer)} className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500" title="Eliminar">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -204,20 +204,20 @@ export const CustomersPage = () => {
       {data?.meta && data.meta.totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
           <p className="text-xs text-brand-muted">
-            {data.meta.total} cliente(s) — Página {data.meta.page} de {data.meta.totalPages}
+            {formatNumber(data.meta.total)} cliente(s) — Página {formatNumber(data.meta.page)} de {formatNumber(data.meta.totalPages)}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={data.meta.page <= 1}
-              className="p-1.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setPage(p => Math.min(data.meta!.totalPages!, p + 1))}
               disabled={data.meta.page >= data.meta.totalPages}
-              className="p-1.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

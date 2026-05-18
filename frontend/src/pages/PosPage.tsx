@@ -120,11 +120,11 @@ export const PosPage = () => {
         <h1 className="text-xl font-sans font-bold text-brand-text">Punto de Venta — {cajas.find((c) => c.id === cartId)?.name || `Caja ${cartId}`}</h1>
       </div>
 
-      <div className="flex-1 flex gap-4 min-h-0">
-        <div className="flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
+        <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
           <PosProductSearch onAddToCart={handleAddToCart} />
         </div>
-        <div className="flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
+        <div className="w-full lg:flex-1 lg:max-w-sm bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
           <PosCart
             items={cartItems}
             onUpdateQuantity={handleUpdateQuantity}

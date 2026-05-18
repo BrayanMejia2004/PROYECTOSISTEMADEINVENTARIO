@@ -1,5 +1,6 @@
 import { useLowStock } from '../../inventory/hooks';
 import { AlertTriangle, Package } from 'lucide-react';
+import { formatNumber } from '../../../lib/utils';
 
 export const LowStockCard = () => {
   const { data, isLoading } = useLowStock();
@@ -31,11 +32,11 @@ export const LowStockCard = () => {
           {items.slice(0, 5).map((item: any) => (
             <div key={item._id} className="flex items-center justify-between text-xs">
               <span className="text-brand-text truncate mr-2">{item.productName || item.sku || '—'}</span>
-              <span className="text-red-500 font-medium shrink-0">{item.quantity} / {item.minStock || 0}</span>
+              <span className="text-red-500 font-medium shrink-0">{formatNumber(item.quantity)} / {formatNumber(item.minStock || 0)}</span>
             </div>
           ))}
           {count > 5 && (
-            <p className="text-xs text-brand-muted text-center pt-1">+{count - 5} más</p>
+            <p className="text-xs text-brand-muted text-center pt-1">+{formatNumber(count - 5)} más</p>
           )}
         </div>
       )}

@@ -77,14 +77,14 @@ export const ConfirmDialog = ({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-brand-muted hover:text-brand-text hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-4 py-3 rounded-lg border border-gray-200 text-sm font-medium text-brand-muted hover:text-brand-text hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.buttonBg} ${styles.buttonText}`}
+            className={`px-4 py-3 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.buttonBg} ${styles.buttonText}`}
           >
             {isLoading ? (
               <span className="flex items-center gap-1.5">

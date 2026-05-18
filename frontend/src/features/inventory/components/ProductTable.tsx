@@ -3,7 +3,7 @@ import { useProducts, useDeleteProduct } from '../hooks';
 import { Product } from '../../../types';
 import { useNavigate } from 'react-router-dom';
 import { usePermission } from '../../../hooks/usePermission';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatNumber } from '../../../lib/utils';
 import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
@@ -34,11 +34,12 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
   const meta = data?.meta;
 
   const columns = [
-    { key: 'sku', label: 'Código', className: 'font-mono text-xs text-brand-muted' },
+    { key: 'sku', label: 'Código', hideOnMobile: true, className: 'font-mono text-xs text-brand-muted' },
     { key: 'name', label: 'Nombre', className: 'font-medium text-brand-text' },
     {
       key: 'departmentName',
       label: 'Departamento',
+      hideOnMobile: true,
       render: (p: Product) => (
         <span className="text-brand-muted">{p.departmentName || '—'}</span>
       ),
@@ -48,13 +49,14 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
       label: 'Stock',
       render: (p: Product) => (
         <span className={`font-semibold text-sm ${(p.stock ?? 0) > 0 ? 'text-brand' : 'text-brand-muted'}`}>
-          {p.stock ?? 0}
+          {formatNumber(p.stock ?? 0)}
         </span>
       ),
     },
     {
       key: 'unit',
       label: 'Tipo',
+      hideOnMobile: true,
       render: (p: Product) => (
         <span className="text-brand-muted text-xs">{UNIT_LABELS[p.unit] || p.unit}</span>
       ),
@@ -62,6 +64,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
     {
       key: 'costPrice',
       label: 'Costo',
+      hideOnMobile: true,
       render: (p: Product) => (
         <span className="text-brand-muted">{formatCurrency(p.costPrice)}</span>
       ),
@@ -69,6 +72,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
     {
       key: 'profit',
       label: 'Ganancia',
+      hideOnMobile: true,
       render: (p: Product) => {
         if (p.price <= p.costPrice) return <span className="text-brand-muted">—</span>;
         const percent = ((1 - p.costPrice / p.price) * 100).toFixed(1);
@@ -85,6 +89,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
     {
       key: 'wholesalePrice',
       label: 'Precio Mayor',
+      hideOnMobile: true,
       render: (p: Product) => (
         <span className="text-brand-muted">
           {p.wholesalePrice ? formatCurrency(p.wholesalePrice) : '—'}
@@ -132,7 +137,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
           <thead>
             <tr className="bg-brand-bg/50">
               {columns.map((col) => (
-                <th key={col.key} className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap">
+                <th key={col.key} className={`text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap${col.hideOnMobile ? ' hidden md:table-cell' : ''}`}>
                   {col.label}
                 </th>
               ))}
@@ -145,7 +150,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
             {products.map((product) => (
               <tr key={product.id} className="hover:bg-brand-bg/30 transition-colors">
                 {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3.5 text-sm whitespace-nowrap">
+                  <td key={col.key} className={`px-4 py-3.5 text-sm whitespace-nowrap${col.hideOnMobile ? ' hidden md:table-cell' : ''}`}>
                     {col.render ? col.render(product) : (
                       <span className={col.className || 'text-brand-text'}>
                         {(product as any)[col.key] ?? '—'}
@@ -158,7 +163,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
                     {hasPermission('inventory:update') && (
                       <button
                         onClick={() => navigate(`/inventory/${product.id}/edit`)}
-                        className="p-1.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+                        className="p-2.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -166,7 +171,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
                     {hasPermission('inventory:delete') && (
                       <button
                         onClick={() => setConfirmDelete({ open: true, id: product.id })}
-                        className="p-1.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors"
+                        className="p-2.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -182,20 +187,20 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
           <p className="text-xs text-brand-muted">
-            {meta.total} producto(s) — Página {meta.page} de {meta.totalPages}
+            {formatNumber(meta.total)} producto(s) — Página {formatNumber(meta.page)} de {formatNumber(meta.totalPages)}
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={meta.page <= 1}
-              className="p-1.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
               disabled={meta.page >= meta.totalPages}
-              className="p-1.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

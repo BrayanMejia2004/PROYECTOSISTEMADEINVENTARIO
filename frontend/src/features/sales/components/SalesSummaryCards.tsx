@@ -1,5 +1,5 @@
 import { useSalesSummary } from '../hooks';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatNumber } from '../../../lib/utils';
 import { ShoppingCart, DollarSign, Receipt, XCircle, Package } from 'lucide-react';
 
 interface CardProps {
@@ -33,7 +33,7 @@ export const SalesSummaryCards = () => {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       <Card
         label="Ventas Hoy"
-        value={String(s?.salesToday ?? 0)}
+        value={formatNumber(s?.salesToday ?? 0)}
         icon={<ShoppingCart className="w-5 h-5" />}
         bgColor="bg-blue-50"
         iconColor="text-blue-600"
@@ -54,14 +54,14 @@ export const SalesSummaryCards = () => {
       />
       <Card
         label="Devueltas"
-        value={String(s?.cancelledCount ?? 0)}
+        value={formatNumber(s?.cancelledCount ?? 0)}
         icon={<XCircle className="w-5 h-5" />}
         bgColor="bg-red-50"
         iconColor="text-red-600"
       />
       <Card
         label="Productos Vend."
-        value={String(s?.totalProductsSold ?? 0)}
+        value={formatNumber(s?.totalProductsSold ?? 0)}
         icon={<Package className="w-5 h-5" />}
         bgColor="bg-purple-50"
         iconColor="text-purple-600"

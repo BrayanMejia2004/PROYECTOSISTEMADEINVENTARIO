@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Filter, X, Search } from 'lucide-react';
 import { useUsers } from '../../users/hooks';
+import { NumberInput } from '../../../components/ui/NumberInput';
 
 interface SalesFiltersProps {
   filters: {
@@ -49,18 +50,18 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
             value={filters.search || ''}
             onChange={(e) => update('search', e.target.value)}
             placeholder="Buscar por número o cliente..."
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+            className="w-full pl-9 pr-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
           />
         </div>
         <button
           onClick={() => setOpen(!open)}
-          className={`p-2 rounded-lg border transition-colors text-sm ${open ? 'bg-brand text-white border-brand' : 'border-gray-200 text-brand-muted hover:text-brand-text'}`}
+          className={`p-2.5 rounded-lg border transition-colors text-sm ${open ? 'bg-brand text-white border-brand' : 'border-gray-200 text-brand-muted hover:text-brand-text'}`}
           title="Filtros"
         >
           <Filter className="w-4 h-4" />
         </button>
         {hasFilters && (
-          <button onClick={clear} className="p-2 rounded-lg border border-gray-200 text-brand-muted hover:text-red-500 transition-colors text-sm" title="Limpiar filtros">
+          <button onClick={clear} className="p-2.5 rounded-lg border border-gray-200 text-brand-muted hover:text-red-500 transition-colors text-sm" title="Limpiar filtros">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -73,7 +74,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
               <select
                 value={filters.status || ''}
                 onChange={(e) => update('status', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               >
                 <option value="">Todos</option>
                 <option value="completed">Completada</option>
@@ -85,7 +86,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
               <select
                 value={filters.paymentMethod || ''}
                 onChange={(e) => update('paymentMethod', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               >
                 <option value="">Todos</option>
                 <option value="cash">Efectivo</option>
@@ -99,7 +100,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
               <select
                 value={filters.userId || ''}
                 onChange={(e) => update('userId', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               >
                 <option value="">Todos</option>
                 {users?.data?.map((u: any) => (
@@ -113,7 +114,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
                 value={filters.customerName || ''}
                 onChange={(e) => update('customerName', e.target.value)}
                 placeholder="Nombre del cliente"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
             </div>
             <div>
@@ -122,7 +123,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
                 type="date"
                 value={filters.startDate || ''}
                 onChange={(e) => update('startDate', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
             </div>
             <div>
@@ -131,29 +132,27 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
                 type="date"
                 value={filters.endDate || ''}
                 onChange={(e) => update('endDate', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Monto Mín</label>
-              <input
-                type="number"
-                min="0"
+              <NumberInput
                 value={filters.minTotal ?? ''}
-                onChange={(e) => update('minTotal', e.target.value === '' ? undefined : Number(e.target.value))}
+                onChange={(v) => update('minTotal', v === '' ? undefined : v)}
+                min={0}
                 placeholder="0"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Monto Máx</label>
-              <input
-                type="number"
-                min="0"
+              <NumberInput
                 value={filters.maxTotal ?? ''}
-                onChange={(e) => update('maxTotal', e.target.value === '' ? undefined : Number(e.target.value))}
+                onChange={(v) => update('maxTotal', v === '' ? undefined : v)}
+                min={0}
                 placeholder="999999"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
             </div>
           </div>

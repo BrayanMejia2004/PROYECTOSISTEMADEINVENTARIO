@@ -8,7 +8,8 @@ import { ShiftSummary } from '../features/sales/components/ShiftSummary';
 import { ShiftCloseReceipt } from '../features/sales/components/ShiftCloseReceipt';
 import { AdminShiftDetail } from '../features/sales/components/AdminShiftDetail';
 import { CashMovements } from '../features/sales/components/CashMovements';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatNumber } from '../lib/utils';
+import { NumberInput } from '../components/ui/NumberInput';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export const CashierShiftPage = () => {
@@ -90,13 +91,12 @@ const CashierSection = () => {
             </button>
           ) : (
             <div className="max-w-xs mx-auto space-y-3">
-              <input
-                type="number"
-                min="0"
-                value={openingAmount}
-                onChange={(e) => setOpeningAmount(e.target.value)}
+              <NumberInput
+                value={openingAmount === '' ? '' : Number(openingAmount)}
+                onChange={(v) => setOpeningAmount(v === '' ? '' : String(v))}
+                min={0}
                 placeholder="Monto inicial en efectivo"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-center text-lg font-semibold text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-lg font-semibold text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
                 autoFocus
               />
               <div className="flex gap-2">
@@ -227,7 +227,7 @@ const AdminSection = () => {
               <select
                 value={filters.status || ''}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -240,7 +240,7 @@ const AdminSection = () => {
                 type="date"
                 value={filters.startDate || ''}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
               />
             </div>
             <div>
@@ -249,7 +249,7 @@ const AdminSection = () => {
                 type="date"
                 value={filters.endDate || ''}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
               />
             </div>
             <div className="flex items-end">
@@ -331,7 +331,7 @@ const AdminSection = () => {
 
       {meta && (
         <div className="flex items-center justify-between text-sm text-brand-muted">
-          <span>Mostrando {shifts.length} de {meta.total} turnos</span>
+          <span>Mostrando {formatNumber(shifts.length)} de {formatNumber(meta.total)} turnos</span>
           <div className="flex gap-2">
             <button
               onClick={() => handleFilterChange('page', String(Math.max(1, (filters.page || 1) - 1)))}

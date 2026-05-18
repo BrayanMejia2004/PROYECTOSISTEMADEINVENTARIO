@@ -5,7 +5,7 @@ import { SalesFilters } from '../features/sales/components/SalesFilters';
 import { SaleDetail } from '../features/sales/components/SaleDetail';
 import { useAuth } from '../hooks/useAuth';
 import { useBranches } from '../features/settings/hooks';
-import { formatCurrency, formatDate } from '../lib/utils';
+import { formatCurrency, formatNumber, formatDate } from '../lib/utils';
 import { Store, Receipt, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -80,7 +80,7 @@ export const SalesPage = () => {
               <select
                 value={selectedBranchId || ''}
                 onChange={(e) => { setSelectedBranchId(e.target.value || undefined); setPage(1); }}
-                className="flex-1 max-w-xs px-3 py-2 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                className="flex-1 max-w-xs px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               >
                 <option value="">Todas las sucursales</option>
                 {branches?.data?.map((b: any) => (
@@ -98,7 +98,7 @@ export const SalesPage = () => {
           <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 text-sm text-brand-muted">
             <Receipt className="w-4 h-4" />
             Historial de ventas
-            {meta && <span className="text-xs ml-auto">{meta.total} registro(s)</span>}
+            {meta && <span className="text-xs ml-auto">{formatNumber(meta.total)} registro(s)</span>}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -147,13 +147,13 @@ export const SalesPage = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100">
               <span className="text-xs text-brand-muted">
-                Página {meta?.page} de {totalPages}
+                Página {formatNumber(meta?.page)} de {formatNumber(totalPages)}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text disabled:opacity-30"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text disabled:opacity-30"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -173,7 +173,7 @@ export const SalesPage = () => {
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text disabled:opacity-30"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text disabled:opacity-30"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>

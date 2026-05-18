@@ -14,6 +14,13 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount)
 }
 
+export const formatNumber = (value: number, decimals = 0): string => {
+  return new Intl.NumberFormat('es-CL', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value)
+}
+
 export const formatDate = (date: string | Date): string => {
   return new Intl.DateTimeFormat('es-MX', {
     year: 'numeric',

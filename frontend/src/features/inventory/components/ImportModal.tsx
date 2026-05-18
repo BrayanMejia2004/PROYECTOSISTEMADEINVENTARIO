@@ -151,7 +151,7 @@ export const ImportModal = ({ onClose }: ImportModalProps) => {
               {step === 1 ? 'Importar Productos' : step === 2 ? 'Mapear Columnas' : 'Resultado'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text">
+          <button onClick={onClose} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text">
             <X className="w-5 h-5" />
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { Banknote, CreditCard, Building2, TrendingUp, Package } from 'lucide-react';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatNumber } from '../../../lib/utils';
 
 interface ShiftSummaryProps {
   shift: any;
@@ -62,7 +62,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-brand-text">{formatCurrency(summary.cashTotal)}</p>
-                <p className="text-xs text-brand-muted">{summary.cashCount} venta(s)</p>
+                <p className="text-xs text-brand-muted">{formatNumber(summary.cashCount)} venta(s)</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-brand-text">{formatCurrency(summary.cardTotal)}</p>
-                <p className="text-xs text-brand-muted">{summary.cardCount} venta(s)</p>
+                <p className="text-xs text-brand-muted">{formatNumber(summary.cardCount)} venta(s)</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -86,7 +86,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-brand-text">{formatCurrency(summary.transferTotal)}</p>
-                <p className="text-xs text-brand-muted">{summary.transferCount} venta(s)</p>
+                <p className="text-xs text-brand-muted">{formatNumber(summary.transferCount)} venta(s)</p>
               </div>
             </div>
           </div>
@@ -121,11 +121,11 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-brand-muted">Ventas hoy</span>
-              <span className="font-semibold text-brand-text">{summary.salesToday}</span>
+              <span className="font-semibold text-brand-text">{formatNumber(summary.salesToday)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-brand-muted">Productos vendidos</span>
-              <span className="font-semibold text-brand-text">{summary.totalProductsSold}</span>
+              <span className="font-semibold text-brand-text">{formatNumber(summary.totalProductsSold)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-brand-muted">Ticket promedio</span>
@@ -133,7 +133,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
             </div>
             <div className="flex justify-between">
               <span className="text-brand-muted">Devueltas</span>
-              <span className="font-semibold text-red-500">{summary.cancelledCount}</span>
+              <span className="font-semibold text-red-500">{formatNumber(summary.cancelledCount)}</span>
             </div>
             <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100 text-xs text-brand-muted">
               <Package className="w-3 h-3" />
