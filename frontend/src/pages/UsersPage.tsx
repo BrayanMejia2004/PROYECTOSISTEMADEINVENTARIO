@@ -41,11 +41,12 @@ export const UsersPage = () => {
         lastName: editingUser.lastName,
         email: editingUser.email,
         password: '',
+        confirmPassword: '',
         role: editingUser.role,
         branchId: editingUser.branchId || '',
       });
     } else {
-      reset({ firstName: '', lastName: '', email: '', password: '', role: 'cashier', branchId: '' });
+      reset({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: 'cashier', branchId: '' });
     }
   }, [editingUser, reset]);
 
@@ -57,8 +58,9 @@ export const UsersPage = () => {
   const handleConfirmSave = () => {
     const data = pendingData.current;
     if (!data) return;
+    const { confirmPassword: _, ...payload } = data;
     if (editingUser) {
-      const input: any = { ...data };
+      const input: any = { ...payload };
       if (!input.password) delete input.password;
       updateUser({ id: editingUser._id, input }, {
         onSuccess: () => {
@@ -68,7 +70,7 @@ export const UsersPage = () => {
         },
       });
     } else {
-      createUser(data, {
+      createUser(payload, {
         onSuccess: () => {
           setShowSuccess('Usuario creado exitosamente');
           setShowForm(false);
@@ -146,6 +148,11 @@ export const UsersPage = () => {
               </label>
               <input {...register('password')} type="password" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-brand-text mb-1.5">Confirmar Contraseña</label>
+              <input {...register('confirmPassword')} type="password" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-text mb-1.5">Rol</label>

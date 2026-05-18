@@ -1,6 +1,6 @@
 import { forwardRef, useState } from 'react';
 
-const LOCALE = 'es-CL';
+const LOCALE = 'es-MX';
 
 const formatLocale = (num: number, decimals = 0): string => {
   return num.toLocaleString(LOCALE, {

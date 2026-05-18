@@ -1,7 +1,11 @@
 import { useDepartments, useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from '../features/departments/hooks';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { departmentSchema, type DepartmentForm } from '../features/departments/schemas';
+import { formatNumber } from '../lib/utils';
 import { Tag, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { SuccessToast } from '../components/ui/SuccessToast';
@@ -17,33 +21,43 @@ export const DepartmentsPage = () => {
   const { mutate: deleteDepartment } = useDeleteDepartment();
   const [showForm, setShowForm] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<any>(null);
-  const [name, setName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
   const [confirmSave, setConfirmSave] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
+  const pendingData = useRef<DepartmentForm | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<DepartmentForm>({
+    resolver: zodResolver(departmentSchema),
+  });
 
   const resetForm = () => {
-    setName('');
+    reset({ name: '' });
     setEditingDepartment(null);
     setShowForm(false);
   };
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
+  const onSubmit = (data: DepartmentForm) => {
+    pendingData.current = data;
     setConfirmSave(true);
   };
 
   const handleConfirmSave = () => {
+    const data = pendingData.current;
+    if (!data) return;
     if (editingDepartment) {
-      updateDepartment({ id: editingDepartment._id, input: { name: name.trim() } }, {
+      updateDepartment({ id: editingDepartment._id, input: { name: data.name.trim() } }, {
         onSuccess: () => {
           setShowSuccess('Departamento actualizado exitosamente');
           resetForm();
         },
       });
     } else {
-      createDepartment({ name: name.trim() }, {
+      createDepartment({ name: data.name.trim() }, {
         onSuccess: () => {
           setShowSuccess('Departamento creado exitosamente');
           resetForm();
@@ -51,11 +65,12 @@ export const DepartmentsPage = () => {
       });
     }
     setConfirmSave(false);
+    pendingData.current = null;
   };
 
   const handleEdit = (department: any) => {
     setEditingDepartment(department);
-    setName(department.name);
+    reset({ name: department.name });
     setShowForm(true);
   };
 
@@ -85,27 +100,26 @@ export const DepartmentsPage = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={onSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6 max-w-md">
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6 max-w-md">
           <h3 className="font-sans font-semibold text-brand-text mb-4">
             {editingDepartment ? 'Editar Departamento' : 'Nuevo Departamento'}
           </h3>
           <div className="mb-4">
             <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...register('name')}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               placeholder="Nombre del departamento"
             />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
           <div className="flex justify-end">
-            <button type="submit" disabled={isCreating || isUpdating || !name.trim()} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
+            <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
               {isCreating || isUpdating ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </form>
       )}
-
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 text-sm text-brand-muted">
           <Tag className="w-4 h-4" />

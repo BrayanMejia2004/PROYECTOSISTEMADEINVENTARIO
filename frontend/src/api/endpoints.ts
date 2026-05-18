@@ -14,6 +14,9 @@ export const ENDPOINTS = {
   // Users
   USERS: '/users',
 
+  // Brands
+  BRANDS: '/brands',
+
   // Departments
   DEPARTMENTS: '/departments',
 

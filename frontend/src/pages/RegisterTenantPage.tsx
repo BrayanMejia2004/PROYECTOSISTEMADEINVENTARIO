@@ -21,7 +21,8 @@ export const RegisterTenantPage = () => {
 
   const onSubmit = async (data: RegisterTenantForm) => {
     try {
-      await registerTenant(data);
+      const { confirmPassword: _, ...payload } = data;
+      await registerTenant(payload);
       navigate('/login');
     } catch {
       setError('Error al registrar. Verifica los datos.');
@@ -119,6 +120,18 @@ export const RegisterTenantPage = () => {
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-brand-text mb-1.5">
+                Confirmar Contraseña
+              </label>
+              <input
+                {...register('confirmPassword')}
+                type="password"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+              />
+              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
             </div>
 
             <button

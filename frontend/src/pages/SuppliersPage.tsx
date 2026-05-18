@@ -129,18 +129,20 @@ export const SuppliersPage = () => {
               <input {...register('email')} type="email" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-              <input {...register('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
-              <input {...register('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">RFC</label>
-              <input {...register('taxId')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
+                <input {...register('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
+                <input {...register('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1.5">RFC</label>
+                <input {...register('taxId')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                {errors.taxId && <p className="text-red-500 text-xs mt-1">{errors.taxId.message}</p>}
+              </div>
           </div>
           <div className="flex justify-end pt-2">
             <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">

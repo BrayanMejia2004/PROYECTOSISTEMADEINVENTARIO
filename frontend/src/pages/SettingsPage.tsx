@@ -162,10 +162,12 @@ export const SettingsPage = () => {
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">NIT</label>
                 <input {...registerTenant('nit')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="12345678-9" />
+                {tenantErrors.nit && <p className="text-red-500 text-xs mt-1">{tenantErrors.nit.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-                <input {...registerTenant('phone')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                <input {...registerTenant('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                {tenantErrors.phone && <p className="text-red-500 text-xs mt-1">{tenantErrors.phone.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
@@ -217,7 +219,8 @@ export const SettingsPage = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-                  <input {...registerBranch('phone')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                  <input {...registerBranch('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                  {branchErrors.phone && <p className="text-red-500 text-xs mt-1">{branchErrors.phone.message}</p>}
                 </div>
               </div>
               <div className="flex justify-end pt-2">
