@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductForm } from '../schemas';
 import { useCreateProduct, useUpdateProduct, useProduct, useInitializeStock } from '../hooks';
 import { useDepartments } from '../../departments/hooks';
+import { useBrands } from '../../brands/hooks';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -20,6 +21,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const { user } = useAuth();
   const { data: productData } = useProduct(productId || '');
   const { data: departments } = useDepartments();
+  const { data: brands } = useBrands({ limit: 1000 });
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const { mutate: initializeStock } = useInitializeStock();
@@ -196,12 +198,18 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
             </div>
             <div>
               <label className={labelClass}>{req('Marca')}</label>
-              <input {...register('brandId')} className={inputClass} placeholder="Ej: Bic, Norma" />
+              <select {...register('brandId')} className={inputClass}>
+                <option value="">Seleccionar marca</option>
+                {brands?.data?.map((brand: any) => (
+                  <option key={brand._id} value={brand._id}>{brand.name}</option>
+                ))}
+              </select>
               {errors.brandId && <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>}
             </div>
             <div className="md:col-span-2">
               <label className={labelClass}>URL Imagen</label>
               <input {...register('image')} className={inputClass} placeholder="https://..." />
+              {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image.message}</p>}
             </div>
           </div>
         </div>
@@ -290,12 +298,14 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
               <Controller name="minStock" control={control} render={({ field }) => (
                 <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
               )} />
+              {errors.minStock && <p className="text-red-500 text-xs mt-1">{errors.minStock.message}</p>}
             </div>
             <div>
               <label className={labelClass}>Stock Máximo</label>
               <Controller name="maxStock" control={control} render={({ field }) => (
                 <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
               )} />
+              {errors.maxStock && <p className="text-red-500 text-xs mt-1">{errors.maxStock.message}</p>}
             </div>
             <div>
               <label className={labelClass}>{req('Unidad de Medida')}</label>

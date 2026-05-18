@@ -6,7 +6,7 @@ import { useCart, useCajas } from '../context/CartContext';
 import { PosCart } from '../features/sales/components/PosCart';
 import { PosProductSearch } from '../features/sales/components/PosProductSearch';
 import { SaleReceipt } from '../features/sales/components/SaleReceipt';
-import { ArrowLeft, Wallet } from 'lucide-react';
+import { ArrowLeft, Wallet, AlertCircle, X } from 'lucide-react';
 
 export const PosPage = () => {
   const { user } = useAuth();
@@ -22,6 +22,7 @@ export const PosPage = () => {
 
   const { items: cartItems, addToCart, updateQuantity, removeItem, clearCart, total } = useCart(cartId);
   const [saleResult, setSaleResult] = useState<any>(null);
+  const [saleError, setSaleError] = useState<string | null>(null);
   const { mutate: createSale, isPending } = useCreateSale();
 
   const handleAddToCart = addToCart;
@@ -62,7 +63,11 @@ export const PosPage = () => {
       {
         onSuccess: (res) => {
           setSaleResult(res.data);
+          setSaleError(null);
           clearCart();
+        },
+        onError: (err: any) => {
+          setSaleError(err?.response?.data?.message || 'Error al procesar la venta');
         },
       }
     );
@@ -120,6 +125,34 @@ export const PosPage = () => {
         <h1 className="text-xl font-sans font-bold text-brand-text">Punto de Venta — {cajas.find((c) => c.id === cartId)?.name || `Caja ${cartId}`}</h1>
       </div>
 
+      {saleError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSaleError(null)}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between">
+                  <h3 className="text-lg font-sans font-bold text-brand-text">Error</h3>
+                  <button onClick={() => setSaleError(null)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text shrink-0 ml-2">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="mt-2 text-sm text-brand-muted leading-relaxed">{saleError}</p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSaleError(null)}
+                className="px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
         <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
           <PosProductSearch onAddToCart={handleAddToCart} />

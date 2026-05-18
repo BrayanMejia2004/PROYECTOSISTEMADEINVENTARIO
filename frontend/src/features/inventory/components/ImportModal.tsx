@@ -51,6 +51,9 @@ interface ImportModalProps {
   onClose: () => void;
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_ROWS = 10000;
+
 export const ImportModal = ({ onClose }: ImportModalProps) => {
   const [step, setStep] = useState(1);
   const [fileName, setFileName] = useState('');
@@ -59,10 +62,20 @@ export const ImportModal = ({ onClose }: ImportModalProps) => {
   const [rawData, setRawData] = useState<any[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ created: number; errors: Array<{ row: number; message: string }> } | null>(null);
+  const [fileError, setFileError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { mutate: importProducts, isPending } = useImportProducts();
 
   const handleFile = (file: File) => {
+    setFileError('');
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError(`El archivo excede el límite de 5 MB`);
+      return;
+    }
+    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+      setFileError('Formato no soportado. Usa .xlsx, .xls o .csv');
+      return;
+    }
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -70,7 +83,14 @@ export const ImportModal = ({ onClose }: ImportModalProps) => {
       const workbook = XLSX.read(data, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      if (json.length === 0) return;
+      if (json.length === 0) {
+        setFileError('El archivo está vacío');
+        return;
+      }
+      if (json.length > MAX_ROWS) {
+        setFileError(`El archivo tiene más de ${MAX_ROWS.toLocaleString()} filas. Reduce la cantidad e intenta de nuevo`);
+        return;
+      }
       const hdrs = Object.keys(json[0] as object);
       setHeaders(hdrs);
       setRawData(json as any[]);

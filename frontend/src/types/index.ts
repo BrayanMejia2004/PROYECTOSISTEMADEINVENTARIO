@@ -121,6 +121,13 @@ export interface Sale {
   createdAt: string;
 }
 
+export interface Brand {
+  _id: string;
+  tenantId: string;
+  name: string;
+  isActive: boolean;
+}
+
 export interface Department {
   _id: string;
   tenantId: string;

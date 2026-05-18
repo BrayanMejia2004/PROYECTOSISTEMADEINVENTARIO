@@ -4,6 +4,9 @@ import { Wallet, Lock, Filter, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCurrentShift, useOpenShift, useCloseShift, useShifts } from '../features/sales/hooks';
 import { useCartSummary } from '@/context/CartContext';
+import { openShiftSchema, type OpenShiftForm } from '../features/sales/schemas';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ShiftSummary } from '../features/sales/components/ShiftSummary';
 import { ShiftCloseReceipt } from '../features/sales/components/ShiftCloseReceipt';
 import { AdminShiftDetail } from '../features/sales/components/AdminShiftDetail';
@@ -25,13 +28,27 @@ export const CashierShiftPage = () => {
 const CashierSection = () => {
   const { user, tenant } = useAuth();
   const [showOpenShift, setShowOpenShift] = useState(false);
-  const [openingAmount, setOpeningAmount] = useState('');
   const [closeReceiptData, setCloseReceiptData] = useState<any>(null);
   const [confirmClose, setConfirmClose] = useState(false);
 
   const { data: shiftData, isLoading: shiftLoading } = useCurrentShift();
   const { mutate: openShift, isPending: isOpening } = useOpenShift();
   const { mutate: closeShift, isPending: isClosing } = useCloseShift();
+
+  const {
+    control: openControl,
+    handleSubmit: handleOpenSubmit,
+    formState: { errors: openErrors },
+    reset: resetOpen,
+  } = useForm<OpenShiftForm>({
+    resolver: zodResolver(openShiftSchema),
+  });
+
+  const onOpenShift = (data: OpenShiftForm) => {
+    openShift(data.openingAmount, {
+      onSuccess: () => { setShowOpenShift(false); resetOpen(); },
+    });
+  };
 
   const shift = shiftData?.data;
   const isOpen = !!shift && shift.status === 'open';
@@ -90,37 +107,39 @@ const CashierSection = () => {
               Abrir Caja
             </button>
           ) : (
-            <div className="max-w-xs mx-auto space-y-3">
-              <NumberInput
-                value={openingAmount === '' ? '' : Number(openingAmount)}
-                onChange={(v) => setOpeningAmount(v === '' ? '' : String(v))}
-                min={0}
-                placeholder="Monto inicial en efectivo"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-lg font-semibold text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-                autoFocus
+            <form onSubmit={handleOpenSubmit(onOpenShift)} className="max-w-xs mx-auto space-y-3">
+              <Controller
+                name="openingAmount"
+                control={openControl}
+                render={({ field }) => (
+                  <NumberInput
+                    value={field.value ?? ''}
+                    onChange={(v) => field.onChange(v === '' ? undefined : v)}
+                    min={0}
+                    placeholder="Monto inicial en efectivo"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-lg font-semibold text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                    autoFocus
+                  />
+                )}
               />
+              {openErrors.openingAmount && <p className="text-red-500 text-xs text-center">{openErrors.openingAmount.message}</p>}
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setShowOpenShift(false); setOpeningAmount(''); }}
+                  type="button"
+                  onClick={() => { setShowOpenShift(false); resetOpen(); }}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-brand-muted hover:text-brand-text transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={() => {
-                    if (openingAmount) {
-                      openShift(Number(openingAmount), {
-                        onSuccess: () => { setShowOpenShift(false); setOpeningAmount(''); },
-                      });
-                    }
-                  }}
-                  disabled={isOpening || !openingAmount}
+                  type="submit"
+                  disabled={isOpening}
                   className="flex-1 bg-brand text-white py-2.5 rounded-xl hover:bg-brand-dark transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isOpening ? 'Abriendo...' : 'Confirmar'}
                 </button>
               </div>
-            </div>
+            </form>
           )}
         </div>
       ) : (
@@ -251,6 +270,9 @@ const AdminSection = () => {
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
                 className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
               />
+              {filters.startDate && filters.endDate && filters.startDate > filters.endDate && (
+                <p className="text-red-500 text-xs mt-1">La fecha de inicio debe ser anterior a la fecha fin</p>
+              )}
             </div>
             <div className="flex items-end">
               <button

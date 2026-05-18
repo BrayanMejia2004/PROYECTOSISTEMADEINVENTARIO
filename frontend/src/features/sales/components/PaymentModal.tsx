@@ -88,8 +88,8 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
         setError('Debes buscar y seleccionar una venta original');
         return;
       }
-      if (total < exchangeCredit) {
-        setError(`El total del carrito debe ser al menos ${formatCurrency(exchangeCredit)}`);
+      if (total < availableCredit) {
+        setError(`El total del carrito debe ser al menos ${formatCurrency(availableCredit)}`);
         return;
       }
       if (extraAmount > 0) {
@@ -139,7 +139,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
   };
 
   const canConfirm = isExchange
-    ? total > 0 && !!exchangeSale && total >= exchangeCredit && (extraAmount <= 0 || (extraPaymentMethod === 'cash' || (extraPaymentMethod === 'transfer' && !!extraTransferReference.trim() && !!extraTransferBank) || (extraPaymentMethod === 'card' && !!extraCardReference.trim() && !!extraCardBank)))
+    ? total > 0 && !!exchangeSale && total >= availableCredit && (extraAmount <= 0 || (extraPaymentMethod === 'cash' || (extraPaymentMethod === 'transfer' && !!extraTransferReference.trim() && !!extraTransferBank) || (extraPaymentMethod === 'card' && !!extraCardReference.trim() && !!extraCardBank)))
     : isCash
       ? amountReceived >= total && total > 0
       : isTransfer
@@ -192,6 +192,12 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
             <CheckCircle className="w-4 h-4" />
             <span className="font-medium">{exchangeSale.saleNumber}</span>
           </div>
+          {exchangeSale.customerName && (
+            <div className="flex justify-between text-sm">
+              <span className="text-brand-muted">Cliente original</span>
+              <span className="font-semibold text-brand-text">{exchangeSale.customerName}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span className="text-brand-muted">Crédito disponible</span>
             <span className="font-semibold text-brand-text">{formatCurrency(availableCredit)}</span>
@@ -201,10 +207,10 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
             <span className="font-semibold text-brand-text">{formatCurrency(total)}</span>
           </div>
 
-          {total < exchangeCredit && (
+          {total < availableCredit && (
             <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
               <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-              <p className="text-xs text-amber-700">Debes agregar productos por al menos {formatCurrency(exchangeCredit)}</p>
+              <p className="text-xs text-amber-700">Debes agregar productos por al menos {formatCurrency(availableCredit)}</p>
             </div>
           )}
 
@@ -283,7 +289,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
             </div>
           )}
 
-          {extraAmount === 0 && total >= exchangeCredit && (
+          {extraAmount === 0 && total >= availableCredit && (
             <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
               <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
               <p className="text-xs text-green-700">Cubierto completamente por intercambio - sin cobro adicional</p>
@@ -342,7 +348,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
                     value={amountReceived}
                     onChange={(v) => setAmountReceived(v === '' ? 0 : v)}
                     min={0}
-                    decimals={2}
+                    decimals={0}
                     disabled={!isCash || isPending}
                     className={`w-full pl-9 pr-4 py-3 text-xl font-bold text-brand-text tabular-nums rounded-xl border outline-none transition-all ${
                       amountReceived < total && isCash
@@ -428,7 +434,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
             </>
           )}
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex gap-3 pt-3">
             <button
               onClick={onCancel}
               className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-brand-muted hover:text-brand-text hover:border-gray-300 transition-all"

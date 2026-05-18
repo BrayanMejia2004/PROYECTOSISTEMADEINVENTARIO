@@ -134,6 +134,9 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
                 onChange={(e) => update('endDate', e.target.value)}
                 className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
+              {filters.startDate && filters.endDate && filters.startDate > filters.endDate && (
+                <p className="text-red-500 text-xs mt-1">La fecha de inicio debe ser anterior a la fecha fin</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Monto Mín</label>

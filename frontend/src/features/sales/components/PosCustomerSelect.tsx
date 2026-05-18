@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { customerSchema, type CustomerForm } from '../../../features/customers/schemas';
 import { useCustomers, useCreateCustomer } from '../../../features/customers/hooks';
 import { Search, Plus, X, User, Check } from 'lucide-react';
 
@@ -11,12 +14,19 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
   const [search, setSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newPhone, setNewPhone] = useState('');
   const { data: customersData } = useCustomers(search ? { search, limit: 10 } : undefined);
   const { mutate: createCustomer, isPending: isCreating } = useCreateCustomer();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm<CustomerForm>({
+    resolver: zodResolver(customerSchema),
+  });
 
   const customers = customersData?.data ?? [];
 
@@ -36,15 +46,13 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
     setShowDropdown(false);
   };
 
-  const handleCreate = () => {
-    if (!newName.trim()) return;
+  const onCreateCustomer = (data: CustomerForm) => {
     createCustomer(
-      { name: newName.trim(), phone: newPhone.trim() || undefined },
+      { name: data.name.trim(), phone: data.phone?.trim() || undefined },
       {
-        onSuccess: (data) => {
-          onSelectCustomer({ name: data.data.name, phone: data.data.phone });
-          setNewName('');
-          setNewPhone('');
+        onSuccess: (res) => {
+          onSelectCustomer({ name: res.data.name, phone: res.data.phone });
+          resetForm();
           setShowCreateForm(false);
           setShowDropdown(false);
         },
@@ -128,38 +136,41 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
       )}
 
       {showCreateForm && (
-        <div className="mt-2 bg-gray-50 rounded-lg border border-gray-200 p-3 space-y-2">
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="Nombre del cliente"
-            className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
-            autoFocus
-          />
-          <input
-            type="text"
-            value={newPhone}
-            onChange={(e) => setNewPhone(e.target.value)}
-            placeholder="Teléfono (opcional)"
-            className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
-          />
+        <form onSubmit={handleSubmit(onCreateCustomer)} className="mt-2 bg-gray-50 rounded-lg border border-gray-200 p-3 space-y-2">
+          <div>
+            <input
+              {...register('name')}
+              placeholder="Nombre del cliente"
+              className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
+              autoFocus
+            />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          </div>
+          <div>
+            <input
+              {...register('phone')}
+              placeholder="Teléfono (opcional)"
+              className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none transition-all"
+            />
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+          </div>
           <div className="flex gap-2">
             <button
-              onClick={handleCreate}
-              disabled={isCreating || !newName.trim()}
+              type="submit"
+              disabled={isCreating}
               className="flex-1 bg-brand text-white py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCreating ? 'Creando...' : 'Guardar'}
             </button>
             <button
+              type="button"
               onClick={() => setShowCreateForm(false)}
               className="px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text transition-colors"
             >
               Cancelar
             </button>
           </div>
-        </div>
+        </form>
       )}
     </div>
   );

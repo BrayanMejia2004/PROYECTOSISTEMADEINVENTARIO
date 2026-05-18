@@ -113,8 +113,13 @@ export const createSale = async (input: CreateSaleInput) => {
           `Crédito insuficiente. Disponible: $${availableCredit.toLocaleString('es-CO')}`
         );
 
-      if (preTotal < (input.exchangeCredit || 0))
-        throw ApiError.badRequest('El total de la venta debe ser mayor o igual al crédito de intercambio');
+      if (originalSale.customerName && input.customerName?.toLowerCase() !== originalSale.customerName.toLowerCase())
+        throw ApiError.badRequest(
+          `El cliente debe ser "${originalSale.customerName}" (coincidir con la venta original)`
+        );
+
+      if (preTotal < availableCredit)
+        throw ApiError.badRequest('El total de la venta debe ser mayor o igual al crédito disponible');
 
       if (preTotal > (input.exchangeCredit || 0)) {
         if (!input.paymentMethod || input.paymentMethod === 'exchange') {
@@ -269,46 +274,71 @@ export const getSalesSummary = async (tenantId: string, branchId?: string) => {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  const matchTenant: any = { tenantId };
   const matchToday: any = {
     tenantId,
     createdAt: { $gte: today, $lte: endOfToday },
   };
   if (branchId) {
-    matchTenant.branchId = branchId;
     matchToday.branchId = branchId;
   }
 
-  const [salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg] = await Promise.all([
-    Sale.countDocuments({ ...matchToday, status: 'completed' }),
-    Sale.countDocuments({ ...matchTenant, status: { $in: ['cancelled', 'refunded'] } }),
-    Sale.aggregate([
-      { $match: { ...matchToday, status: 'completed' } },
-      { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
-      { $group: { _id: null, totalRevenue: { $sum: '$effectiveTotal' }, totalSales: { $sum: 1 } } },
+  const [[salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg], refundedSales, exchangeRefundIds] = await Promise.all([
+    Promise.all([
+      Sale.countDocuments({ ...matchToday, status: 'completed' }),
+      Sale.countDocuments({ ...matchToday, status: { $in: ['cancelled', 'refunded'] } }),
+      Sale.aggregate([
+        { $match: { ...matchToday, status: 'completed' } },
+        { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
+        { $group: { _id: null, totalRevenue: { $sum: '$effectiveTotal' }, totalSales: { $sum: 1 } } },
+      ]),
+      Sale.aggregate([
+        { $match: { ...matchToday, status: 'completed' } },
+        { $unwind: '$items' },
+        { $group: { _id: null, totalProducts: { $sum: '$items.quantity' } } },
+      ]),
+      Sale.aggregate([
+        { $match: { ...matchToday, status: 'completed' } },
+        { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
+        { $group: { _id: '$paymentMethod', total: { $sum: '$effectiveTotal' }, count: { $sum: 1 } } },
+      ]),
+      Sale.aggregate([
+        { $match: { ...matchToday, status: 'completed' } },
+        { $unwind: '$items' },
+        { $group: { _id: null, totalCost: { $sum: { $multiply: ['$items.quantity', '$items.costPrice'] } } } },
+      ]),
     ]),
-    Sale.aggregate([
-      { $match: { ...matchToday, status: 'completed' } },
-      { $unwind: '$items' },
-      { $group: { _id: null, totalProducts: { $sum: '$items.quantity' } } },
-    ]),
-    Sale.aggregate([
-      { $match: { ...matchToday, status: 'completed' } },
-      { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
-      { $group: { _id: '$paymentMethod', total: { $sum: '$effectiveTotal' }, count: { $sum: 1 } } },
-    ]),
-    Sale.aggregate([
-      { $match: { ...matchToday, status: 'completed' } },
-      { $unwind: '$items' },
-      { $group: { _id: null, totalCost: { $sum: { $multiply: ['$items.quantity', '$items.costPrice'] } } } },
-    ]),
+    Sale.find({ ...matchToday, status: 'refunded' }).lean(),
+    Sale.distinct('exchangeFromSaleId', {
+      exchangeFromSaleId: { $ne: null },
+      ...matchToday,
+      status: 'completed',
+    }),
   ]);
 
-  const totalRevenue = totalAgg[0]?.totalRevenue || 0;
+  // Compute refund adjustments:
+  // - Exchange-paired refunds: only reverse cost (revenue already handled via exchangeCredit)
+  // - Standalone refunds: reverse BOTH revenue and cost
+  const exchangeRefundIdSet = new Set(exchangeRefundIds.map((id: any) => id.toString()));
+  let refundedRevenue = 0;
+  let refundedCost = 0;
+  for (const sale of refundedSales) {
+    const isExchangePaired = exchangeRefundIdSet.has(sale._id.toString());
+    if (!isExchangePaired) {
+      refundedRevenue += sale.total;
+    }
+    for (const item of sale.items) {
+      refundedCost += item.quantity * item.costPrice;
+    }
+  }
+
+  const completedRevenue = totalAgg[0]?.totalRevenue || 0;
   const totalSalesCount = totalAgg[0]?.totalSales || 0;
   const totalProductsSold = productAgg[0]?.totalProducts || 0;
-  const avgTicket = totalSalesCount > 0 ? Math.round(totalRevenue / totalSalesCount) : 0;
-  const totalCost = profitAgg[0]?.totalCost || 0;
+  const avgTicket = totalSalesCount > 0 ? Math.round(completedRevenue / totalSalesCount) : 0;
+  const completedCost = profitAgg[0]?.totalCost || 0;
+
+  const totalRevenue = completedRevenue - refundedRevenue;
+  const totalCost = completedCost - refundedCost;
   const totalProfit = totalRevenue - totalCost;
 
   const cashTotal = paymentAgg.find((p: any) => p._id === 'cash')?.total || 0;
@@ -367,10 +397,10 @@ export const getSaleById = async (saleId: string, tenantId: string, branchId?: s
 };
 
 export const getSaleByNumber = async (saleNumber: string, tenantId: string, branchId?: string) => {
-  const query: any = { saleNumber, tenantId };
+  const query: any = { saleNumber, tenantId, status: 'refunded' };
   if (branchId) query.branchId = branchId;
   const sale = await Sale.findOne(query);
-  if (!sale) throw ApiError.notFound('Sale not found');
+  if (!sale) throw ApiError.notFound('Sale not found or not refunded');
 
   const saleObj = sale.toObject() as Record<string, any>;
   try {
