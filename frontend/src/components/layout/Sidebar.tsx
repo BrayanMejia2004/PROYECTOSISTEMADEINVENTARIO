@@ -22,9 +22,10 @@ import {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  desktopOpen: boolean;
 }
 
-export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+export const Sidebar = ({ isOpen, onClose, desktopOpen }: SidebarProps) => {
   const { user, logout, tenant } = useAuth();
   const { hasPermission } = usePermission();
   const { data: branches } = useBranches();
@@ -36,10 +37,10 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     <>
       {isOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={onClose} />}
       <aside className={cn(
-        "fixed lg:static inset-y-0 left-0 z-40 w-64 min-h-screen bg-brand-sidebar flex flex-col shrink-0",
+        "fixed inset-y-0 left-0 z-40 w-64 min-h-screen bg-brand-sidebar flex flex-col shrink-0",
         "transform transition-transform duration-200 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full",
-        "lg:translate-x-0"
+        desktopOpen ? "lg:translate-x-0" : "lg:-translate-x-full"
       )}>
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
           <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">

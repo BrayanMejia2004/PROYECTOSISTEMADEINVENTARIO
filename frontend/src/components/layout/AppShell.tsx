@@ -6,12 +6,13 @@ import { CartProvider } from '@/context/CartContext';
 
 export const AppShell = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarDesktopOpen, setSidebarDesktopOpen] = useState(true);
 
   return (
     <div className="min-h-screen bg-brand-bg flex">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
+      <Sidebar isOpen={sidebarOpen} desktopOpen={sidebarDesktopOpen} onClose={() => setSidebarOpen(false)} />
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${sidebarDesktopOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+        <Header onMenuToggle={() => setSidebarOpen((prev) => !prev)} onDesktopMenuToggle={() => setSidebarDesktopOpen((prev) => !prev)} />
         <main className="flex-1 p-6 lg:p-8">
           <CartProvider>
             <Outlet />
