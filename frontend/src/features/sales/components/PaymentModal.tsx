@@ -88,6 +88,10 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
         setError('Debes buscar y seleccionar una venta original');
         return;
       }
+      if (availableCredit <= 0) {
+        setError('Esta venta ya fue intercambiada completamente y no tiene crédito disponible');
+        return;
+      }
       if (total < availableCredit) {
         setError(`El total del carrito debe ser al menos ${formatCurrency(availableCredit)}`);
         return;
@@ -139,7 +143,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
   };
 
   const canConfirm = isExchange
-    ? total > 0 && !!exchangeSale && total >= availableCredit && (extraAmount <= 0 || (extraPaymentMethod === 'cash' || (extraPaymentMethod === 'transfer' && !!extraTransferReference.trim() && !!extraTransferBank) || (extraPaymentMethod === 'card' && !!extraCardReference.trim() && !!extraCardBank)))
+    ? total > 0 && !!exchangeSale && total >= availableCredit && availableCredit > 0 && (extraAmount <= 0 || (extraPaymentMethod === 'cash' || (extraPaymentMethod === 'transfer' && !!extraTransferReference.trim() && !!extraTransferBank) || (extraPaymentMethod === 'card' && !!extraCardReference.trim() && !!extraCardBank)))
     : isCash
       ? amountReceived >= total && total > 0
       : isTransfer
@@ -214,7 +218,14 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
             </div>
           )}
 
-          {extraAmount > 0 && (
+          {exchangeSale && availableCredit <= 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+              <p className="text-xs text-red-600">Esta venta ya fue intercambiada completamente y no tiene crédito disponible</p>
+            </div>
+          )}
+
+          {extraAmount > 0 && availableCredit > 0 && (
             <div className="border-t border-gray-200 pt-2 mt-1 space-y-3">
               <div className="flex justify-between text-sm font-semibold text-brand-text">
                 <span>A pagar adicional</span>

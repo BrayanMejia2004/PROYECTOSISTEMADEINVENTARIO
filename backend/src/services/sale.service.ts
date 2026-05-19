@@ -108,6 +108,9 @@ export const createSale = async (input: CreateSaleInput) => {
       const usedCredit = usedAgg[0]?.total || 0;
       const availableCredit = originalSale.total - usedCredit;
 
+      if (availableCredit <= 0)
+        throw ApiError.badRequest('Esta venta ya fue intercambiada completamente y no tiene crédito disponible');
+
       if ((input.exchangeCredit || 0) > availableCredit)
         throw ApiError.badRequest(
           `Crédito insuficiente. Disponible: $${availableCredit.toLocaleString('es-CO')}`

@@ -111,7 +111,7 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
               className="flex items-center gap-3 p-2.5 rounded-lg bg-white border border-gray-50 hover:border-gray-200 transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-brand-text truncate">{item.productName}</p>
+                <p className="text-sm font-medium text-brand-text line-clamp-2">{item.productName}</p>
                 <p className="text-xs text-brand-muted">{formatCurrency(item.unitPrice)} c/u</p>
               </div>
 
