@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Product from '../models/product.model';
 import Department from '../models/department.model';
 import Stock from '../models/stock.model';
+import StockMovement from '../models/stockMovement.model';
 import * as stockService from './stock.service';
 import { ApiError } from '../utils/ApiError';
 import ExcelJS from 'exceljs';
@@ -56,26 +57,104 @@ export const getProducts = async (options: GetProductsOptions) => {
 
   if (search) {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    query.$or = [
-      { name: { $regex: escaped, $options: 'i' } },
-      { sku: { $regex: `^${escaped}`, $options: 'i' } },
-    ];
+    const exactBarcode = /^\d{8,}$/.test(search);
+    if (exactBarcode) {
+      query.barcode = search;
+    } else {
+      query.$or = [
+        { $text: { $search: search } },
+        { sku: { $regex: `^${escaped}`, $options: 'i' } },
+      ];
+    }
   }
   if (departmentId) query.departmentId = departmentId;
   if (supplierId) query.supplierId = supplierId;
 
-  const [total, products] = await Promise.all([
-    Product.countDocuments(query),
-    Product.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean(),
-  ]);
+  const total = await Product.countDocuments(query);
 
-  const data = await Promise.all(
-    products.map((p) => enrichProduct(p, tenantId, branchId))
+  const pipeline: any[] = [
+    { $match: query },
+    { $sort: { createdAt: -1 } },
+    { $skip: (page - 1) * limit },
+    { $limit: limit },
+  ];
+
+  const stockLookupPipeline: any[] = [
+    { $match: { $expr: { $eq: ['$productId', { $toString: '$$productId' }] } } },
+  ];
+  if (branchId) {
+    stockLookupPipeline.push({ $match: { branchId } });
+  }
+
+  pipeline.push(
+    {
+      $lookup: {
+        from: 'stocks',
+        let: { productId: '$_id' },
+        pipeline: stockLookupPipeline,
+        as: 'stockInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'departments',
+        localField: 'departmentId',
+        foreignField: '_id',
+        as: 'department',
+      },
+    },
+    {
+      $addFields: {
+        departmentName: { $arrayElemAt: ['$department.name', 0] },
+        stock: {
+          $cond: [
+            { $gt: [{ $size: '$stockInfo' }, 0] },
+            { $sum: '$stockInfo.quantity' },
+            0,
+          ],
+        },
+      },
+    },
+    {
+      $project: {
+        department: 0,
+        stockInfo: 0,
+      },
+    },
   );
+
+  const products = await Product.aggregate(pipeline).allowDiskUse(true);
+
+  const data = products.map(p => ({
+    id: p._id.toString(),
+    _id: p._id.toString(),
+    tenantId: p.tenantId,
+    sku: p.sku,
+    barcode: p.barcode,
+    name: p.name,
+    description: p.description,
+    departmentId: p.departmentId,
+    departmentName: p.departmentName,
+    brandId: p.brandId,
+    supplierId: p.supplierId,
+    image: p.image,
+    costPrice: p.costPrice,
+    price: p.price,
+    wholesalePrice: p.wholesalePrice,
+    specialPrice: p.specialPrice,
+    applyTax: p.applyTax,
+    taxPercentage: p.taxPercentage,
+    allowsDiscount: p.allowsDiscount,
+    maxDiscount: p.maxDiscount,
+    minStock: p.minStock,
+    maxStock: p.maxStock,
+    sellOutOfStock: p.sellOutOfStock,
+    unit: p.unit,
+    isActive: p.isActive,
+    stock: p.stock,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  }));
 
   return {
     data,
@@ -87,7 +166,7 @@ export const getProducts = async (options: GetProductsOptions) => {
   };
 };
 
-const enrichProduct = async (product: any, tenantId: string, branchId?: string) => {
+const enrichSingleProduct = async (product: any, tenantId: string, branchId?: string) => {
   let departmentName: string | null = null;
   if (product.departmentId) {
     const dept = await Department.findById(product.departmentId).select('name').lean();
@@ -138,7 +217,7 @@ const enrichProduct = async (product: any, tenantId: string, branchId?: string) 
 export const getProductByBarcode = async (barcode: string, tenantId: string, branchId?: string) => {
   const product = await Product.findOne({ tenantId, barcode, isActive: true }).lean();
   if (!product) return null;
-  return enrichProduct(product, tenantId, branchId);
+  return enrichSingleProduct(product, tenantId, branchId);
 };
 
 export const getProductById = async (productId: string, tenantId: string, branchId?: string) => {
@@ -146,7 +225,7 @@ export const getProductById = async (productId: string, tenantId: string, branch
   if (!product) {
     throw ApiError.notFound('Product not found');
   }
-  return enrichProduct(product.toObject(), tenantId, branchId);
+  return enrichSingleProduct(product.toObject(), tenantId, branchId);
 };
 
 export const createProduct = async (input: CreateProductInput) => {
@@ -201,7 +280,7 @@ interface ImportProductInput {
 
 export const importProducts = async (tenantId: string, products: ImportProductInput[], branchId?: string, skipDuplicates = false) => {
   const errors: Array<{ row: number; message: string }> = [];
-  const created: any[] = [];
+  let createdCount = 0;
 
   const departmentNames = [...new Set(products.map(p => p.categoryName).filter(Boolean))];
   const existingDepartments = await Department.find({ tenantId, name: { $in: departmentNames } });
@@ -214,50 +293,63 @@ export const importProducts = async (tenantId: string, products: ImportProductIn
     }
   }
 
+  const existingSKUs = new Set<string>(
+    (await Product.find({ tenantId }).select('sku').lean()).map(p => p.sku)
+  );
+
+  const UNIT_MAP: Record<string, string> = {
+    unidad: 'unit', unidades: 'unit',
+    kilo: 'kg', kilos: 'kg',
+    gramo: 'g', gramos: 'g',
+    litro: 'l', litros: 'l',
+    mililitro: 'ml', mililitros: 'ml',
+    caja: 'box', cajas: 'box',
+    paquete: 'pack', paquetes: 'pack',
+  };
+
+  interface ValidProduct {
+    row: number;
+    data: Record<string, any>;
+    original: ImportProductInput;
+  }
+
+  const validProducts: ValidProduct[] = [];
+
   for (let i = 0; i < products.length; i++) {
     const p = products[i];
     const row = i + 2;
 
-    try {
-      if (!p.sku) { errors.push({ row, message: 'SKU requerido' }); continue; }
-      if (!p.name || p.name.length < 2) { errors.push({ row, message: 'Nombre mínimo 2 caracteres' }); continue; }
-      if (!p.barcode) { errors.push({ row, message: 'Código de barras requerido' }); continue; }
-      if (!p.categoryName) { errors.push({ row, message: 'Categoría requerida' }); continue; }
-      if (p.costPrice == null || p.costPrice < 0) { errors.push({ row, message: 'Precio costo inválido' }); continue; }
-      if (p.price == null || p.price < 0) { errors.push({ row, message: 'Precio venta inválido' }); continue; }
-      if (p.minStock == null || p.minStock < 0) { errors.push({ row, message: 'Stock mínimo inválido' }); continue; }
-      if (p.maxStock == null || p.maxStock < 0) { errors.push({ row, message: 'Stock máximo inválido' }); continue; }
-      if (!p.unit) { errors.push({ row, message: 'Unidad requerida' }); continue; }
-      if (p.initialStock == null || p.initialStock < 0) { errors.push({ row, message: 'Stock inicial inválido' }); continue; }
+    if (!p.sku) { errors.push({ row, message: 'SKU requerido' }); continue; }
+    if (!p.name || p.name.length < 2) { errors.push({ row, message: 'Nombre mínimo 2 caracteres' }); continue; }
+    if (!p.barcode) { errors.push({ row, message: 'Código de barras requerido' }); continue; }
+    if (!p.categoryName) { errors.push({ row, message: 'Categoría requerida' }); continue; }
+    if (p.costPrice == null || p.costPrice < 0) { errors.push({ row, message: 'Precio costo inválido' }); continue; }
+    if (p.price == null || p.price < 0) { errors.push({ row, message: 'Precio venta inválido' }); continue; }
+    if (p.minStock == null || p.minStock < 0) { errors.push({ row, message: 'Stock mínimo inválido' }); continue; }
+    if (p.maxStock == null || p.maxStock < 0) { errors.push({ row, message: 'Stock máximo inválido' }); continue; }
+    if (!p.unit) { errors.push({ row, message: 'Unidad requerida' }); continue; }
+    if (p.initialStock == null || p.initialStock < 0) { errors.push({ row, message: 'Stock inicial inválido' }); continue; }
 
-      const UNIT_MAP: Record<string, string> = {
-        unidad: 'unit', unidades: 'unit',
-        kilo: 'kg', kilos: 'kg',
-        gramo: 'g', gramos: 'g',
-        litro: 'l', litros: 'l',
-        mililitro: 'ml', mililitros: 'ml',
-        caja: 'box', cajas: 'box',
-        paquete: 'pack', paquetes: 'pack',
-      };
-      const normalized = p.unit?.toLowerCase().trim();
-      p.unit = UNIT_MAP[normalized] || p.unit;
+    if (existingSKUs.has(p.sku)) {
+      if (skipDuplicates) continue;
+      errors.push({ row, message: `SKU "${p.sku}" ya existe` });
+      continue;
+    }
+    existingSKUs.add(p.sku);
 
-      const existing = await Product.findOne({ tenantId, sku: p.sku });
-      if (existing) {
-        if (skipDuplicates) continue;
-        errors.push({ row, message: `SKU "${p.sku}" ya existe` });
-        continue;
-      }
+    const normalized = p.unit?.toLowerCase().trim();
+    const unit = UNIT_MAP[normalized] || p.unit;
 
-      const departmentId = departmentMap.get(p.categoryName);
-
-      const product = await Product.create({
+    validProducts.push({
+      row,
+      original: p,
+      data: {
         tenantId,
         sku: p.sku,
         barcode: p.barcode,
         name: p.name,
         description: p.description,
-        departmentId,
+        departmentId: departmentMap.get(p.categoryName),
         brandId: p.brandId,
         costPrice: p.costPrice,
         price: p.price,
@@ -270,31 +362,96 @@ export const importProducts = async (tenantId: string, products: ImportProductIn
         minStock: p.minStock,
         maxStock: p.maxStock,
         sellOutOfStock: p.sellOutOfStock ?? false,
-        unit: p.unit,
-      });
+        unit,
+      },
+    });
+  }
+
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < validProducts.length; i += BATCH_SIZE) {
+    const batch = validProducts.slice(i, i + BATCH_SIZE);
+    const operations = batch.map(vp => ({
+      insertOne: { document: vp.data },
+    }));
+
+    try {
+      const result = await Product.bulkWrite(operations, { ordered: false });
+      const insertedIds = Object.values(result.insertedIds).map((id: any) => id.toString());
 
       if (branchId && branchId.trim()) {
-        try {
-          await stockService.initializeStock(tenantId, branchId, product._id.toString(), p.price, p.initialStock);
-        } catch {
-          errors.push({ row, message: `Producto creado pero no se pudo inicializar stock: ${product.name}` });
+        const stockDocs = batch.map((vp, idx) => ({
+          tenantId,
+          branchId,
+          productId: insertedIds[idx],
+          quantity: vp.original.initialStock || 0,
+          price: vp.original.price,
+          isLowStock: (vp.original.initialStock || 0) <= (vp.original.minStock || 0),
+        }));
+        const stockFiltered = stockDocs.filter(s => s.productId);
+        if (stockFiltered.length > 0) {
+          try {
+            await Stock.insertMany(stockFiltered, { ordered: false });
+
+            const movements = stockFiltered
+              .filter(s => s.quantity > 0)
+              .map(s => ({
+                tenantId: s.tenantId,
+                branchId: s.branchId,
+                productId: s.productId,
+                type: 'adjustment' as const,
+                quantity: s.quantity,
+                previousQuantity: 0,
+                newQuantity: s.quantity,
+                note: 'Initial stock (import)',
+              }));
+            if (movements.length > 0) {
+              await StockMovement.insertMany(movements, { ordered: false });
+            }
+          } catch {
+            batch.forEach(vp => errors.push({ row: vp.row, message: `Producto creado pero no se pudo inicializar stock: ${vp.data.name}` }));
+          }
         }
       }
 
-      created.push(product);
+      createdCount += batch.length;
     } catch (err: any) {
-      errors.push({ row, message: err.message || 'Error desconocido' });
+      batch.forEach(vp => errors.push({ row: vp.row, message: err.message || 'Error al insertar producto' }));
     }
   }
 
-  return { created: created.length, errors };
+  return { created: createdCount, errors };
+};
+
+const BATCH_SIZE = 500;
+
+const addProductRowsToSheet = (sheet: ExcelJS.Worksheet, products: any[], departmentNameMap: Map<string, string>) => {
+  for (const product of products) {
+    sheet.addRow({
+      sku: product.sku,
+      barcode: product.barcode || '',
+      name: product.name,
+      description: product.description || '',
+      categoryName: product.departmentId ? (departmentNameMap.get(product.departmentId.toString()) || '') : '',
+      brandId: product.brandId || '',
+      costPrice: product.costPrice,
+      price: product.price,
+      wholesalePrice: product.wholesalePrice ?? '',
+      specialPrice: product.specialPrice ?? '',
+      applyTax: product.applyTax ? 'Sí' : 'No',
+      taxPercentage: product.taxPercentage || 0,
+      allowsDiscount: product.allowsDiscount ? 'Sí' : 'No',
+      maxDiscount: product.maxDiscount || 0,
+      minStock: product.minStock,
+      maxStock: product.maxStock,
+      sellOutOfStock: product.sellOutOfStock ? 'Sí' : 'No',
+      initialStock: 0,
+      unit: product.unit,
+    });
+  }
 };
 
 export const exportProducts = async (tenantId: string) => {
-  const products = await Product.find({ tenantId, isActive: true }).sort({ name: 1 });
-
-  const departmentIds = [...new Set(products.map(p => p.departmentId).filter(Boolean))];
-  const departments = await Department.find({ _id: { $in: departmentIds } });
+  const departments = await Department.find({ tenantId });
   const departmentNameMap = new Map(departments.map(d => [d._id.toString(), d.name]));
 
   const workbook = new ExcelJS.Workbook();
@@ -326,28 +483,20 @@ export const exportProducts = async (tenantId: string) => {
   headerRow.font = { bold: true, size: 11 };
   headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0E8' } };
 
-  for (const product of products) {
-    sheet.addRow({
-      sku: product.sku,
-      barcode: product.barcode || '',
-      name: product.name,
-      description: product.description || '',
-      categoryName: product.departmentId ? (departmentNameMap.get(product.departmentId.toString()) || '') : '',
-      brandId: product.brandId || '',
-      costPrice: product.costPrice,
-      price: product.price,
-      wholesalePrice: product.wholesalePrice ?? '',
-      specialPrice: product.specialPrice ?? '',
-      applyTax: product.applyTax ? 'Sí' : 'No',
-      taxPercentage: product.taxPercentage || 0,
-      allowsDiscount: product.allowsDiscount ? 'Sí' : 'No',
-      maxDiscount: product.maxDiscount || 0,
-      minStock: product.minStock,
-      maxStock: product.maxStock,
-      sellOutOfStock: product.sellOutOfStock ? 'Sí' : 'No',
-      initialStock: 0,
-      unit: product.unit,
-    });
+  const cursor = Product.find({ tenantId, isActive: true })
+    .sort({ name: 1 })
+    .cursor();
+
+  let batch: any[] = [];
+  for await (const product of cursor) {
+    batch.push(product);
+    if (batch.length >= BATCH_SIZE) {
+      addProductRowsToSheet(sheet, batch, departmentNameMap);
+      batch = [];
+    }
+  }
+  if (batch.length > 0) {
+    addProductRowsToSheet(sheet, batch, departmentNameMap);
   }
 
   return workbook;

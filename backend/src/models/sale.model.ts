@@ -84,6 +84,7 @@ const SaleSchema = new Schema<ISale>(
 
 SaleSchema.index({ tenantId: 1, saleNumber: 1 }, { unique: true });
 SaleSchema.index({ tenantId: 1, branchId: 1, createdAt: -1 });
+SaleSchema.index({ tenantId: 1, createdAt: -1, status: 1 });
 
 export const Sale = mongoose.model<ISale>('Sale', SaleSchema);
 export const SaleItem = mongoose.model<ISaleItem>('SaleItem', SaleItemSchema);

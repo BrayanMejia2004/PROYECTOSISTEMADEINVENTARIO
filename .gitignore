@@ -2,3 +2,9 @@
 .ai/
 .opencode/
 skills-lock.json
+
+# Environment files with secrets
+backend/.env
+frontend/.env
+frontend/.env.local
+backend/.env.local

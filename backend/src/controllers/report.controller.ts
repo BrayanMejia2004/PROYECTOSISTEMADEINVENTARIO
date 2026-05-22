@@ -9,9 +9,10 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
     if (!startDate || !endDate) {
       throw new Error('startDate and endDate are required');
     }
+    const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
     const report = await reportService.getSalesReport({
       tenantId: req.user!.tenantId,
-      branchId: (queryBranchId as string) || req.user!.branchId,
+      branchId,
       startDate: new Date(startDate as string),
       endDate: new Date(endDate as string),
     });
@@ -24,9 +25,10 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
 export const getInventoryReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { branchId: queryBranchId } = req.query;
+    const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
     const report = await reportService.getInventoryReport({
       tenantId: req.user!.tenantId,
-      branchId: (queryBranchId as string) || req.user!.branchId,
+      branchId,
     });
     sendSuccess(res, 'Inventory report generated', report);
   } catch (error) {
@@ -36,10 +38,16 @@ export const getInventoryReport = async (req: AuthRequest, res: Response, next: 
 
 export const getProfitabilityReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { branchId: queryBranchId } = req.query;
+    const { startDate, endDate, branchId: queryBranchId } = req.query;
+    if (!startDate || !endDate) {
+      throw new Error('startDate and endDate are required');
+    }
+    const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
     const report = await reportService.getProfitabilityReport(
       req.user!.tenantId,
-      (queryBranchId as string) || req.user!.branchId
+      new Date(startDate as string),
+      new Date(endDate as string),
+      branchId
     );
     sendSuccess(res, 'Profitability report generated', report);
   } catch (error) {

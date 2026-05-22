@@ -104,7 +104,7 @@ export const createSale = async (input: CreateSaleInput) => {
       const usedAgg = await Sale.aggregate([
         { $match: { exchangeFromSaleId: originalSale._id, tenantId: input.tenantId } },
         { $group: { _id: null, total: { $sum: '$exchangeCredit' } } },
-      ]).session(session);
+      ]).allowDiskUse(true).session(session);
       const usedCredit = usedAgg[0]?.total || 0;
       const availableCredit = originalSale.total - usedCredit;
 
@@ -293,22 +293,22 @@ export const getSalesSummary = async (tenantId: string, branchId?: string) => {
         { $match: { ...matchToday, status: 'completed' } },
         { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
         { $group: { _id: null, totalRevenue: { $sum: '$effectiveTotal' }, totalSales: { $sum: 1 } } },
-      ]),
+      ]).allowDiskUse(true),
       Sale.aggregate([
         { $match: { ...matchToday, status: 'completed' } },
         { $unwind: '$items' },
         { $group: { _id: null, totalProducts: { $sum: '$items.quantity' } } },
-      ]),
+      ]).allowDiskUse(true),
       Sale.aggregate([
         { $match: { ...matchToday, status: 'completed' } },
         { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
         { $group: { _id: '$paymentMethod', total: { $sum: '$effectiveTotal' }, count: { $sum: 1 } } },
-      ]),
+      ]).allowDiskUse(true),
       Sale.aggregate([
         { $match: { ...matchToday, status: 'completed' } },
         { $unwind: '$items' },
         { $group: { _id: null, totalCost: { $sum: { $multiply: ['$items.quantity', '$items.costPrice'] } } } },
-      ]),
+      ]).allowDiskUse(true),
     ]),
     Sale.find({ ...matchToday, status: 'refunded' }).lean(),
     Sale.distinct('exchangeFromSaleId', {
@@ -416,20 +416,28 @@ export const getSaleByNumber = async (saleNumber: string, tenantId: string, bran
   const usedAgg = await Sale.aggregate([
     { $match: { exchangeFromSaleId: sale._id.toString(), tenantId } },
     { $group: { _id: null, total: { $sum: '$exchangeCredit' } } },
-  ]);
+  ]).allowDiskUse(true);
   const usedCredit = usedAgg[0]?.total || 0;
   saleObj.availableExchangeCredit = sale.total - usedCredit;
 
   return saleObj as any;
 };
 
-export const getTransferSales = async (tenantId: string, branchId?: string) => {
+export const getTransferSales = async (tenantId: string, branchId?: string, page: number = 1, limit: number = 20) => {
   const query: any = { tenantId, paymentMethod: 'transfer' };
   if (branchId) query.branchId = branchId;
 
-  const sales = await Sale.find(query).sort({ createdAt: -1 }).lean();
+  const [total, sales] = await Promise.all([
+    Sale.countDocuments(query),
+    Sale.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+  ]);
+
   const enriched = await enrichWithUserNames(sales);
-  return enriched;
+  return { data: enriched, meta: { total, page, limit } };
 };
 
 export const refundSale = async (saleId: string, tenantId: string, branchId: string) => {

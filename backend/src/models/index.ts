@@ -10,3 +10,4 @@ export { default as Customer } from './customer.model';
 export { Sale, SaleItem } from './sale.model';
 export { default as CashierShift } from './cashierShift.model';
 export { default as CashMovement } from './cashMovement.model';
+export { Counter } from './counter.model';

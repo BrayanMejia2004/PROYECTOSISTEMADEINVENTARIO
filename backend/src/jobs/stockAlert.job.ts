@@ -11,8 +11,8 @@ export const startStockAlertJob = () => {
 
       for (const tenant of tenants) {
         const alerts = await getLowStockAlerts(tenant._id.toString());
-        if (alerts.length > 0) {
-          logger.warn(`Tenant ${tenant.slug}: ${alerts.length} products with low stock`);
+        if (alerts.data.length > 0) {
+          logger.warn(`Tenant ${tenant.slug}: ${alerts.data.length} products with low stock`);
         }
       }
 

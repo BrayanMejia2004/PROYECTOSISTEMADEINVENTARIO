@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
+import { PermissionRoute } from './PermissionRoute';
 import { AppShell } from '../components/layout/AppShell';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterTenantPage } from '../pages/RegisterTenantPage';
@@ -28,18 +29,18 @@ export const AppRouter = () => {
           <Route element={<AppShell />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/caja" element={<CashierShiftPage />} />
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/inventory/new" element={<ProductFormPage />} />
-            <Route path="/inventory/:id/edit" element={<ProductFormPage />} />
-            <Route path="/departments" element={<DepartmentsPage />} />
-            <Route path="/pos" element={<Navigate to="/pos/1" replace />} />
-            <Route path="/pos/:cartId" element={<PosPage />} />
-            <Route path="/sales" element={<SalesPage />} />
-            <Route path="/suppliers" element={<SuppliersPage />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/inventory" element={<PermissionRoute roles={['owner', 'admin']}><InventoryPage /></PermissionRoute>} />
+            <Route path="/inventory/new" element={<PermissionRoute roles={['owner', 'admin']}><ProductFormPage /></PermissionRoute>} />
+            <Route path="/inventory/:id/edit" element={<PermissionRoute roles={['owner', 'admin']}><ProductFormPage /></PermissionRoute>} />
+            <Route path="/departments" element={<PermissionRoute roles={['owner', 'admin']}><DepartmentsPage /></PermissionRoute>} />
+            <Route path="/pos" element={<PermissionRoute roles={['owner', 'admin', 'cashier']}><Navigate to="/pos/1" replace /></PermissionRoute>} />
+            <Route path="/pos/:cartId" element={<PermissionRoute roles={['owner', 'admin', 'cashier']}><PosPage /></PermissionRoute>} />
+            <Route path="/sales" element={<PermissionRoute roles={['owner', 'admin']}><SalesPage /></PermissionRoute>} />
+            <Route path="/suppliers" element={<PermissionRoute roles={['owner', 'admin']}><SuppliersPage /></PermissionRoute>} />
+            <Route path="/customers" element={<PermissionRoute roles={['owner', 'admin']}><CustomersPage /></PermissionRoute>} />
+            <Route path="/reports" element={<PermissionRoute roles={['owner']}><ReportsPage /></PermissionRoute>} />
+            <Route path="/users" element={<PermissionRoute roles={['owner', 'admin']}><UsersPage /></PermissionRoute>} />
+            <Route path="/settings" element={<PermissionRoute roles={['owner']}><SettingsPage /></PermissionRoute>} />
           </Route>
         </Route>
 

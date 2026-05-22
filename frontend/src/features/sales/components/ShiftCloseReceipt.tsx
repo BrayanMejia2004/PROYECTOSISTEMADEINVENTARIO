@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
 import { formatCurrency } from '../../../lib/utils';
 import { Printer, X } from 'lucide-react';
 
@@ -22,6 +23,7 @@ interface ShiftCloseReceiptProps {
 }
 
 export const ShiftCloseReceipt = ({ data, userName, tenantName, onClose }: ShiftCloseReceiptProps) => {
+  const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
@@ -133,12 +135,14 @@ export const ShiftCloseReceipt = ({ data, userName, tenantName, onClose }: Shift
               </div>
             </div>
 
-            <div className="border-t border-dashed border-gray-200 pt-3">
-              <div className="flex justify-between text-sm font-semibold text-green-600">
-                <span>Ganancia del Día</span>
-                <span>{formatCurrency(data.totalProfit)}</span>
+            {user?.role !== 'cashier' && (
+              <div className="border-t border-dashed border-gray-200 pt-3">
+                <div className="flex justify-between text-sm font-semibold text-green-600">
+                  <span>Ganancia del Día</span>
+                  <span>{formatCurrency(data.totalProfit)}</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="border-t border-dashed border-gray-200 pt-3 text-xs text-brand-muted space-y-1">
               <div className="flex justify-between">

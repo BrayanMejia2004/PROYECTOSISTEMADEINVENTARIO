@@ -7,7 +7,15 @@ const RETRY_INTERVAL = 5000;
 
 export const connectDB = async (retries = MAX_RETRIES): Promise<void> => {
   try {
-    await mongoose.connect(env.MONGODB_URI);
+    await mongoose.connect(env.MONGODB_URI, {
+      maxPoolSize: 50,
+      minPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      waitQueueTimeoutMS: 5000,
+      heartbeatFrequencyMS: 10000,
+    });
     logger.info('✅ MongoDB connected successfully');
   } catch (error) {
     logger.error('❌ MongoDB connection failed:', error);

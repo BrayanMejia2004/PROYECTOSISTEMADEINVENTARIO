@@ -12,7 +12,13 @@ export const ProfitCard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getProfitabilityReport();
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        const response = await getProfitabilityReport(
+          start.toISOString().split('T')[0],
+          end.toISOString().split('T')[0]
+        );
         const products = response.data || [];
         const revenue = products.reduce((sum: number, p: any) => sum + (p.totalRevenue || 0), 0);
         const cost = products.reduce((sum: number, p: any) => sum + (p.totalCost || 0), 0);

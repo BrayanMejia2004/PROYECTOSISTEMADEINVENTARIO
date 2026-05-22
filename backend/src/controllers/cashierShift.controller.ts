@@ -6,8 +6,9 @@ import { AuthRequest } from '../types/express';
 export const getShifts = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { branchId: queryBranchId, userId, status, startDate, endDate, page, limit } = req.query;
+    const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
     const result = await cashierShiftService.getShifts(req.user!.tenantId, {
-      branchId: (queryBranchId as string) || req.user!.branchId,
+      branchId,
       userId: userId as string | undefined,
       status: status as string | undefined,
       startDate: startDate as string | undefined,

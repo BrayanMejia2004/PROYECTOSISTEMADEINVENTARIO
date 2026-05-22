@@ -42,6 +42,10 @@ export const moveStock = async (input: MoveStockInput): Promise<void> => {
   }
 
   stock.quantity = newQuantity;
+
+  const prod = await Product.findById(productId).select('minStock').lean();
+  stock.isLowStock = prod ? stock.quantity <= (prod.minStock || 0) : false;
+
   await stock.save({ session });
 
   const movement = new StockMovement({
@@ -58,48 +62,55 @@ export const moveStock = async (input: MoveStockInput): Promise<void> => {
   await movement.save({ session });
 };
 
-export const getStockByBranch = async (tenantId: string, branchId: string) => {
-  const stock = await Stock.find({ tenantId, branchId })
-    .populate('productId', 'name sku barcode')
-    .sort({ createdAt: -1 });
-  return stock;
-};
-
-export const getLowStockAlerts = async (tenantId: string, branchId?: string) => {
-  const match: any = { tenantId };
-  if (branchId) match.branchId = branchId;
-
-  const stock = await Stock.aggregate([
-    { $match: match },
-    { $addFields: { productIdObj: { $toObjectId: '$productId' } } },
-    {
-      $lookup: {
-        from: 'products',
-        localField: 'productIdObj',
-        foreignField: '_id',
-        as: 'product',
-      },
-    },
-    { $unwind: '$product' },
-    {
-      $match: {
-        $expr: { $lte: ['$quantity', '$product.minStock'] },
-      },
-    },
-    {
-      $project: {
-        productId: 1,
-        branchId: 1,
-        quantity: 1,
-        price: 1,
-        productName: '$product.name',
-        sku: '$product.sku',
-        minStock: '$product.minStock',
-      },
-    },
+export const getStockByBranch = async (
+  tenantId: string,
+  branchId: string,
+  page: number = 1,
+  limit: number = 50
+) => {
+  const [total, stock] = await Promise.all([
+    Stock.countDocuments({ tenantId, branchId }),
+    Stock.find({ tenantId, branchId })
+      .populate('productId', 'name sku barcode')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
   ]);
 
-  return stock;
+  return { data: stock, meta: { total, page, limit } };
+};
+
+export const getLowStockAlerts = async (
+  tenantId: string,
+  branchId?: string,
+  page: number = 1,
+  limit: number = 50
+) => {
+  const query: any = { tenantId, isLowStock: true };
+  if (branchId) query.branchId = branchId;
+
+  const [total, stock] = await Promise.all([
+    Stock.countDocuments(query),
+    Stock.find(query)
+      .populate('productId', 'name sku minStock')
+      .sort({ quantity: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+  ]);
+
+  const data = stock.map(s => ({
+    productId: (s.productId as any)?._id?.toString() || s.productId,
+    branchId: s.branchId,
+    quantity: s.quantity,
+    price: s.price,
+    productName: (s.productId as any)?.name || 'Unknown',
+    sku: (s.productId as any)?.sku || '',
+    minStock: (s.productId as any)?.minStock || 0,
+  }));
+
+  return { data, meta: { total, page, limit } };
 };
 
 export const initializeStock = async (
@@ -125,6 +136,7 @@ export const initializeStock = async (
     productId,
     quantity,
     price,
+    isLowStock: quantity <= (product.minStock || 0),
   });
   await stock.save();
 

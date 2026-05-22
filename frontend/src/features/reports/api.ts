@@ -1,6 +1,5 @@
 import api from '../../api/axios';
 import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse } from '../types';
 
 export const getSalesReport = async (startDate: string, endDate: string, branchId?: string) => {
   const { data } = await api.get(ENDPOINTS.REPORTS_SALES, { params: { startDate, endDate, branchId } });
@@ -17,7 +16,7 @@ export const getBranchComparison = async (startDate: string, endDate: string) =>
   return data;
 };
 
-export const getProfitabilityReport = async (branchId?: string) => {
-  const { data } = await api.get(ENDPOINTS.REPORTS_PROFITABILITY, { params: { branchId } });
+export const getProfitabilityReport = async (startDate: string, endDate: string, branchId?: string) => {
+  const { data } = await api.get(ENDPOINTS.REPORTS_PROFITABILITY, { params: { startDate, endDate, branchId } });
   return data;
 };

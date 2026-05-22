@@ -82,8 +82,10 @@ export const getSaleByNumber = async (req: AuthRequest, res: Response, next: Nex
 export const getTransferSales = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const branchId = req.user!.role === 'owner' ? undefined : req.user!.branchId;
-    const sales = await saleService.getTransferSales(req.user!.tenantId, branchId);
-    sendSuccess(res, 'Transfer sales retrieved', sales);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const result = await saleService.getTransferSales(req.user!.tenantId, branchId, page, limit);
+    sendPaginated(res, 'Transfer sales retrieved', result.data, result.meta);
   } catch (error) {
     next(error);
   }

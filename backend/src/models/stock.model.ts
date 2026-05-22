@@ -6,6 +6,7 @@ export interface IStock extends Document {
   productId: string;
   quantity: number;
   price: number;
+  isLowStock: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +39,11 @@ const StockSchema = new Schema<IStock>(
       required: true,
       min: 0,
     },
+    isLowStock: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -45,5 +51,6 @@ const StockSchema = new Schema<IStock>(
 );
 
 StockSchema.index({ tenantId: 1, branchId: 1, productId: 1 }, { unique: true });
+StockSchema.index({ tenantId: 1, branchId: 1, isLowStock: 1 });
 
 export default mongoose.model<IStock>('Stock', StockSchema);

@@ -1,13 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import * as stockService from '../services/stock.service';
-import { sendSuccess } from '../utils/ApiResponse';
+import { sendSuccess, sendPaginated } from '../utils/ApiResponse';
 import { AuthRequest } from '../types/express';
 
 export const getStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const branchId = req.query.branchId as string || req.user!.branchId!;
-    const stock = await stockService.getStockByBranch(req.user!.tenantId, branchId);
-    sendSuccess(res, 'Stock retrieved', stock);
+    const queryBranchId = req.query.branchId as string | undefined;
+    const branchId = req.user!.role === 'owner' ? (queryBranchId || req.user!.branchId!) : req.user!.branchId!;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const result = await stockService.getStockByBranch(req.user!.tenantId, branchId, page, limit);
+    sendPaginated(res, 'Stock retrieved', result.data, result.meta);
   } catch (error) {
     next(error);
   }
@@ -15,9 +18,12 @@ export const getStock = async (req: AuthRequest, res: Response, next: NextFuncti
 
 export const getLowStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const branchId = req.query.branchId as string || req.user!.branchId;
-    const alerts = await stockService.getLowStockAlerts(req.user!.tenantId, branchId);
-    sendSuccess(res, 'Low stock alerts retrieved', alerts);
+    const queryBranchId = req.query.branchId as string | undefined;
+    const branchId = req.user!.role === 'owner' ? (queryBranchId || req.user!.branchId) : req.user!.branchId;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const result = await stockService.getLowStockAlerts(req.user!.tenantId, branchId, page, limit);
+    sendPaginated(res, 'Low stock alerts retrieved', result.data, result.meta);
   } catch (error) {
     next(error);
   }
@@ -25,10 +31,12 @@ export const getLowStock = async (req: AuthRequest, res: Response, next: NextFun
 
 export const initializeStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { productId, price, quantity, branchId } = req.body;
+    const { productId, price, quantity } = req.body;
+    const bodyBranchId = req.body.branchId as string | undefined;
+    const branchId = req.user!.role === 'owner' ? (bodyBranchId || req.user!.branchId!) : req.user!.branchId!;
     const stock = await stockService.initializeStock(
       req.user!.tenantId,
-      branchId || req.user!.branchId!,
+      branchId,
       productId,
       price,
       quantity

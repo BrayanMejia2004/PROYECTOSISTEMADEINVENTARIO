@@ -25,30 +25,31 @@ export const getSalesReport = async (options: SalesReportOptions) => {
   };
   if (branchId) match.branchId = branchId;
 
-  const report = await Sale.aggregate([
-    { $match: match },
-    {
-      $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-        totalSales: { $sum: '$total' },
-        count: { $sum: 1 },
-        subtotal: { $sum: '$subtotal' },
-        tax: { $sum: '$tax' },
-        discount: { $sum: '$discount' },
+  const [report, totals] = await Promise.all([
+    Sale.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          totalSales: { $sum: '$total' },
+          count: { $sum: 1 },
+          subtotal: { $sum: '$subtotal' },
+          tax: { $sum: '$tax' },
+          discount: { $sum: '$discount' },
+        },
       },
-    },
-    { $sort: { _id: 1 } },
-  ]);
-
-  const totals = await Sale.aggregate([
-    { $match: match },
-    {
-      $group: {
-        _id: null,
-        totalSales: { $sum: '$total' },
-        totalCount: { $sum: 1 },
+      { $sort: { _id: 1 } },
+    ]).allowDiskUse(true),
+    Sale.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: '$total' },
+          totalCount: { $sum: 1 },
+        },
       },
-    },
+    ]).allowDiskUse(true),
   ]);
 
   return {
@@ -97,16 +98,20 @@ export const getInventoryReport = async (options: InventoryReportOptions) => {
         },
       },
     },
-  ]);
-
-  return report;
+  ]).allowDiskUse(true);
 
   return report;
 };
 
-export const getProfitabilityReport = async (tenantId: string, branchId?: string) => {
+export const getProfitabilityReport = async (
+  tenantId: string,
+  startDate: Date,
+  endDate: Date,
+  branchId?: string
+) => {
   const match: any = {
     tenantId,
+    createdAt: { $gte: startDate, $lte: endDate },
     status: 'completed',
   };
   if (branchId) match.branchId = branchId;
@@ -142,7 +147,8 @@ export const getProfitabilityReport = async (tenantId: string, branchId?: string
       },
     },
     { $sort: { profit: -1 } },
-  ]);
+    { $limit: 100 },
+  ]).allowDiskUse(true);
 
   return report;
 };
@@ -183,7 +189,7 @@ export const getBranchComparison = async (tenantId: string, startDate: Date, end
       },
     },
     { $sort: { totalSales: -1 } },
-  ]);
+  ]).allowDiskUse(true);
 
   return report;
 };
