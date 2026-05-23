@@ -1,0 +1,17 @@
+import mongoose, { Document } from 'mongoose';
+
+export interface ICounter extends Document {
+  tenantId: string;
+  key: string;
+  seq: number;
+}
+
+const counterSchema = new mongoose.Schema({
+  tenantId: { type: String, required: true },
+  key: { type: String, required: true },
+  seq: { type: Number, default: 0 },
+});
+
+counterSchema.index({ tenantId: 1, key: 1 }, { unique: true });
+
+export const Counter = mongoose.model<ICounter>('Counter', counterSchema);

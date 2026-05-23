@@ -4,11 +4,11 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { env } from './config/env';
-import { logger } from './config/logger';
+import { env } from './config/env/env';
+import { logger } from './config/logger/logger';
 import routes from './routes';
-import { errorHandler } from './middlewares/error.middleware';
-import { notFound } from './middlewares/notFound.middleware';
+import { errorHandler } from './middlewares/error/error.middleware';
+import { notFound } from './middlewares/notFound/notFound.middleware';
 
 const app = express();
 

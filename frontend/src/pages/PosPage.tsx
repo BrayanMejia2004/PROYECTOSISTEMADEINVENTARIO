@@ -23,6 +23,7 @@ export const PosPage = () => {
   const { items: cartItems, addToCart, updateQuantity, removeItem, clearCart, total } = useCart(cartId);
   const [saleResult, setSaleResult] = useState<any>(null);
   const [saleError, setSaleError] = useState<string | null>(null);
+  const [saleKey, setSaleKey] = useState(0);
   const { mutate: createSale, isPending } = useCreateSale();
 
   const handleAddToCart = addToCart;
@@ -65,6 +66,7 @@ export const PosPage = () => {
           setSaleResult(res.data);
           setSaleError(null);
           clearCart();
+          setSaleKey((k) => k + 1);
         },
         onError: (err: any) => {
           setSaleError(err?.response?.data?.message || 'Error al procesar la venta');
@@ -159,6 +161,7 @@ export const PosPage = () => {
         </div>
         <div className="w-full lg:flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
           <PosCart
+            key={`cart-${cartId}-${saleKey}`}
             items={cartItems}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}

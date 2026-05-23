@@ -6,6 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const formatCurrency = (amount: number): string => {
+  if (amount == null || Number.isNaN(amount)) return '$0';
   return new Intl.NumberFormat('es-MX', {
     style: 'currency',
     currency: 'MXN',
@@ -15,6 +16,7 @@ export const formatCurrency = (amount: number): string => {
 }
 
 export const formatNumber = (value: number, decimals = 0): string => {
+  if (value == null || Number.isNaN(value)) return '0';
   return new Intl.NumberFormat('es-CL', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

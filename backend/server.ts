@@ -1,8 +1,8 @@
 import app from './src/app';
-import { connectDB } from './src/config/database';
-import { env } from './src/config/env';
-import { logger } from './src/config/logger';
-import { startStockAlertJob } from './src/jobs/stockAlert.job';
+import { connectDB } from './src/config/database/database';
+import { env } from './src/config/env/env';
+import { logger } from './src/config/logger/logger';
+import { startStockAlertJob } from './src/jobs/stockAlert/stockAlert.job';
 
 const startServer = async (): Promise<void> => {
   await connectDB();
