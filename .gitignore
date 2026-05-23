@@ -9,6 +9,6 @@ frontend/.env
 frontend/.env.local
 backend/.env.local
 
-frontend\playwright-report
-frontend\test-results
-frontend\e2e
+frontend/playwright-report/
+frontend/test-results/
+frontend/e2e/
