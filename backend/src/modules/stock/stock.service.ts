@@ -87,14 +87,13 @@ export const getLowStockAlerts = async (
   page: number = 1,
   limit: number = 50
 ) => {
-  const query: any = { tenantId, isLowStock: true, quantity: { $gt: 0 } };
+  const query: any = { tenantId, isLowStock: true };
   if (branchId) query.branchId = branchId;
 
   const [total, stock] = await Promise.all([
     Stock.countDocuments(query),
     Stock.find(query)
       .populate('productId', 'name sku minStock')
-      .populate('branchId', 'name')
       .sort({ quantity: 1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -103,13 +102,12 @@ export const getLowStockAlerts = async (
 
   const data = stock.map(s => ({
     productId: (s.productId as any)?._id?.toString() || s.productId,
-    branchId: (s.branchId as any)?._id?.toString() || s.branchId,
+    branchId: s.branchId,
     quantity: s.quantity,
     price: s.price,
     productName: (s.productId as any)?.name || 'Unknown',
     sku: (s.productId as any)?.sku || '',
     minStock: (s.productId as any)?.minStock || 0,
-    branchName: (s.branchId as any)?.name || 'Unknown',
   }));
 
   return { data, meta: { total, page, limit } };

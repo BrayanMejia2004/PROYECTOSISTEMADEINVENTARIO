@@ -20,6 +20,8 @@ interface GetProductsOptions {
 
 interface CreateProductInput {
   tenantId: string;
+  branchId?: string;
+  stock?: number;
   sku: string;
   barcode?: string;
   name: string;
@@ -231,8 +233,37 @@ export const getProductById = async (productId: string, tenantId: string, branch
 };
 
 export const createProduct = async (input: CreateProductInput) => {
-  const product = new Product(input);
+  const { branchId, stock, ...productFields } = input;
+  const product = new Product(productFields);
   await product.save();
+
+  if (stock && stock > 0 && branchId) {
+    const { tenantId } = input;
+    const existingStock = await Stock.findOne({ tenantId, branchId, productId: product._id.toString() });
+    if (!existingStock) {
+      const newStock = new Stock({
+        tenantId,
+        branchId,
+        productId: product._id,
+        quantity: stock,
+        price: product.price,
+        isLowStock: stock <= (product.minStock || 0),
+      });
+      await newStock.save();
+
+      await StockMovement.create({
+        tenantId,
+        branchId,
+        productId: product._id,
+        type: 'adjustment' as any,
+        quantity: stock,
+        previousQuantity: 0,
+        newQuantity: stock,
+        note: 'Initial stock',
+      });
+    }
+  }
+
   return product;
 };
 

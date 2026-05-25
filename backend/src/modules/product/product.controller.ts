@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import * as productService from './product.service';
-import * as stockService from '../stock/stock.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { AuthRequest } from '../../shared/types/express/express';
 
@@ -55,18 +54,9 @@ export const createProduct = async (req: AuthRequest, res: Response, next: NextF
     const product = await productService.createProduct({
       ...productData,
       tenantId: req.user!.tenantId,
+      branchId: req.user!.branchId,
+      stock: stock !== undefined ? Number(stock) : undefined,
     });
-
-    if (stock > 0 && req.user!.branchId) {
-      await stockService.initializeStock(
-        req.user!.tenantId,
-        req.user!.branchId!,
-        product._id.toString(),
-        product.price,
-        stock
-      );
-    }
-
     sendSuccess(res, 'Product created', product, 201);
   } catch (error) {
     next(error);

@@ -1,7 +1,7 @@
 import { SalesChart } from '../features/reports/components/SalesChart';
 import { StockValueCard } from '../features/reports/components/StockValueCard';
 import { ProfitCard } from '../features/reports/components/ProfitCard';
-import { MonthlySalesCard } from '../features/reports/components/MonthlySalesCard';
+import { LowStockCard } from '../features/reports/components/LowStockCard';
 import { BranchComparison } from '../features/reports/components/BranchComparison';
 import { BarChart3 } from 'lucide-react';
 
@@ -16,7 +16,7 @@ export const ReportsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StockValueCard />
         <ProfitCard />
-        <MonthlySalesCard />
+        <LowStockCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

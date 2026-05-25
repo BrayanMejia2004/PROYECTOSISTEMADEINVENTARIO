@@ -4,7 +4,6 @@ import { StatCard } from '../components/ui/StatCard';
 import { useProducts } from '../features/inventory/hooks';
 import { useSales } from '../features/sales/hooks';
 import { OutOfStockCard } from '../features/reports/components/OutOfStockCard';
-import { DashboardLowStockCard } from '../features/reports/components/DashboardLowStockCard';
 import { useAuth } from '../hooks/useAuth';
 import { useCajas, useCartSummary } from '../context/CartContext';
 import { formatCurrency, formatNumber } from '../lib/utils';
@@ -77,7 +76,7 @@ export const DashboardPage = () => {
   const completedSales = salesData?.data?.filter((s: any) => s.status === 'completed') ?? [];
   const totalSales = completedSales.length;
   const totalRevenue = completedSales.reduce((sum: number, s: any) => sum + (s.total || 0), 0) ?? 0;
-  const lowStock = productsData?.data?.filter((p: any) => p.stock > 0 && p.stock < p.minStock).length ?? 0;
+  const lowStock = productsData?.data?.filter((p: any) => p.stock <= p.minStock).length ?? 0;
 
   return (
     <div>
@@ -115,9 +114,8 @@ export const DashboardPage = () => {
       </div>
 
       {(user?.role === 'owner' || user?.role === 'admin') && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div className="mb-8">
           <OutOfStockCard />
-          <DashboardLowStockCard />
         </div>
       )}
 

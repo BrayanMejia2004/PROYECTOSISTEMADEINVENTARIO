@@ -4,6 +4,7 @@ import { productSchema, type ProductForm } from '../schemas';
 import { useCreateProduct, useUpdateProduct, useProduct } from '../hooks';
 import { useDepartments } from '../../departments/hooks';
 import { useBrands } from '../../brands/hooks';
+import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Package, DollarSign, FileText, Box } from 'lucide-react';
@@ -17,6 +18,7 @@ interface ProductFormProps {
 
 export const ProductForm = ({ productId }: ProductFormProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: productData } = useProduct(productId || '');
   const { data: departments } = useDepartments();
   const { data: brands } = useBrands({ limit: 1000 });
