@@ -1,10 +1,21 @@
+import { useState } from 'react';
 import { useLowStock } from '../../inventory/hooks';
-import { AlertTriangle, Package } from 'lucide-react';
+import { useAuth } from '../../../hooks/useAuth';
+import { useBranches } from '../../settings/hooks';
+import { AlertTriangle, Package, Filter } from 'lucide-react';
 import { formatNumber } from '../../../lib/utils';
 
 export const LowStockCard = () => {
-  const { data, isLoading } = useLowStock();
-  const items = data?.data || [];
+  const { user } = useAuth();
+  const { data: branches } = useBranches();
+  const [selectedBranchId, setSelectedBranchId] = useState<string | undefined>(undefined);
+  const isOwner = user?.role === 'owner';
+
+  const queryBranchId = isOwner ? selectedBranchId : undefined;
+  const { data, isLoading } = useLowStock(queryBranchId);
+
+  const allItems = data?.data || [];
+  const items = allItems.filter((item: any) => item.quantity > 0);
 
   if (isLoading) return <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"><p className="text-sm text-brand-muted">Cargando...</p></div>;
 
@@ -27,6 +38,23 @@ export const LowStockCard = () => {
           ? `${count} producto${count !== 1 ? 's' : ''} por debajo del stock mínimo`
           : 'Todos los productos tienen stock suficiente'}
       </p>
+
+      {isOwner && (
+        <div className="mt-3 flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-brand-muted" />
+          <select
+            value={selectedBranchId || ''}
+            onChange={(e) => setSelectedBranchId(e.target.value || undefined)}
+            className="flex-1 px-2 py-2 rounded-lg border border-gray-200 text-xs text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none"
+          >
+            <option value="">Todas las sucursales</option>
+            {branches?.data?.map((b: any) => (
+              <option key={b._id} value={b._id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {hasLowStock && (
         <div className="mt-3 space-y-1.5 max-h-32 overflow-y-auto">
           {items.slice(0, 5).map((item: any) => (

@@ -20,7 +20,7 @@ export const PosPage = () => {
   const shift = shiftData?.data;
   const isShiftOpen = !!shift && shift.status === 'open';
 
-  const { items: cartItems, addToCart, updateQuantity, removeItem, clearCart, total } = useCart(cartId);
+  const { items: cartItems, addToCart, updateQuantity, removeItem, clearCart, total, subtotal, tax: cartTax, discount: cartDiscount } = useCart(cartId);
   const [saleResult, setSaleResult] = useState<any>(null);
   const [saleError, setSaleError] = useState<string | null>(null);
   const [saleKey, setSaleKey] = useState(0);
@@ -42,6 +42,7 @@ export const PosPage = () => {
     exchangeFromSaleId?: string;
     exchangeCredit?: number;
   }) => {
+    const discount = data.discountAmount || 0;
     createSale(
       {
         items: cartItems.map((item) => ({
@@ -50,7 +51,9 @@ export const PosPage = () => {
           unitPrice: item.unitPrice,
         })),
         paymentMethod: data.paymentMethod,
-        tax: 0,
+        tax: Math.round(cartTax),
+        discount: Math.round(cartDiscount),
+        subtotal: Math.round(subtotal),
         customerName: data.customerName,
         customerPhone: data.customerPhone,
         transferReference: data.transferReference,
@@ -167,6 +170,9 @@ export const PosPage = () => {
             onRemoveItem={handleRemoveItem}
             onCheckout={handleCheckout}
             total={total}
+            subtotal={subtotal}
+            tax={cartTax}
+            discount={cartDiscount}
             isPending={isPending}
           />
         </div>

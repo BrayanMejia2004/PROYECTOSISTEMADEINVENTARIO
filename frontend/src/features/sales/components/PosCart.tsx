@@ -30,10 +30,13 @@ interface PosCartProps {
     exchangeCredit?: number;
   }) => void;
   total: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
   isPending?: boolean;
 }
 
-export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, total, isPending }: PosCartProps) => {
+export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, total, subtotal, tax, discount, isPending }: PosCartProps) => {
   const { user, tenant } = useAuth();
   const [selectedCustomer, setSelectedCustomer] = useState<{ name: string; phone?: string } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'exchange'>('cash');
@@ -173,11 +176,29 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-brand-muted">Total</span>
-            <span className="text-xl font-sans font-bold text-brand-text tabular-nums">
-              {formatCurrency(total)}
-            </span>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-brand-muted">Subtotal</span>
+              <span className="text-sm text-brand-text tabular-nums">{formatCurrency(subtotal)}</span>
+            </div>
+            {tax > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-brand-muted">IVA</span>
+                <span className="text-sm text-brand-text tabular-nums">{formatCurrency(tax)}</span>
+              </div>
+            )}
+            {discount > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-brand-muted">Descuento</span>
+                <span className="text-sm text-red-500 tabular-nums">-{formatCurrency(discount)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-brand-muted">Total</span>
+              <span className="text-xl font-sans font-bold text-brand-text tabular-nums">
+                {formatCurrency(total)}
+              </span>
+            </div>
           </div>
 
           {!selectedCustomer && items.length > 0 && (

@@ -16,6 +16,9 @@ interface CartActions {
   removeItem: (productId: string) => void;
   clearCart: () => void;
   total: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
 }
 
 interface CartSummary {
@@ -135,9 +138,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setCart(cartId, () => []);
       };
 
-      const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+      let subtotal = 0;
+      let tax = 0;
+      let discount = 0;
+      for (const item of items) {
+        const itemSubtotal = item.quantity * item.unitPrice;
+        subtotal += itemSubtotal;
+        if (item.applyTax && item.taxPercentage) {
+          tax += itemSubtotal * (item.taxPercentage / 100);
+        }
+        if (item.allowsDiscount && item.maxDiscount && item.maxDiscount > 0) {
+          const itemWithTax = itemSubtotal + (item.applyTax && item.taxPercentage ? itemSubtotal * (item.taxPercentage / 100) : 0);
+          discount += itemWithTax * (item.maxDiscount / 100);
+        }
+      }
+      const total = subtotal + tax - discount;
 
-      return { items, addToCart, updateQuantity, removeItem, clearCart, total };
+      return { items, addToCart, updateQuantity, removeItem, clearCart, total, subtotal, tax, discount };
     },
     [carts, setCart]
   );

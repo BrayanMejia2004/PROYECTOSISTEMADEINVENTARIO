@@ -7,4 +7,9 @@ export interface CartItem {
   quantity: number;
   unitPrice: number;
   total: number;
+  costPrice?: number;
+  applyTax?: boolean;
+  taxPercentage?: number;
+  allowsDiscount?: boolean;
+  maxDiscount?: number;
 }

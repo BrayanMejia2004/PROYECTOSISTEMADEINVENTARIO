@@ -135,6 +135,7 @@ export const createSale = async (input: CreateSaleInput) => {
 
     let subtotal = 0;
     const saleItems: any[] = [];
+    let maxAllowedDiscountAmount = 0;
 
     for (const item of input.items) {
       const product = await Product.findOne({
@@ -158,6 +159,12 @@ export const createSale = async (input: CreateSaleInput) => {
 
       const itemTotal = item.quantity * item.unitPrice;
       subtotal += itemTotal;
+
+      if (product.allowsDiscount && product.maxDiscount && product.maxDiscount > 0) {
+        const itemWithTax = itemTotal + (product.applyTax && product.taxPercentage
+          ? itemTotal * (product.taxPercentage / 100) : 0);
+        maxAllowedDiscountAmount += itemWithTax * (product.maxDiscount / 100);
+      }
 
       saleItems.push({
         productId: item.productId,
@@ -183,6 +190,12 @@ export const createSale = async (input: CreateSaleInput) => {
     const tax = input.tax || 0;
     const discount = input.discount || 0;
     const total = subtotal + tax - discount;
+
+    if (discount > Math.round(maxAllowedDiscountAmount)) {
+      throw ApiError.badRequest(
+        `El descuento ($${discount.toLocaleString('es-CO')}) excede el máximo permitido ($${Math.round(maxAllowedDiscountAmount).toLocaleString('es-CO')})`
+      );
+    }
 
     const sale = new Sale({
       tenantId: input.tenantId,

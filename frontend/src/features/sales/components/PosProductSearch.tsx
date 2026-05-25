@@ -66,6 +66,11 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
       quantity: 1,
       unitPrice: product.price,
       total: product.price,
+      costPrice: product.costPrice,
+      applyTax: product.applyTax,
+      taxPercentage: product.taxPercentage,
+      allowsDiscount: product.allowsDiscount,
+      maxDiscount: product.maxDiscount,
     });
     barcodeInputRef.current?.focus();
   };
