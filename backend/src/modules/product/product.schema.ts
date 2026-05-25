@@ -7,7 +7,7 @@ export const createProductSchema = z.object({
   description: z.string().optional(),
   departmentId: z.string().min(1, 'Departamento requerido'),
   brandId: z.string().min(1, 'Marca requerida'),
-  supplierId: z.string().optional(),
+  supplierId: z.string().optional().transform(v => v === '' ? undefined : v),
   image: z.string().optional(),
   costPrice: z.number().min(0, 'Precio costo debe ser positivo'),
   price: z.number().min(0, 'Precio venta debe ser positivo'),
@@ -20,6 +20,7 @@ export const createProductSchema = z.object({
   minStock: z.number().min(0, 'Stock mínimo debe ser positivo'),
   maxStock: z.number().min(0, 'Stock máximo debe ser positivo'),
   sellOutOfStock: z.boolean().optional(),
+  stock: z.number().min(0).optional(),
   unit: z.string().min(1, 'Unidad requerida'),
 });
 
@@ -28,9 +29,9 @@ export const updateProductSchema = z.object({
   barcode: z.string().optional(),
   name: z.string().min(2).optional(),
   description: z.string().optional(),
-  departmentId: z.string().optional(),
-  brandId: z.string().optional(),
-  supplierId: z.string().optional(),
+  departmentId: z.string().optional().transform(v => v === '' ? undefined : v),
+  brandId: z.string().optional().transform(v => v === '' ? undefined : v),
+  supplierId: z.string().optional().transform(v => v === '' ? undefined : v),
   image: z.string().optional(),
   costPrice: z.number().min(0).optional(),
   price: z.number().min(0).optional(),
@@ -43,5 +44,6 @@ export const updateProductSchema = z.object({
   minStock: z.number().min(0).optional(),
   maxStock: z.number().min(0).optional(),
   sellOutOfStock: z.boolean().optional(),
+  stock: z.number().min(0).optional(),
   unit: z.string().optional(),
 });

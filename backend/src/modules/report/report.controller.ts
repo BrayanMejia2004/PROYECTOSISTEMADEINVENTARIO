@@ -14,7 +14,7 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
       tenantId: req.user!.tenantId,
       branchId,
       startDate: new Date(startDate as string),
-      endDate: new Date(endDate as string),
+      endDate: (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })(),
     });
     sendSuccess(res, 'Sales report generated', report);
   } catch (error) {
@@ -46,7 +46,7 @@ export const getProfitabilityReport = async (req: AuthRequest, res: Response, ne
     const report = await reportService.getProfitabilityReport(
       req.user!.tenantId,
       new Date(startDate as string),
-      new Date(endDate as string),
+      (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })(),
       branchId
     );
     sendSuccess(res, 'Profitability report generated', report);
@@ -64,7 +64,7 @@ export const getBranchComparison = async (req: AuthRequest, res: Response, next:
     const report = await reportService.getBranchComparison(
       req.user!.tenantId,
       new Date(startDate as string),
-      new Date(endDate as string)
+      (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })()
     );
     sendSuccess(res, 'Branch comparison generated', report);
   } catch (error) {

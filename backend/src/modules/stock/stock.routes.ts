@@ -12,6 +12,7 @@ router.use(authenticate, resolveTenant);
 
 router.get('/', checkPermission('inventory:read', true), stockController.getStock);
 router.get('/low', checkPermission('inventory:read', true), stockController.getLowStock);
+router.get('/out', checkPermission('inventory:read', true), stockController.getOutOfStock);
 router.post('/', checkPermission('inventory:create', true), validate(initializeStockSchema), stockController.initializeStock);
 router.patch('/:productId/price', checkPermission('inventory:set-price', true), validate(updatePriceSchema), stockController.updatePrice);
 router.post('/:productId/adjust', checkPermission('inventory:adjust', true), validate(adjustStockSchema), stockController.adjustStock);

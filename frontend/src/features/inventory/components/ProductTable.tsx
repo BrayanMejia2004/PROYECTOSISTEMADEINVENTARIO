@@ -20,7 +20,7 @@ const UNIT_LABELS: Record<string, string> = {
   pack: 'Paquete',
 };
 
-export const ProductTable = ({ branchId }: { branchId?: string }) => {
+export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOnly?: boolean }) => {
   const [page, setPage] = useState(1);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string }>({ open: false });
   const [showSuccess, setShowSuccess] = useState(false);
@@ -142,7 +142,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
                 </th>
               ))}
               <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap">
-                Acciones
+                {!readOnly && 'Acciones'}
               </th>
             </tr>
           </thead>
@@ -159,6 +159,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
                   </td>
                 ))}
                 <td className="px-4 py-3.5 text-sm text-right whitespace-nowrap">
+                  {!readOnly && (
                   <div className="flex items-center justify-end gap-1">
                     {hasPermission('inventory:update') && (
                       <button
@@ -177,6 +178,7 @@ export const ProductTable = ({ branchId }: { branchId?: string }) => {
                       </button>
                     )}
                   </div>
+                  )}
                 </td>
               </tr>
             ))}

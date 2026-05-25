@@ -236,14 +236,47 @@ export const createProduct = async (input: CreateProductInput) => {
   return product;
 };
 
-export const updateProduct = async (productId: string, tenantId: string, updates: Partial<CreateProductInput>) => {
+const OBJECT_ID_FIELDS = ['supplierId', 'departmentId', 'brandId'];
+
+export const updateProduct = async (productId: string, tenantId: string, branchId: string | undefined, updates: Partial<CreateProductInput> & { stock?: number }) => {
   const product = await Product.findOne({ _id: productId, tenantId });
   if (!product) {
     throw ApiError.notFound('Product not found');
   }
 
-  Object.assign(product, updates);
+  const cleanUpdates: Record<string, any> = { ...updates };
+  const stockValue = cleanUpdates.stock;
+  delete cleanUpdates.stock;
+
+  for (const field of OBJECT_ID_FIELDS) {
+    if (cleanUpdates[field] === '' || cleanUpdates[field] === null) {
+      delete cleanUpdates[field];
+    }
+  }
+
+  Object.assign(product, cleanUpdates);
   await product.save();
+
+  if (stockValue !== undefined && branchId) {
+    const minStock = cleanUpdates.minStock !== undefined ? cleanUpdates.minStock : product.minStock;
+    const existingStock = await Stock.findOne({ tenantId, branchId, productId: product._id.toString() });
+    if (existingStock) {
+      existingStock.quantity = stockValue;
+      existingStock.isLowStock = stockValue <= minStock;
+      await existingStock.save();
+    } else {
+      await Stock.create({
+        tenantId,
+        branchId,
+        productId: product._id,
+        quantity: stockValue,
+        price: product.price,
+        minStock,
+        isLowStock: stockValue <= minStock,
+      });
+    }
+  }
+
   return product;
 };
 

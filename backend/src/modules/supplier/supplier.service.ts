@@ -22,10 +22,19 @@ interface UpdateSupplierInput {
   isActive?: boolean;
 }
 
+const buildBranchQuery = (query: any, branchId?: string) => {
+  if (branchId) {
+    query.$or = [
+      { branchId },
+      { branchId: { $exists: false } },
+    ];
+  }
+};
+
 export const getSuppliers = async (tenantId: string, branchId?: string, options?: { page?: number; limit?: number }) => {
   const { page = 1, limit = 10 } = options || {};
   const query: any = { tenantId, isActive: true };
-  if (branchId) query.branchId = branchId;
+  buildBranchQuery(query, branchId);
   const [total, suppliers] = await Promise.all([
     Supplier.countDocuments(query),
     Supplier.find(query).sort({ name: 1 }).skip((page - 1) * limit).limit(limit),
@@ -35,7 +44,7 @@ export const getSuppliers = async (tenantId: string, branchId?: string, options?
 
 export const getSupplierById = async (supplierId: string, tenantId: string, branchId?: string) => {
   const query: any = { _id: supplierId, tenantId };
-  if (branchId) query.branchId = branchId;
+  buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOne(query);
   if (!supplier) throw ApiError.notFound('Supplier not found');
   return supplier;
@@ -49,7 +58,7 @@ export const createSupplier = async (input: CreateSupplierInput) => {
 
 export const updateSupplier = async (supplierId: string, tenantId: string, branchId: string | undefined, input: UpdateSupplierInput) => {
   const query: any = { _id: supplierId, tenantId };
-  if (branchId) query.branchId = branchId;
+  buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOne(query);
   if (!supplier) throw ApiError.notFound('Supplier not found');
 
@@ -60,7 +69,7 @@ export const updateSupplier = async (supplierId: string, tenantId: string, branc
 
 export const deleteSupplier = async (supplierId: string, tenantId: string, branchId?: string) => {
   const query: any = { _id: supplierId, tenantId };
-  if (branchId) query.branchId = branchId;
+  buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOneAndDelete(query);
   if (!supplier) throw ApiError.notFound('Supplier not found');
   return supplier;

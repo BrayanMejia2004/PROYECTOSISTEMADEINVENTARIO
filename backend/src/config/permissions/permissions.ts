@@ -19,6 +19,9 @@ export const PERMISSIONS = {
 
   // Proveedores
   'suppliers:read': ['owner', 'admin'],
+  'suppliers:create': ['owner', 'admin'],
+  'suppliers:update': ['owner', 'admin'],
+  'suppliers:delete': ['owner', 'admin'],
 
   // Reportes
   'reports:branch': ['owner'],

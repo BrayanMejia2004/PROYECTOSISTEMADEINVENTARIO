@@ -20,14 +20,14 @@ export const getSales = async (params?: {
   return data;
 };
 
-export const getSalesSummary = async (): Promise<ApiResponse<{
+export const getSalesSummary = async (params?: Record<string, any>): Promise<ApiResponse<{
   salesToday: number;
   totalRevenue: number;
   avgTicket: number;
   cancelledCount: number;
   totalProductsSold: number;
 }>> => {
-  const { data } = await api.get(`${ENDPOINTS.SALES}/summary`);
+  const { data } = await api.get(`${ENDPOINTS.SALES}/summary`, { params });
   return data;
 };
 

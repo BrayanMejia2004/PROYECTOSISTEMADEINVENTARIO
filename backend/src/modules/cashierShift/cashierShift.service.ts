@@ -85,7 +85,7 @@ export const closeShift = async (input: CloseShiftInput) => {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  const summary = await saleService.getSalesSummary(input.tenantId, input.branchId);
+  const summary = await saleService.getSalesSummary(input.tenantId, { branchId: input.branchId });
 
   const movements = await CashMovement.aggregate([
     {
@@ -131,7 +131,7 @@ export const getCurrentShift = async (tenantId: string, branchId: string) => {
 
   if (!shift) return null;
 
-  const summary = await saleService.getSalesSummary(tenantId, branchId);
+  const summary = await saleService.getSalesSummary(tenantId, { branchId });
 
   const movements = await CashMovement.aggregate([
     {

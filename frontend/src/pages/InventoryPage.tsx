@@ -90,7 +90,7 @@ export const InventoryPage = () => {
           <Package className="w-4 h-4" />
           Lista de productos
         </div>
-        <ProductTable branchId={isOwner ? selectedBranchId : user?.branchId} />
+        <ProductTable branchId={isOwner ? selectedBranchId : user?.branchId} readOnly={isOwner} />
       </div>
 
       {showImport && <ImportModal onClose={() => setShowImport(false)} />}

@@ -5,6 +5,7 @@ import { SalesFilters } from '../features/sales/components/SalesFilters';
 import { SaleDetail } from '../features/sales/components/SaleDetail';
 import { useAuth } from '../hooks/useAuth';
 import { useBranches } from '../features/settings/hooks';
+import { useDebouncedValue } from '../hooks/useDebounce';
 import { formatCurrency, formatNumber, formatDate } from '../lib/utils';
 import { Store, Receipt, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -48,7 +49,9 @@ export const SalesPage = () => {
   const limit = 15;
   const isOwner = user?.role === 'owner';
 
-  const queryParams: Record<string, any> = { ...filters, page, limit };
+  const debouncedFilters = useDebouncedValue(filters, 400);
+
+  const queryParams: Record<string, any> = { ...debouncedFilters, page, limit };
   if (isOwner && selectedBranchId) queryParams.branchId = selectedBranchId;
   Object.keys(queryParams).forEach(k => { if (queryParams[k] === undefined || queryParams[k] === '') delete queryParams[k]; });
 
@@ -90,7 +93,9 @@ export const SalesPage = () => {
             </div>
           </div>
         )}
-        <SalesSummaryCards />
+        <SalesSummaryCards
+          filters={{ ...filters, branchId: isOwner && selectedBranchId ? selectedBranchId : undefined }}
+        />
 
         <SalesFilters filters={filters} onChange={handleFiltersChange} />
 

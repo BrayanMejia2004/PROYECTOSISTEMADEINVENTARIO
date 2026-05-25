@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { getProfitabilityReport } from '../api';
 import { formatCurrency } from '../../../lib/utils';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, AlertCircle } from 'lucide-react';
 
 export const ProfitCard = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -16,8 +17,8 @@ export const ProfitCard = () => {
         const start = new Date();
         start.setDate(start.getDate() - 30);
         const response = await getProfitabilityReport(
-          start.toISOString().split('T')[0],
-          end.toISOString().split('T')[0]
+          start.toISOString(),
+          end.toISOString()
         );
         const products = response.data || [];
         const revenue = products.reduce((sum: number, p: any) => sum + (p.totalRevenue || 0), 0);
@@ -25,8 +26,8 @@ export const ProfitCard = () => {
         setTotalRevenue(revenue);
         setTotalCost(cost);
         setTotalProfit(revenue - cost);
-      } catch (error) {
-        console.error('Error fetching profitability report:', error);
+      } catch (err) {
+        setError((err as any)?.message || 'Error al cargar');
       } finally {
         setLoading(false);
       }
@@ -35,6 +36,18 @@ export const ProfitCard = () => {
   }, []);
 
   if (loading) return <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"><p className="text-sm text-brand-muted">Cargando...</p></div>;
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-red-200 shadow-sm p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <AlertCircle className="w-4 h-4 text-red-500" />
+          <p className="text-xs font-medium text-red-600">Error en ganancias</p>
+        </div>
+        <p className="text-sm text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   const margin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0.0';
 

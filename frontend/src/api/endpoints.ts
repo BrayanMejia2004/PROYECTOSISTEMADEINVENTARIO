@@ -32,6 +32,7 @@ export const ENDPOINTS = {
   // Stock
   STOCK: '/stock',
   STOCK_LOW: '/stock/low',
+  STOCK_OUT: '/stock/out',
 
   // Sales
   SALES: '/sales',

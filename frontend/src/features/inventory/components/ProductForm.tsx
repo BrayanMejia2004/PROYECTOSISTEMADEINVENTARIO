@@ -1,10 +1,9 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductForm } from '../schemas';
-import { useCreateProduct, useUpdateProduct, useProduct, useInitializeStock } from '../hooks';
+import { useCreateProduct, useUpdateProduct, useProduct } from '../hooks';
 import { useDepartments } from '../../departments/hooks';
 import { useBrands } from '../../brands/hooks';
-import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Package, DollarSign, FileText, Box } from 'lucide-react';
@@ -18,13 +17,11 @@ interface ProductFormProps {
 
 export const ProductForm = ({ productId }: ProductFormProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { data: productData } = useProduct(productId || '');
   const { data: departments } = useDepartments();
   const { data: brands } = useBrands({ limit: 1000 });
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
-  const { mutate: initializeStock } = useInitializeStock();
   const [confirmSave, setConfirmSave] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
   const pendingFormData = useRef<ProductForm | null>(null);
@@ -121,15 +118,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
       );
     } else {
       createProduct(data, {
-        onSuccess: (res) => {
-          if (data.stock > 0 && user?.branchId) {
-            initializeStock({
-              productId: res.data.id,
-              price: data.price,
-              quantity: data.stock,
-              branchId: user.branchId,
-            });
-          }
+        onSuccess: () => {
           setShowSuccess('Producto creado exitosamente');
           setTimeout(() => navigate('/inventory'), 1500);
         },

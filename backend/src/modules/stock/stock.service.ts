@@ -113,6 +113,42 @@ export const getLowStockAlerts = async (
   return { data, meta: { total, page, limit } };
 };
 
+export const getOutOfStock = async (
+  tenantId: string,
+  branchId?: string,
+  page: number = 1,
+  limit: number = 100
+) => {
+  const query: any = { tenantId, quantity: 0 };
+  if (branchId) query.branchId = branchId;
+
+  const [total, stock] = await Promise.all([
+    Stock.countDocuments(query),
+    Stock.find(query)
+      .populate('productId', 'name sku barcode minStock')
+      .populate('branchId', 'name')
+      .sort({ 'productId.name': 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+  ]);
+
+  const data = stock.map(s => ({
+    _id: (s as any)._id,
+    productId: (s.productId as any)?._id?.toString() || s.productId,
+    branchId: (s.branchId as any)?._id?.toString() || s.branchId,
+    quantity: s.quantity,
+    price: s.price,
+    productName: (s.productId as any)?.name || 'Unknown',
+    sku: (s.productId as any)?.sku || '',
+    barcode: (s.productId as any)?.barcode || '',
+    minStock: (s.productId as any)?.minStock || 0,
+    branchName: (s.branchId as any)?.name || 'Unknown',
+  }));
+
+  return { data, meta: { total, page, limit } };
+};
+
 export const initializeStock = async (
   tenantId: string,
   branchId: string,

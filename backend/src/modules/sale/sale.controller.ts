@@ -30,7 +30,7 @@ export const getSales = async (req: AuthRequest, res: Response, next: NextFuncti
     const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
     const result = await saleService.getSales(req.user!.tenantId, branchId, {
       startDate: startDate ? new Date(startDate as string) : undefined,
-      endDate: endDate ? new Date(endDate as string) : undefined,
+      endDate: endDate ? (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })() : undefined,
       page: page ? parseInt(page as string) : undefined,
       limit: limit ? parseInt(limit as string) : undefined,
       status: status as string | undefined,
@@ -49,8 +49,27 @@ export const getSales = async (req: AuthRequest, res: Response, next: NextFuncti
 
 export const getSalesSummary = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const branchId = req.user!.role === 'owner' ? undefined : req.user!.branchId;
-    const summary = await saleService.getSalesSummary(req.user!.tenantId, branchId);
+    const {
+      startDate, endDate, status, paymentMethod, customerName, userId,
+      search, minTotal, maxTotal, branchId: queryBranchId,
+    } = req.query;
+
+    const branchId = req.user!.role === 'owner'
+      ? (queryBranchId as string | undefined)
+      : req.user!.branchId;
+
+    const summary = await saleService.getSalesSummary(req.user!.tenantId, {
+      branchId,
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })() : undefined,
+      status: status as string | undefined,
+      paymentMethod: paymentMethod as string | undefined,
+      customerName: customerName as string | undefined,
+      userId: userId as string | undefined,
+      search: search as string | undefined,
+      minTotal: minTotal ? parseFloat(minTotal as string) : undefined,
+      maxTotal: maxTotal ? parseFloat(maxTotal as string) : undefined,
+    });
     sendSuccess(res, 'Sales summary retrieved', summary);
   } catch (error) {
     next(error);

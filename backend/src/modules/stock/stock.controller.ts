@@ -77,3 +77,16 @@ export const adjustStock = async (req: AuthRequest, res: Response, next: NextFun
     next(error);
   }
 };
+
+export const getOutOfStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const queryBranchId = req.query.branchId as string | undefined;
+    const branchId = req.user!.role === 'owner' ? (queryBranchId || req.user!.branchId) : req.user!.branchId;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const result = await stockService.getOutOfStock(req.user!.tenantId, branchId, page, limit);
+    sendPaginated(res, 'Out of stock products retrieved', result.data, result.meta);
+  } catch (error) {
+    next(error);
+  }
+};

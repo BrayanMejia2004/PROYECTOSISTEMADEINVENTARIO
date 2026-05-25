@@ -42,6 +42,11 @@ export const getLowStock = async (branchId?: string): Promise<ApiResponse<Stock[
   return data;
 };
 
+export const getOutOfStock = async (branchId?: string): Promise<ApiResponse<any[]>> => {
+  const { data } = await api.get<ApiResponse<any[]>>(ENDPOINTS.STOCK_OUT, { params: { branchId } });
+  return data;
+};
+
 export const initializeStock = async (input: { productId: string; price: number; quantity?: number; branchId?: string }): Promise<ApiResponse<Stock>> => {
   const { data } = await api.post<ApiResponse<Stock>>(ENDPOINTS.STOCK, input);
   return data;

@@ -3,6 +3,7 @@ import { Package, AlertTriangle, DollarSign, Users, ShoppingCart, ChevronRight, 
 import { StatCard } from '../components/ui/StatCard';
 import { useProducts } from '../features/inventory/hooks';
 import { useSales } from '../features/sales/hooks';
+import { OutOfStockCard } from '../features/reports/components/OutOfStockCard';
 import { useAuth } from '../hooks/useAuth';
 import { useCajas, useCartSummary } from '../context/CartContext';
 import { formatCurrency, formatNumber } from '../lib/utils';
@@ -111,6 +112,12 @@ export const DashboardPage = () => {
           sublabel="Todo funcionando"
         />
       </div>
+
+      {(user?.role === 'owner' || user?.role === 'admin') && (
+        <div className="mb-8">
+          <OutOfStockCard />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">

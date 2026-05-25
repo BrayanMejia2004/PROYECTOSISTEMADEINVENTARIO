@@ -61,11 +61,19 @@ export const useLowStock = (branchId?: string) => {
   });
 };
 
+export const useOutOfStock = (branchId?: string) => {
+  return useQuery({
+    queryKey: ['outOfStock', branchId],
+    queryFn: () => inventoryApi.getOutOfStock(branchId),
+  });
+};
+
 export const useInitializeStock = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: inventoryApi.initializeStock,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['stock'] });
     },
   });

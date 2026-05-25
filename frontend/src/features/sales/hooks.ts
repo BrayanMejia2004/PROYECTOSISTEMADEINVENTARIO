@@ -8,10 +8,10 @@ export const useSales = (params?: Record<string, any>) => {
   });
 };
 
-export const useSalesSummary = () => {
+export const useSalesSummary = (params?: Record<string, any>) => {
   return useQuery({
-    queryKey: ['sales', 'summary'],
-    queryFn: salesApi.getSalesSummary,
+    queryKey: ['sales', 'summary', params],
+    queryFn: () => salesApi.getSalesSummary(params),
     refetchInterval: 60000,
   });
 };

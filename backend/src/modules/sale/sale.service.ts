@@ -271,50 +271,86 @@ export const getSales = async (
   return { data: enrichedSales, meta: { total, page, limit } };
 };
 
-export const getSalesSummary = async (tenantId: string, branchId?: string) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
+interface SalesSummaryFilters {
+  branchId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  status?: string;
+  paymentMethod?: string;
+  customerName?: string;
+  userId?: string;
+  search?: string;
+  minTotal?: number;
+  maxTotal?: number;
+}
 
-  const matchToday: any = {
+export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFilters) => {
+  const { branchId, startDate, endDate, status, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
+
+  const today = startDate || new Date();
+  if (!startDate) today.setHours(0, 0, 0, 0);
+  const endOfToday = endDate || new Date();
+  if (!endDate) endOfToday.setHours(23, 59, 59, 999);
+
+  const match: any = {
     tenantId: new mongoose.Types.ObjectId(tenantId),
     createdAt: { $gte: today, $lte: endOfToday },
   };
+
   if (branchId) {
-    matchToday.branchId = new mongoose.Types.ObjectId(branchId);
+    match.branchId = new mongoose.Types.ObjectId(branchId);
   }
+
+  if (paymentMethod) match.paymentMethod = paymentMethod;
+  if (customerName) match.customerName = { $regex: customerName, $options: 'i' };
+  if (userId) match.userId = new mongoose.Types.ObjectId(userId);
+
+  if (search) {
+    match.$or = [
+      { saleNumber: { $regex: search, $options: 'i' } },
+      { customerName: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  if (minTotal !== undefined || maxTotal !== undefined) {
+    match.total = {};
+    if (minTotal !== undefined) match.total.$gte = minTotal;
+    if (maxTotal !== undefined) match.total.$lte = maxTotal;
+  }
+
+  const matchCompleted = { ...match, status: 'completed' };
+  const matchRefunded = { ...match, status: 'refunded' };
+  const matchCancelledOrRefunded = { ...match, status: { $in: ['cancelled', 'refunded'] } };
 
   const [[salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg], refundedSales, exchangeRefundIds] = await Promise.all([
     Promise.all([
-      Sale.countDocuments({ ...matchToday, status: 'completed' }),
-      Sale.countDocuments({ ...matchToday, status: { $in: ['cancelled', 'refunded'] } }),
+      Sale.countDocuments(matchCompleted),
+      Sale.countDocuments(matchCancelledOrRefunded),
       Sale.aggregate([
-        { $match: { ...matchToday, status: 'completed' } },
+        { $match: matchCompleted },
         { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
         { $group: { _id: null, totalRevenue: { $sum: '$effectiveTotal' }, totalSales: { $sum: 1 } } },
       ]).allowDiskUse(true),
       Sale.aggregate([
-        { $match: { ...matchToday, status: 'completed' } },
+        { $match: matchCompleted },
         { $unwind: '$items' },
         { $group: { _id: null, totalProducts: { $sum: '$items.quantity' } } },
       ]).allowDiskUse(true),
       Sale.aggregate([
-        { $match: { ...matchToday, status: 'completed' } },
+        { $match: matchCompleted },
         { $addFields: { effectiveTotal: { $subtract: ['$total', { $ifNull: ['$exchangeCredit', 0] }] } } },
         { $group: { _id: '$paymentMethod', total: { $sum: '$effectiveTotal' }, count: { $sum: 1 } } },
       ]).allowDiskUse(true),
       Sale.aggregate([
-        { $match: { ...matchToday, status: 'completed' } },
+        { $match: matchCompleted },
         { $unwind: '$items' },
         { $group: { _id: null, totalCost: { $sum: { $multiply: ['$items.quantity', '$items.costPrice'] } } } },
       ]).allowDiskUse(true),
     ]),
-    Sale.find({ ...matchToday, status: 'refunded' }).lean(),
+    Sale.find(matchRefunded).lean(),
     Sale.distinct('exchangeFromSaleId', {
       exchangeFromSaleId: { $ne: null },
-      ...matchToday,
-      status: 'completed',
+      ...matchCompleted,
     }),
   ]);
 
@@ -371,13 +407,13 @@ export const getSalesSummary = async (tenantId: string, branchId?: string) => {
 const enrichWithUserNames = async (sales: any[]) => {
   if (sales.length === 0) return [];
 
-  const userIds = [...new Set(sales.map(s => s.userId))];
+  const userIds = [...new Set(sales.map(s => s.userId.toString()))];
   const users = await User.find({ _id: { $in: userIds } }).select('firstName lastName');
   const userMap = new Map(users.map(u => [u._id.toString(), `${u.firstName} ${u.lastName}`]));
 
   return sales.map(s => {
     const obj = s.toObject ? s.toObject() : s;
-    obj.userName = userMap.get(s.userId) || s.userId;
+    obj.userName = userMap.get(s.userId.toString()) || s.userId.toString();
     return obj;
   });
 };
@@ -391,9 +427,9 @@ export const getSaleById = async (saleId: string, tenantId: string, branchId?: s
   const saleObj = sale.toObject() as Record<string, any>;
   try {
     const user = await User.findById(sale.userId).select('firstName lastName');
-    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId;
+    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId.toString();
   } catch {
-    saleObj.userName = sale.userId;
+    saleObj.userName = sale.userId.toString();
   }
 
   return saleObj as any;
@@ -408,9 +444,9 @@ export const getSaleByNumber = async (saleNumber: string, tenantId: string, bran
   const saleObj = sale.toObject() as Record<string, any>;
   try {
     const user = await User.findById(sale.userId).select('firstName lastName');
-    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId;
+    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId.toString();
   } catch {
-    saleObj.userName = sale.userId;
+    saleObj.userName = sale.userId.toString();
   }
 
   const usedAgg = await Sale.aggregate([

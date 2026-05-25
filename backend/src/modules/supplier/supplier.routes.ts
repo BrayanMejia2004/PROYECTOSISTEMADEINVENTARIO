@@ -12,8 +12,8 @@ router.use(authenticate, resolveTenantMiddleware);
 
 router.get('/', checkPermission('suppliers:read', true), supplierController.getSuppliers);
 router.get('/:id', checkPermission('suppliers:read', true), supplierController.getSupplier);
-router.post('/', checkPermission('suppliers:read', true), validate(createSupplierSchema), supplierController.createSupplier);
-router.patch('/:id', checkPermission('suppliers:read', true), validate(updateSupplierSchema), supplierController.updateSupplier);
-router.delete('/:id', checkPermission('suppliers:read', true), supplierController.deleteSupplier);
+router.post('/', checkPermission('suppliers:create', true), validate(createSupplierSchema), supplierController.createSupplier);
+router.patch('/:id', checkPermission('suppliers:update', true), validate(updateSupplierSchema), supplierController.updateSupplier);
+router.delete('/:id', checkPermission('suppliers:delete', true), supplierController.deleteSupplier);
 
 export default router;
