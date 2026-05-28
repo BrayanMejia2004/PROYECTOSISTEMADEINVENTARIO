@@ -15,5 +15,6 @@ const customerSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 customerSchema.index({ tenantId: 1, branchId: 1 });
+customerSchema.index({ tenantId: 1, name: 1 });
 
 export default mongoose.model('Customer', customerSchema);

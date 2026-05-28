@@ -6,7 +6,7 @@ import { useCart, useCajas } from '../context/CartContext';
 import { PosCart } from '../features/sales/components/PosCart';
 import { PosProductSearch } from '../features/sales/components/PosProductSearch';
 import { SaleReceipt } from '../features/sales/components/SaleReceipt';
-import { ArrowLeft, Wallet, AlertCircle, X } from 'lucide-react';
+import { Wallet, AlertCircle, X } from 'lucide-react';
 
 export const PosPage = () => {
   const { user } = useAuth();
@@ -118,18 +118,6 @@ export const PosPage = () => {
 
   return (
     <div className="h-[calc(100vh-5rem)] flex flex-col">
-      <div className="flex items-center gap-3 mb-4 shrink-0">
-        <Link
-          to="/"
-          className="flex items-center gap-1.5 text-sm text-brand-muted hover:text-brand transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver
-        </Link>
-        <div className="w-px h-5 bg-gray-200" />
-        <h1 className="text-xl font-sans font-bold text-brand-text">Punto de Venta — {cajas.find((c) => c.id === cartId)?.name || `Caja ${cartId}`}</h1>
-      </div>
-
       {saleError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSaleError(null)}>
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
@@ -158,11 +146,11 @@ export const PosPage = () => {
           </div>
         </div>
       )}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
-        <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 min-h-0">
+        <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col">
           <PosProductSearch onAddToCart={handleAddToCart} />
         </div>
-        <div className="w-full lg:flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-hidden flex flex-col">
+        <div className="w-full lg:flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col">
           <PosCart
             key={`cart-${cartId}-${saleKey}`}
             items={cartItems}

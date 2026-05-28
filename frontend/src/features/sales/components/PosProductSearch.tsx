@@ -180,11 +180,21 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
                     <p className="text-base font-bold text-brand">
                       {formatCurrency(product.price)}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-auto pt-1">
+                    <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
                       <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${stockColors[stockLevel]}`}>
                         <Package className="w-3 h-3" />
                         {formatNumber(product.stock ?? 0)} uds
                       </div>
+                      {product.applyTax && product.taxPercentage > 0 && (
+                        <div className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+                          IVA {product.taxPercentage}%
+                        </div>
+                      )}
+                      {product.allowsDiscount && product.maxDiscount > 0 && (
+                        <div className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
+                          Dcto {product.maxDiscount}%
+                        </div>
+                      )}
                     </div>
                   </div>
                   {!outOfStock && (

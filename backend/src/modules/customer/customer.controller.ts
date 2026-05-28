@@ -6,7 +6,7 @@ import { AuthRequest } from '../../shared/types/express/express';
 export const getCustomers = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { search, page, limit } = req.query;
-    const result = await customerService.getCustomers(req.user!.tenantId, req.user!.branchId, {
+    const result = await customerService.getCustomers(req.user!.tenantId, {
       search: search as string,
       page: page ? parseInt(page as string) : undefined,
       limit: limit ? parseInt(limit as string) : undefined,
@@ -19,7 +19,7 @@ export const getCustomers = async (req: AuthRequest, res: Response, next: NextFu
 
 export const getCustomer = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const customer = await customerService.getCustomerById(req.params.id, req.user!.tenantId, req.user!.branchId);
+    const customer = await customerService.getCustomerById(req.params.id, req.user!.tenantId);
     sendSuccess(res, 'Customer retrieved', customer);
   } catch (error) {
     next(error);
@@ -31,7 +31,6 @@ export const createCustomer = async (req: AuthRequest, res: Response, next: Next
     const customer = await customerService.createCustomer({
       ...req.body,
       tenantId: req.user!.tenantId,
-      branchId: req.user!.branchId,
     });
     sendSuccess(res, 'Customer created', customer, 201);
   } catch (error) {
@@ -44,7 +43,6 @@ export const updateCustomer = async (req: AuthRequest, res: Response, next: Next
     const customer = await customerService.updateCustomer(
       req.params.id,
       req.user!.tenantId,
-      req.user!.branchId,
       req.body
     );
     sendSuccess(res, 'Customer updated', customer);
@@ -55,7 +53,7 @@ export const updateCustomer = async (req: AuthRequest, res: Response, next: Next
 
 export const deleteCustomer = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await customerService.deleteCustomer(req.params.id, req.user!.tenantId, req.user!.branchId);
+    await customerService.deleteCustomer(req.params.id, req.user!.tenantId);
     sendSuccess(res, 'Customer deleted');
   } catch (error) {
     next(error);

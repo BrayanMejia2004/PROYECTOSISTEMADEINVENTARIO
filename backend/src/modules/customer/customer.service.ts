@@ -3,7 +3,6 @@ import { ApiError } from '../../shared/utils/apiError/ApiError';
 
 interface CreateCustomerInput {
   tenantId: string;
-  branchId?: string;
   name: string;
   phone?: string;
   email?: string;
@@ -22,18 +21,10 @@ interface UpdateCustomerInput {
 
 export const getCustomers = async (
   tenantId: string,
-  branchId?: string,
   options?: { search?: string; page?: number; limit?: number }
 ) => {
   const { search, page = 1, limit = 20 } = options || {};
   const query: any = { tenantId, isActive: true };
-
-  if (branchId) {
-    query.$or = [
-      { branchId },
-      { branchId: { $exists: false } },
-    ];
-  }
 
   if (search) {
     query.$or = [
@@ -52,27 +43,15 @@ export const getCustomers = async (
   return { data: customers, meta: { total, page, limit } };
 };
 
-export const getCustomerById = async (customerId: string, tenantId: string, branchId?: string) => {
+export const getCustomerById = async (customerId: string, tenantId: string) => {
   const query: any = { _id: customerId, tenantId };
-  if (branchId) {
-    query.$or = [
-      { branchId },
-      { branchId: { $exists: false } },
-    ];
-  }
   const customer = await Customer.findOne(query);
   if (!customer) throw ApiError.notFound('Customer not found');
   return customer;
 };
 
-export const findCustomerByNamePhone = async (tenantId: string, name: string, branchId?: string, phone?: string) => {
+export const findCustomerByNamePhone = async (tenantId: string, name: string, phone?: string) => {
   const query: any = { tenantId, name: { $regex: `^${name}$`, $options: 'i' }, isActive: true };
-  if (branchId) {
-    query.$or = [
-      { branchId },
-      { branchId: { $exists: false } },
-    ];
-  }
   if (phone) query.phone = phone;
   return Customer.findOne(query);
 };
@@ -83,14 +62,8 @@ export const createCustomer = async (input: CreateCustomerInput) => {
   return customer;
 };
 
-export const updateCustomer = async (customerId: string, tenantId: string, branchId: string | undefined, input: UpdateCustomerInput) => {
+export const updateCustomer = async (customerId: string, tenantId: string, input: UpdateCustomerInput) => {
   const query: any = { _id: customerId, tenantId };
-  if (branchId) {
-    query.$or = [
-      { branchId },
-      { branchId: { $exists: false } },
-    ];
-  }
   const customer = await Customer.findOne(query);
   if (!customer) throw ApiError.notFound('Customer not found');
 
@@ -99,14 +72,8 @@ export const updateCustomer = async (customerId: string, tenantId: string, branc
   return customer;
 };
 
-export const deleteCustomer = async (customerId: string, tenantId: string, branchId?: string) => {
+export const deleteCustomer = async (customerId: string, tenantId: string) => {
   const query: any = { _id: customerId, tenantId };
-  if (branchId) {
-    query.$or = [
-      { branchId },
-      { branchId: { $exists: false } },
-    ];
-  }
   const customer = await Customer.findOneAndDelete(query);
   if (!customer) throw ApiError.notFound('Customer not found');
   return customer;

@@ -53,14 +53,13 @@ export const createSale = async (input: CreateSaleInput) => {
 
   if (input.customerName) {
     const existing = await customerService.findCustomerByNamePhone(
-      input.tenantId, input.customerName, input.branchId, input.customerPhone
+      input.tenantId, input.customerName, input.customerPhone
     );
     if (existing) {
       customerId = existing._id.toString();
     } else {
       const newCustomer = await customerService.createCustomer({
         tenantId: input.tenantId,
-        branchId: input.branchId,
         name: input.customerName,
         phone: input.customerPhone,
       });
