@@ -71,10 +71,10 @@ export const Sidebar = ({ isOpen, onClose, desktopOpen }: SidebarProps) => {
               {hasPermission('inventory:create') && user?.role !== 'owner' && (
                 <NavItem to="/departments" icon={<Tag className="w-4 h-4" />} label="Departamentos" />
               )}
-              {hasPermission('suppliers:read') && (
+              {hasPermission('suppliers:read') && user.role !== 'owner' && (
                 <NavItem to="/suppliers" icon={<Users className="w-4 h-4" />} label="Proveedores" />
               )}
-              {hasPermission('sales:read') && (
+              {hasPermission('sales:read') && user.role !== 'owner' && (
                 <NavItem to="/customers" icon={<Contact className="w-4 h-4" />} label="Clientes" />
               )}
               {hasPermission('reports:branch') && (
