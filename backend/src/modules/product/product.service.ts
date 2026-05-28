@@ -294,6 +294,7 @@ export const updateProduct = async (productId: string, tenantId: string, branchI
     const existingStock = await Stock.findOne({ tenantId, branchId, productId: product._id.toString() });
     if (existingStock) {
       existingStock.quantity = stockValue;
+      existingStock.price = product.price;
       existingStock.isLowStock = stockValue <= minStock;
       await existingStock.save();
     } else {

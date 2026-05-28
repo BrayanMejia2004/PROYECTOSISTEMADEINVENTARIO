@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProfitabilityReport } from '../api';
+import { getInventoryReport } from '../api';
 import { formatCurrency } from '../../../lib/utils';
 import { TrendingUp, AlertCircle } from 'lucide-react';
 
@@ -13,16 +13,10 @@ export const ProfitCard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const end = new Date();
-        const start = new Date();
-        start.setDate(start.getDate() - 30);
-        const response = await getProfitabilityReport(
-          start.toISOString(),
-          end.toISOString()
-        );
-        const products = response.data || [];
-        const revenue = products.reduce((sum: number, p: any) => sum + (p.totalRevenue || 0), 0);
-        const cost = products.reduce((sum: number, p: any) => sum + (p.totalCost || 0), 0);
+        const response = await getInventoryReport();
+        const branches = response.data || [];
+        const revenue = branches.reduce((sum: number, branch: any) => sum + (branch.totalValue || 0), 0);
+        const cost = branches.reduce((sum: number, branch: any) => sum + (branch.totalCost || 0), 0);
         setTotalRevenue(revenue);
         setTotalCost(cost);
         setTotalProfit(revenue - cost);
@@ -61,8 +55,8 @@ export const ProfitCard = () => {
       </div>
       <p className="text-2xl font-sans font-bold text-green-600">{formatCurrency(totalProfit)}</p>
       <div className="flex items-center justify-between mt-2 text-xs text-brand-muted">
-        <span>Ingresos: {formatCurrency(totalRevenue)}</span>
-        <span>Costos: {formatCurrency(totalCost)}</span>
+        <span>Total venta: {formatCurrency(totalRevenue)}</span>
+        <span>Inversión: {formatCurrency(totalCost)}</span>
       </div>
       <p className="text-xs text-brand-muted mt-1">Margen: {margin}%</p>
     </div>
