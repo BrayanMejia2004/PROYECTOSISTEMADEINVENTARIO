@@ -8,7 +8,7 @@ import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2 } from 'luc
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 25;
 
 const UNIT_LABELS: Record<string, string> = {
   unit: 'Unidad',
@@ -137,11 +137,11 @@ export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOn
           <thead>
             <tr className="bg-brand-bg/50">
               {columns.map((col) => (
-                <th key={col.key} className={`text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap${col.hideOnMobile ? ' hidden md:table-cell' : ''}`}>
+                <th key={col.key} className={`text-center px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap${col.hideOnMobile ? ' hidden md:table-cell' : ''}`}>
                   {col.label}
                 </th>
               ))}
-              <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap">
+              <th className="text-center px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider whitespace-nowrap">
                 {!readOnly && 'Acciones'}
               </th>
             </tr>
@@ -150,7 +150,7 @@ export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOn
             {products.map((product) => (
               <tr key={product.id} className="hover:bg-brand-bg/30 transition-colors">
                 {columns.map((col) => (
-                  <td key={col.key} className={`px-4 py-3.5 text-sm whitespace-nowrap${col.hideOnMobile ? ' hidden md:table-cell' : ''}`}>
+                  <td key={col.key} className={`px-4 py-3.5 text-sm text-center whitespace-nowrap${col.hideOnMobile ? ' hidden md:table-cell' : ''}`}>
                     {col.render ? col.render(product) : (
                       <span className={col.className || 'text-brand-text'}>
                         {(product as any)[col.key] ?? '—'}
@@ -158,9 +158,9 @@ export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOn
                     )}
                   </td>
                 ))}
-                <td className="px-4 py-3.5 text-sm text-right whitespace-nowrap">
+                <td className="px-4 py-3.5 text-sm text-center whitespace-nowrap">
                   {!readOnly && (
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     {hasPermission('inventory:update') && (
                       <button
                         onClick={() => navigate(`/inventory/${product.id}/edit`)}
@@ -187,24 +187,59 @@ export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOn
       </div>
 
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-100">
           <p className="text-xs text-brand-muted">
             {formatNumber(meta.total)} producto(s) — Página {formatNumber(meta.page)} de {formatNumber(meta.totalPages)}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(1)}
+              disabled={meta.page <= 1}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              title="Primera página"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5 -ml-1.5" />
+            </button>
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={meta.page <= 1}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
+            <div className="flex items-center gap-1 mx-1">
+              {[meta.page - 1, meta.page, meta.page + 1]
+                .filter((p) => p >= 1 && p <= meta.totalPages)
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`min-w-[2rem] h-8 px-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      p === meta.page
+                        ? 'bg-brand text-white'
+                        : 'text-brand-muted hover:text-brand hover:bg-brand/5'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
             <button
               onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
               disabled={meta.page >= meta.totalPages}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setPage(meta.totalPages)}
+              disabled={meta.page >= meta.totalPages}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              title="Última página"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5 -ml-1.5" />
             </button>
           </div>
         </div>

@@ -78,7 +78,7 @@ export const getProducts = async (options: GetProductsOptions) => {
 
   const pipeline: any[] = [
     { $match: query },
-    { $sort: { createdAt: -1 } },
+    { $sort: { name: 1 } },
     { $skip: (page - 1) * limit },
     { $limit: limit },
   ];
@@ -166,6 +166,7 @@ export const getProducts = async (options: GetProductsOptions) => {
       total,
       page,
       limit,
+      totalPages: Math.ceil(total / limit),
     },
   };
 };
@@ -337,8 +338,8 @@ interface ImportProductInput {
   taxPercentage?: number;
   allowsDiscount?: boolean;
   maxDiscount?: number;
-  minStock: number;
-  maxStock: number;
+  minStock?: number;
+  maxStock?: number;
   sellOutOfStock?: boolean;
   unit: string;
   initialStock?: number;
@@ -413,8 +414,8 @@ export const importProducts = async (tenantId: string, products: ImportProductIn
     if (!p.categoryName) { errors.push({ row, message: 'Categoría requerida' }); continue; }
     if (p.costPrice == null || p.costPrice < 0) { errors.push({ row, message: 'Precio costo inválido' }); continue; }
     if (p.price == null || p.price < 0) { errors.push({ row, message: 'Precio venta inválido' }); continue; }
-    if (p.minStock == null || p.minStock < 0) { errors.push({ row, message: 'Stock mínimo inválido' }); continue; }
-    if (p.maxStock == null || p.maxStock < 0) { errors.push({ row, message: 'Stock máximo inválido' }); continue; }
+    if (p.minStock != null && p.minStock < 0) { errors.push({ row, message: 'Stock mínimo inválido' }); continue; }
+    if (p.maxStock != null && p.maxStock < 0) { errors.push({ row, message: 'Stock máximo inválido' }); continue; }
     if (!p.unit) { errors.push({ row, message: 'Unidad requerida' }); continue; }
     if (p.initialStock == null || p.initialStock < 0) { errors.push({ row, message: 'Stock inicial inválido' }); continue; }
 
@@ -447,8 +448,8 @@ export const importProducts = async (tenantId: string, products: ImportProductIn
         taxPercentage: p.taxPercentage ?? 0,
         allowsDiscount: p.allowsDiscount ?? false,
         maxDiscount: p.maxDiscount ?? 0,
-        minStock: p.minStock,
-        maxStock: p.maxStock,
+        minStock: p.minStock ?? 0,
+        maxStock: p.maxStock ?? 0,
         sellOutOfStock: p.sellOutOfStock ?? false,
         unit,
       },

@@ -188,7 +188,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
               {errors.departmentId && <p className="text-red-500 text-xs mt-1">{errors.departmentId.message}</p>}
             </div>
             <div>
-              <label className={labelClass}>{req('Marca')}</label>
+              <label className={labelClass}>Marca</label>
               <select {...register('brandId')} className={inputClass}>
                 <option value="">Seleccionar marca</option>
                 {brands?.data?.map((brand: any) => (
