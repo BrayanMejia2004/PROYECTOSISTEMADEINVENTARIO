@@ -105,15 +105,21 @@ export const getInventoryReport = async (options: InventoryReportOptions) => {
 
 export const getProfitabilityReport = async (
   tenantId: string,
-  startDate: Date,
-  endDate: Date,
+  startDate?: Date,
+  endDate?: Date,
   branchId?: string
 ) => {
   const match: any = {
     tenantId: new mongoose.Types.ObjectId(tenantId),
-    createdAt: { $gte: startDate, $lte: endDate },
     status: 'completed',
   };
+  
+  if (startDate || endDate) {
+    match.createdAt = {};
+    if (startDate) match.createdAt.$gte = startDate;
+    if (endDate) match.createdAt.$lte = endDate;
+  }
+  
   if (branchId) match.branchId = new mongoose.Types.ObjectId(branchId);
 
   const report = await Sale.aggregate([

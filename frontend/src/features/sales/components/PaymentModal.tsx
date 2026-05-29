@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatCurrency } from '../../../lib/utils';
 import { NumberInput } from '../../../components/ui/NumberInput';
-import { Banknote, X, ArrowRight, CheckCircle, Hash, RotateCcw, Search, AlertCircle, Loader2 } from 'lucide-react';
+import { Banknote, CreditCard, Building2, RotateCcw, X, ArrowRight, CheckCircle, Hash, Search, AlertCircle, Loader2 } from 'lucide-react';
 import { useSaleByNumber } from '../hooks';
 import { Sale } from '../../../types';
 
@@ -13,9 +13,15 @@ const BANKS = [
   'Lulo Bank', 'Otro',
 ];
 
+const PAYMENT_METHODS = [
+  { value: 'cash' as const, label: 'Efectivo', icon: Banknote },
+  { value: 'card' as const, label: 'Tarjeta', icon: CreditCard },
+  { value: 'transfer' as const, label: 'Transferencia', icon: Building2 },
+  { value: 'exchange' as const, label: 'Intercambio', icon: RotateCcw },
+];
+
 interface PaymentModalProps {
   total: number;
-  paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
   onConfirm: (data: {
     amountReceived: number;
     change: number;
@@ -26,19 +32,21 @@ interface PaymentModalProps {
     cardReference?: string;
     exchangeFromSaleId?: string;
     exchangeCredit?: number;
+    paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
   }) => void;
   onCancel: () => void;
   isPending?: boolean;
 }
 
-export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPending }: PaymentModalProps) => {
+export const PaymentModal = ({ total, onConfirm, onCancel, isPending }: PaymentModalProps) => {
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'exchange'>('cash');
   const isCash = paymentMethod === 'cash';
   const isCard = paymentMethod === 'card';
   const isTransfer = paymentMethod === 'transfer';
   const isExchange = paymentMethod === 'exchange';
   const needsBankRef = isCard || isTransfer;
 
-  const [amountReceived, setAmountReceived] = useState(isCash ? 0 : total);
+  const [amountReceived, setAmountReceived] = useState(0);
   const [transferReference, setTransferReference] = useState('');
   const [transferBank, setTransferBank] = useState('');
   const [cardBank, setCardBank] = useState('');
@@ -64,12 +72,13 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
   const change = Math.max(0, amountReceived - total);
 
   useEffect(() => {
-    if (!isCash) setAmountReceived(total);
-  }, [isCash, total]);
-
-  useEffect(() => {
-    if (isCash && inputRef.current) inputRef.current.focus();
-  }, [isCash]);
+    if (isCash) {
+      setAmountReceived(0);
+      if (inputRef.current) inputRef.current.focus();
+    } else if (isCard || isTransfer) {
+      setAmountReceived(total);
+    }
+  }, [isCash, isCard, isTransfer, paymentMethod, total]);
 
   const handleSearchSale = () => {
     if (!exchangeSaleNumber.trim()) {
@@ -111,7 +120,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
         change: 0,
         exchangeFromSaleId: exchangeSale._id,
         exchangeCredit,
-        ...(extraAmount > 0 ? { paymentMethod: extraPaymentMethod } : { paymentMethod: 'exchange' as const }),
+        paymentMethod: extraAmount > 0 ? extraPaymentMethod : 'exchange',
         ...(extraAmount > 0 && extraPaymentMethod === 'transfer' ? {
           transferReference: extraTransferReference.trim(),
           transferBank: extraTransferBank,
@@ -135,8 +144,9 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
     }
 
     onConfirm({
-      amountReceived,
-      change,
+      amountReceived: isCash ? amountReceived : total,
+      change: isCash ? change : 0,
+      paymentMethod,
       ...(isTransfer ? { transferReference: transferReference.trim(), transferBank, transferAmount: total } : {}),
       ...(isCard ? { cardBank, cardReference: cardReference.trim() } : {}),
     });
@@ -157,7 +167,7 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
   };
 
   const paymentLabel = isCash ? 'Efectivo recibido' : 'Total a cobrar';
-  const methodLabel = isExchange ? 'Intercambio' : isCash ? 'Efectivo' : paymentMethod === 'card' ? 'Tarjeta' : 'Transferencia';
+  const methodLabel = isExchange ? 'Intercambio' : isCash ? 'Efectivo' : paymentMethod === 'card' ? 'Tarjeta' : paymentMethod === 'transfer' ? 'Transferencia' : '';
 
   const renderExchangeSection = () => (
     <>
@@ -348,6 +358,27 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
             </p>
           </div>
 
+          <div>
+            <p className="text-xs font-medium text-brand-muted mb-2">Método de pago</p>
+            <div className="grid grid-cols-4 gap-1.5 px-0.5">
+              {PAYMENT_METHODS.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => setPaymentMethod(value)}
+                  disabled={isPending}
+                  className={`flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg border text-xs font-medium transition-all ${
+                    paymentMethod === value
+                      ? 'border-brand bg-brand/10 text-brand'
+                      : 'border-gray-200 text-brand-muted hover:border-gray-300'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {isExchange ? renderExchangeSection() : (
             <>
               <div className="space-y-2">
@@ -423,23 +454,23 @@ export const PaymentModal = ({ total, paymentMethod, onConfirm, onCancel, isPend
               {error && <p className="text-xs text-red-500 text-center">{error}</p>}
 
               <div className={`rounded-xl border-2 px-5 py-4 flex items-center justify-between transition-all ${
-                change > 0 ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-gray-50'
+                isCash && change > 0 ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-gray-50'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    change > 0 ? 'bg-green-200' : 'bg-gray-200'
+                    isCash && change > 0 ? 'bg-green-200' : 'bg-gray-200'
                   }`}>
-                    <ArrowRight className={`w-4 h-4 ${change > 0 ? 'text-green-700' : 'text-gray-500'}`} />
+                    <ArrowRight className={`w-4 h-4 ${isCash && change > 0 ? 'text-green-700' : 'text-gray-500'}`} />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-brand-text">Vuelto</p>
-                    {change === 0 && !isCash && <p className="text-xs text-brand-muted">Pago exacto</p>}
+                    {!isCash && <p className="text-xs text-brand-muted">Pago exacto</p>}
                   </div>
                 </div>
                 <p className={`text-xl font-sans font-bold tabular-nums ${
-                  change > 0 ? 'text-green-600' : 'text-brand-muted'
+                  isCash && change > 0 ? 'text-green-600' : 'text-brand-muted'
                 }`}>
-                  {formatCurrency(change)}
+                  {formatCurrency(isCash ? change : 0)}
                 </p>
               </div>
             </>

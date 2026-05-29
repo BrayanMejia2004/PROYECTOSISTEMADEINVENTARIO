@@ -9,7 +9,7 @@ interface PosProductSearchProps {
   onAddToCart: (item: CartItem) => void;
 }
 
-export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
+export const PosProductSearch = ({ onAddToCart, cartItems = [] }: PosProductSearchProps & { cartItems?: { productId: string; quantity: number; stock: number }[] }) => {
   const [search, setSearch] = useState('');
   const [barcode, setBarcode] = useState('');
   const [barcodeFeedback, setBarcodeFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -57,6 +57,11 @@ export const PosProductSearch = ({ onAddToCart }: PosProductSearchProps) => {
   };
 
   const handleAddToCart = (product: any) => {
+    const cartItem = cartItems.find((item) => item.productId === product._id);
+    if (cartItem && cartItem.quantity >= cartItem.stock) {
+      setBarcodeFeedback({ ok: false, msg: 'Stock máximo alcanzado' });
+      return;
+    }
     onAddToCart({
       productId: product._id,
       productName: product.name,

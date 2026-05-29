@@ -16,7 +16,7 @@ export const getBranchComparison = async (startDate: string, endDate: string) =>
   return data;
 };
 
-export const getProfitabilityReport = async (startDate: string, endDate: string, branchId?: string) => {
+export const getProfitabilityReport = async (startDate?: string, endDate?: string, branchId?: string) => {
   const { data } = await api.get(ENDPOINTS.REPORTS_PROFITABILITY, { params: { startDate, endDate, branchId } });
   return data;
 };

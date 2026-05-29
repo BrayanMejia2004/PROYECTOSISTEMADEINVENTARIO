@@ -111,11 +111,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setCart(cartId, (prev) => {
           const existing = prev.find((item) => item.productId === newItem.productId);
           if (existing) {
+            if (existing.quantity + newItem.quantity > existing.stock) {
+              return prev;
+            }
             return prev.map((item) =>
               item.productId === newItem.productId
                 ? { ...item, quantity: item.quantity + newItem.quantity }
                 : item
             );
+          }
+          if (newItem.quantity > newItem.stock) {
+            return prev;
           }
           return [...prev, newItem];
         });
@@ -125,7 +131,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (quantity < 1) return;
         setCart(cartId, (prev) =>
           prev.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item
+            item.productId === productId && quantity <= item.stock ? { ...item, quantity } : item
           )
         );
       };

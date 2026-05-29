@@ -39,14 +39,11 @@ export const getInventoryReport = async (req: AuthRequest, res: Response, next: 
 export const getProfitabilityReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { startDate, endDate, branchId: queryBranchId } = req.query;
-    if (!startDate || !endDate) {
-      throw new Error('startDate and endDate are required');
-    }
     const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
     const report = await reportService.getProfitabilityReport(
       req.user!.tenantId,
-      new Date(startDate as string),
-      (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })(),
+      startDate ? new Date(startDate as string) : undefined,
+      endDate ? (() => { const d = new Date(endDate as string); d.setHours(23, 59, 59, 999); return d; })() : undefined,
       branchId
     );
     sendSuccess(res, 'Profitability report generated', report);

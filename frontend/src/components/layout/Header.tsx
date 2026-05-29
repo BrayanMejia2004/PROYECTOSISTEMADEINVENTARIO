@@ -20,14 +20,12 @@ export const Header = ({ onMenuToggle, onDesktopMenuToggle }: HeaderProps) => {
         >
           <Menu className="w-5 h-5" />
         </button>
-        {user?.role === 'cashier' && (
-          <button
-            onClick={onDesktopMenuToggle}
-            className="hidden lg:flex p-2 -ml-2 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
+        <button
+          onClick={onDesktopMenuToggle}
+          className="hidden lg:flex p-2 -ml-2 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
         <h2 className="text-lg font-sans font-semibold text-brand-text truncate">
           {tenant?.name}
         </h2>

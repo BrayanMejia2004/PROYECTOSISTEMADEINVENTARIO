@@ -1,7 +1,8 @@
 import { SalesChart } from '../features/reports/components/SalesChart';
 import { StockValueCard } from '../features/reports/components/StockValueCard';
-import { ProfitCard } from '../features/reports/components/ProfitCard';
-import { TopProductsCard } from '../features/reports/components/TopProductsCard';
+import { StockPriceValueCard } from '../features/reports/components/StockPriceValueCard';
+import { InventoryCostCard } from '../features/reports/components/InventoryCostCard';
+import { SalesProfitCard } from '../features/reports/components/SalesProfitCard';
 import { BranchComparison } from '../features/reports/components/BranchComparison';
 import { BarChart3 } from 'lucide-react';
 
@@ -13,10 +14,11 @@ export const ReportsPage = () => {
         <p className="text-sm text-brand-muted mt-1">Visualiza las métricas de tu negocio</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start mb-6">
         <StockValueCard />
-        <ProfitCard />
-        <TopProductsCard />
+        <StockPriceValueCard />
+        <InventoryCostCard />
+        <SalesProfitCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

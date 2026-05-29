@@ -148,7 +148,7 @@ export const PosPage = () => {
       )}
       <div className="flex-1 flex flex-col lg:flex-row gap-2 min-h-0">
         <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col">
-          <PosProductSearch onAddToCart={handleAddToCart} />
+          <PosProductSearch onAddToCart={handleAddToCart} cartItems={cartItems} />
         </div>
         <div className="w-full lg:flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col">
           <PosCart

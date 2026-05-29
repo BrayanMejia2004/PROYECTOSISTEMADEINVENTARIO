@@ -3,14 +3,7 @@ import { CartItem } from '../types';
 import { formatCurrency } from '../../../lib/utils';
 import { PosCustomerSelect } from './PosCustomerSelect';
 import { PaymentModal } from './PaymentModal';
-import { Trash2, ShoppingCart, Minus, Plus, CreditCard, Banknote, Building2, AlertCircle, RotateCcw } from 'lucide-react';
-
-const PAYMENT_METHODS = [
-  { value: 'cash' as const, label: 'Efectivo', icon: Banknote },
-  { value: 'card' as const, label: 'Tarjeta', icon: CreditCard },
-  { value: 'transfer' as const, label: 'Transferencia', icon: Building2 },
-  { value: 'exchange' as const, label: 'Intercambio', icon: RotateCcw },
-];
+import { Trash2, ShoppingCart, Minus, Plus, Banknote, AlertCircle } from 'lucide-react';
 
 interface PosCartProps {
   items: CartItem[];
@@ -37,7 +30,6 @@ interface PosCartProps {
 
 export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, total, subtotal, tax, discount, isPending }: PosCartProps) => {
   const [selectedCustomer, setSelectedCustomer] = useState<{ name: string; phone?: string } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'exchange'>('cash');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleCheckout = (paymentData: {
@@ -45,19 +37,18 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
     transferReference?: string; transferBank?: string; transferAmount?: number;
     cardBank?: string; cardReference?: string;
     exchangeFromSaleId?: string; exchangeCredit?: number;
-    paymentMethod?: 'cash' | 'card' | 'transfer' | 'exchange';
+    paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
   }) => {
-    const pm = paymentData.exchangeFromSaleId ? (paymentData.paymentMethod || 'exchange') : paymentMethod;
     onCheckout({
       customerName: selectedCustomer?.name,
       customerPhone: selectedCustomer?.phone,
-      paymentMethod: pm,
-      ...(pm === 'transfer' ? {
+      paymentMethod: paymentData.paymentMethod,
+      ...(paymentData.paymentMethod === 'transfer' ? {
         transferReference: paymentData.transferReference,
         transferBank: paymentData.transferBank,
         transferAmount: paymentData.transferAmount,
       } : {}),
-      ...(pm === 'card' ? {
+      ...(paymentData.paymentMethod === 'card' ? {
         cardBank: paymentData.cardBank,
         cardReference: paymentData.cardReference,
       } : {}),
@@ -115,7 +106,8 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
                 </span>
                 <button
                   onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+                  disabled={item.quantity >= item.stock}
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -138,24 +130,6 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
 
       {items.length > 0 && (
         <div className="border-t border-gray-100 pt-2 mt-2 space-y-2 shrink-0">
-          <div className="grid grid-cols-4 gap-1">
-            {PAYMENT_METHODS.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                onClick={() => setPaymentMethod(value)}
-                title={label}
-                className={`flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-lg border text-[10px] font-medium transition-all leading-none ${
-                  paymentMethod === value
-                    ? 'border-brand bg-brand/10 text-brand'
-                    : 'border-gray-200 text-brand-muted hover:border-gray-300 hover:text-brand-text'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-
           <div className="space-y-0.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-brand-muted">Subtotal</span>
@@ -211,7 +185,6 @@ export const PosCart = ({ items, onUpdateQuantity, onRemoveItem, onCheckout, tot
       {showPaymentModal && (
         <PaymentModal
           total={total}
-          paymentMethod={paymentMethod}
           onConfirm={(data) => handleCheckout(data)}
           onCancel={() => setShowPaymentModal(false)}
           isPending={isPending}
