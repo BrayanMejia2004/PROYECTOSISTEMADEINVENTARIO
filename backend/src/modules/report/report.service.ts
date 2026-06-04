@@ -199,3 +199,31 @@ export const getBranchComparison = async (tenantId: string, startDate: Date, end
 
   return report;
 };
+
+export const getHistoricalSummary = async (tenantId: string) => {
+  const [result] = await Product.aggregate([
+    {
+      $match: {
+        tenantId: new mongoose.Types.ObjectId(tenantId),
+        isActive: true,
+        historicalSales: { $gt: 0 },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: { $multiply: ['$historicalSales', '$price'] } },
+        totalCost: { $sum: { $multiply: ['$historicalSales', '$costPrice'] } },
+      },
+    },
+  ]).allowDiskUse(true);
+
+  const totalRevenue = result?.totalRevenue || 0;
+  const totalCost = result?.totalCost || 0;
+
+  return {
+    totalRevenue,
+    totalCost,
+    totalProfit: totalRevenue - totalCost,
+  };
+};

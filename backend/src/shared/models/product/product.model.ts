@@ -23,6 +23,7 @@ const productSchema = new mongoose.Schema({
   sellOutOfStock: { type: Boolean, default: false },
   unit: { type: String, default: 'unidad' },
   isActive: { type: Boolean, default: true },
+  historicalSales: { type: Number, default: 0 },
 }, { timestamps: true });
 
 productSchema.index({ tenantId: 1, sku: 1 }, { unique: true });

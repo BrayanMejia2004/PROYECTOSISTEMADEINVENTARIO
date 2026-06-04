@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import * as productService from './product.service';
+import cloudinary from '../../config/cloudinary/cloudinary';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { AuthRequest } from '../../shared/types/express/express';
 
@@ -103,6 +104,31 @@ export const exportProducts = async (req: AuthRequest, res: Response, next: Next
     res.setHeader('Content-Disposition', `attachment; filename="inventario-${Date.now()}.xlsx"`);
     await workbook.xlsx.write(res);
     res.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadProductImage = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      return sendSuccess(res, 'No image provided', null);
+    }
+
+    const file = req.file;
+
+    const result = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: `tenant-${req.user!.tenantId}`, resource_type: 'image' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(file.buffer);
+    });
+
+    sendSuccess(res, 'Image uploaded', { url: result.secure_url });
   } catch (error) {
     next(error);
   }

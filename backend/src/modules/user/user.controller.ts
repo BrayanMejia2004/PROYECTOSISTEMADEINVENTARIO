@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import * as userService from './user.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { AuthRequest } from '../../shared/types/express/express';
@@ -30,7 +30,7 @@ export const createUser = async (req: AuthRequest, res: Response, next: NextFunc
     const user = await userService.createUser({
       ...req.body,
       tenantId: req.user!.tenantId,
-    });
+    }, req.user!.userId);
     sendSuccess(res, 'User created', user, 201);
   } catch (error) {
     next(error);
@@ -42,7 +42,9 @@ export const updateUser = async (req: AuthRequest, res: Response, next: NextFunc
     const user = await userService.updateUser(
       req.params.id,
       req.user!.tenantId,
-      req.body
+      req.body,
+      req.user!.role,
+      req.user!.userId
     );
     sendSuccess(res, 'User updated', user);
   } catch (error) {
@@ -52,7 +54,7 @@ export const updateUser = async (req: AuthRequest, res: Response, next: NextFunc
 
 export const deleteUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await userService.deleteUser(req.params.id, req.user!.tenantId);
+    await userService.deleteUser(req.params.id, req.user!.tenantId, req.user!.role, req.user!.userId);
     sendSuccess(res, 'User deleted');
   } catch (error) {
     next(error);

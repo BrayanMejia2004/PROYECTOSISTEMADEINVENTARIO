@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProfitabilityReport } from '../api';
+import { getProfitabilityReport, getHistoricalSummary } from '../api';
 import { formatCurrency, formatNumber } from '../../../lib/utils';
 import { DollarSign, AlertCircle } from 'lucide-react';
 
@@ -12,12 +12,18 @@ export const InventoryCostCard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getProfitabilityReport();
+        const [profitResponse, historicalResponse] = await Promise.all([
+          getProfitabilityReport(),
+          getHistoricalSummary(),
+        ]);
 
-        const products = response.data || [];
+        const products = profitResponse.data || [];
         const cost = products.reduce((sum: number, p: any) => sum + (p.totalCost || 0), 0);
         const units = products.reduce((sum: number, p: any) => sum + (p.totalSold || 0), 0);
-        setTotalCost(cost);
+
+        const historicalCost = historicalResponse.data?.totalCost || 0;
+
+        setTotalCost(cost + historicalCost);
         setTotalUnits(units);
       } catch (err) {
         setError((err as any)?.message || 'Error al cargar');

@@ -30,7 +30,9 @@ export const PERMISSIONS = {
 
   // Usuarios
   'users:read': ['owner', 'admin'],
-  'users:create-cashier': ['owner'],
+  'users:create': ['owner', 'admin'],
+  'users:update': ['owner', 'admin'],
+  'users:delete': ['owner'],
 
   // Tenant
   'branches:read': ['owner', 'admin', 'cashier'],

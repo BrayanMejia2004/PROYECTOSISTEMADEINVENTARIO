@@ -3,8 +3,9 @@ import { useProducts, useDeleteProduct } from '../hooks';
 import { Product } from '../../../types';
 import { useNavigate } from 'react-router-dom';
 import { usePermission } from '../../../hooks/usePermission';
+import { useDebouncedValue } from '../../../hooks/useDebounce';
 import { formatCurrency, formatNumber } from '../../../lib/utils';
-import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
 
@@ -20,15 +21,18 @@ const UNIT_LABELS: Record<string, string> = {
   pack: 'Paquete',
 };
 
-export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOnly?: boolean }) => {
+export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: string; readOnly?: boolean; userRole?: string }) => {
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string }>({ open: false });
   const [showSuccess, setShowSuccess] = useState(false);
-  const { data, isLoading } = useProducts({ page, limit: PAGE_SIZE, branchId });
+  const { data, isLoading } = useProducts({ page, limit: PAGE_SIZE, branchId, search: debouncedSearch || undefined });
   const noBranchSelected = branchId === undefined;
   const { mutate: deleteProduct } = useDeleteProduct();
   const navigate = useNavigate();
   const { hasPermission } = usePermission();
+  const isAdmin = userRole === 'admin';
 
   const products = data?.data || [];
   const meta = data?.meta;
@@ -132,6 +136,21 @@ export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOn
 
   return (
     <div>
+      {isAdmin && (
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="relative max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o SKU..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

@@ -20,3 +20,8 @@ export const getProfitabilityReport = async (startDate?: string, endDate?: strin
   const { data } = await api.get(ENDPOINTS.REPORTS_PROFITABILITY, { params: { startDate, endDate, branchId } });
   return data;
 };
+
+export const getHistoricalSummary = async () => {
+  const { data } = await api.get(ENDPOINTS.REPORTS_HISTORICAL_SUMMARY);
+  return data;
+};

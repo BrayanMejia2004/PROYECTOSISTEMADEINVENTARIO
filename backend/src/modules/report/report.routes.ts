@@ -12,5 +12,6 @@ router.get('/sales', checkPermission('reports:branch'), reportController.getSale
 router.get('/inventory', checkPermission('reports:branch'), reportController.getInventoryReport);
 router.get('/profitability', checkPermission('reports:branch'), reportController.getProfitabilityReport);
 router.get('/branches', checkPermission('reports:global'), reportController.getBranchComparison);
+router.get('/historical-summary', checkPermission('reports:branch'), reportController.getHistoricalSummary);
 
 export default router;

@@ -23,6 +23,7 @@ const SYSTEM_FIELDS = [
   { key: 'allowsDiscount', label: 'Permite Descuento', required: false },
   { key: 'maxDiscount', label: '% Desc Máx', required: false },
   { key: 'sellOutOfStock', label: 'Vender Sin Stock', required: false },
+  { key: 'historicalSales', label: 'Inventario (Vendidos)', required: false },
 ];
 
 const AUTO_MAP: Record<string, string[]> = {
@@ -45,6 +46,7 @@ const AUTO_MAP: Record<string, string[]> = {
   maxDiscount: ['% descuento', 'descuento máx', 'max descuento'],
   initialStock: ['stock inicial', 'inicial', 'stock actual', 'cantidad inicial', 'stock'],
   sellOutOfStock: ['vender sin stock', 'sin stock', 'agotado'],
+  historicalSales: ['inventario', 'vendidos', 'ventas', 'histórico', 'historico', 'cantidad vendida'],
 };
 
 interface ImportModalProps {
@@ -125,7 +127,7 @@ export const ImportModal = ({ onClose }: ImportModalProps) => {
         const col = mapping[field.key];
         if (!col) continue;
         let val = row[col];
-        if (['costPrice', 'price', 'wholesalePrice', 'specialPrice', 'minStock', 'maxStock', 'maxDiscount', 'taxPercentage', 'initialStock'].includes(field.key)) {
+        if (['costPrice', 'price', 'wholesalePrice', 'specialPrice', 'minStock', 'maxStock', 'maxDiscount', 'taxPercentage', 'initialStock', 'historicalSales'].includes(field.key)) {
           val = Number(val) || 0;
         }
         if (['applyTax', 'allowsDiscount', 'sellOutOfStock'].includes(field.key)) {

@@ -6,6 +6,7 @@ interface TokenPayload {
   tenantId: string;
   role: string;
   branchId?: string;
+  tokenVersion?: number;
 }
 
 export const signToken = (payload: TokenPayload): string => {

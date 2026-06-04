@@ -11,4 +11,5 @@ export { Sale, SaleItem } from './sale/sale.model';
 export { default as CashierShift } from './cashierShift/cashierShift.model';
 export { default as CashMovement } from './cashMovement/cashMovement.model';
 export { Counter } from './counter/counter.model';
+export { AuditLog } from './auditLog/auditLog.model';
 export type { MovementType } from './stockMovement/stockMovement.model';

@@ -24,8 +24,8 @@ export const RegisterTenantPage = () => {
       const { confirmPassword: _, ...payload } = data;
       await registerTenant(payload);
       navigate('/login');
-    } catch {
-      setError('Error al registrar. Verifica los datos.');
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Error al registrar. Verifica los datos.');
     }
   };
 

@@ -27,10 +27,11 @@ export const getCustomers = async (
   const query: any = { tenantId, isActive: true };
 
   if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
+      { name: { $regex: escaped, $options: 'i' } },
+      { phone: { $regex: escaped, $options: 'i' } },
+      { email: { $regex: escaped, $options: 'i' } },
     ];
   }
 
@@ -51,7 +52,8 @@ export const getCustomerById = async (customerId: string, tenantId: string) => {
 };
 
 export const findCustomerByNamePhone = async (tenantId: string, name: string, phone?: string) => {
-  const query: any = { tenantId, name: { $regex: `^${name}$`, $options: 'i' }, isActive: true };
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const query: any = { tenantId, name: { $regex: `^${escapedName}$`, $options: 'i' }, isActive: true };
   if (phone) query.phone = phone;
   return Customer.findOne(query);
 };

@@ -3,6 +3,7 @@ export const ENDPOINTS = {
   LOGIN: '/auth/login',
   REGISTER_TENANT: '/auth/register-tenant',
   PROFILE: '/auth/profile',
+  LOGOUT: '/auth/logout',
 
   // Tenant
   TENANT: '/tenant',
@@ -42,6 +43,7 @@ export const ENDPOINTS = {
   REPORTS_INVENTORY: '/reports/inventory',
   REPORTS_PROFITABILITY: '/reports/profitability',
   REPORTS_BRANCHES: '/reports/branches',
+  REPORTS_HISTORICAL_SUMMARY: '/reports/historical-summary',
 
   // Cashier Shifts
   CASHIER_SHIFTS: '/cashier-shifts',

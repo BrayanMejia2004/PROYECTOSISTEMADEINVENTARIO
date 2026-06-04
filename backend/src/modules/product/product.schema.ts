@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export const createProductSchema = z.object({
-  sku: z.string().min(1, 'SKU requerido'),
-  barcode: z.string().min(1, 'Código de barras requerido'),
-  name: z.string().min(2, 'Nombre mínimo 2 caracteres'),
-  description: z.string().optional(),
+  sku: z.string().min(1, 'SKU requerido').max(100),
+  barcode: z.string().min(1, 'Código de barras requerido').max(100),
+  name: z.string().min(2, 'Nombre mínimo 2 caracteres').max(200),
+  description: z.string().max(2000).optional(),
   departmentId: z.string().min(1, 'Departamento requerido'),
   brandId: z.string().min(1, 'Marca requerida'),
   supplierId: z.string().optional().transform(v => v === '' ? undefined : v),
@@ -25,10 +25,10 @@ export const createProductSchema = z.object({
 });
 
 export const updateProductSchema = z.object({
-  sku: z.string().min(1).optional(),
-  barcode: z.string().optional(),
-  name: z.string().min(2).optional(),
-  description: z.string().optional(),
+  sku: z.string().min(1).max(100).optional(),
+  barcode: z.string().max(100).optional(),
+  name: z.string().min(2).max(200).optional(),
+  description: z.string().max(2000).optional(),
   departmentId: z.string().optional().transform(v => v === '' ? undefined : v),
   brandId: z.string().optional().transform(v => v === '' ? undefined : v),
   supplierId: z.string().optional().transform(v => v === '' ? undefined : v),
@@ -46,4 +46,9 @@ export const updateProductSchema = z.object({
   sellOutOfStock: z.boolean().optional(),
   stock: z.number().min(0).optional(),
   unit: z.string().optional(),
+});
+
+export const importProductsSchema = z.object({
+  products: z.array(z.any()).min(1, 'Al menos un producto requerido').max(5000, 'Máximo 5000 productos'),
+  skipDuplicates: z.boolean().optional(),
 });

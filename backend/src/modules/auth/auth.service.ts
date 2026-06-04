@@ -37,7 +37,7 @@ export const registerTenant = async (input: RegisterTenantInput) => {
     });
     await tenant.save({ session });
 
-    const hashedPassword = await bcrypt.hash(input.password, 10);
+    const hashedPassword = await bcrypt.hash(input.password, 12);
     const user = new User({
       tenantId: tenant._id.toString(),
       email: input.email,
@@ -92,17 +92,37 @@ export const login = async (input: LoginInput) => {
     throw ApiError.unauthorized('Invalid credentials');
   }
 
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+    throw ApiError.unauthorized(`Cuenta bloqueada. Intenta de nuevo en ${minutesLeft} minuto(s).`);
+  }
+
   const isMatch = await bcrypt.compare(input.password, user.password);
   if (!isMatch) {
+    user.loginAttempts = (user.loginAttempts ?? 0) + 1;
+    if (user.loginAttempts >= 5) {
+      user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      user.loginAttempts = 0;
+      await user.save();
+      throw ApiError.unauthorized('Cuenta bloqueada por 15 minutos tras múltiples intentos fallidos.');
+    }
+    await user.save();
     throw ApiError.unauthorized('Invalid credentials');
   }
 
-  const token = signToken({
-    userId: user._id.toString(),
-    tenantId: tenant._id.toString(),
-    role: user.role,
-    branchId: user.branchId?.toString() ?? undefined,
-  });
+  if (user.loginAttempts > 0) {
+    user.loginAttempts = 0;
+    user.lockedUntil = null;
+    await user.save();
+  }
+
+    const token = signToken({
+      userId: user._id.toString(),
+      tenantId: tenant._id.toString(),
+      role: user.role,
+      branchId: user.branchId?.toString() ?? undefined,
+      tokenVersion: user.tokenVersion ?? 0,
+    });
 
   return {
     token,
@@ -122,8 +142,8 @@ export const login = async (input: LoginInput) => {
   };
 };
 
-export const getProfile = async (userId: string) => {
-  const user = await User.findById(userId).select('-password');
+export const getProfile = async (userId: string, tenantId: string) => {
+  const user = await User.findOne({ _id: userId, tenantId }).select('-password');
   if (!user) {
     throw ApiError.notFound('User not found');
   }

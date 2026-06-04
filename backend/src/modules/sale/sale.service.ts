@@ -146,6 +146,17 @@ export const createSale = async (input: CreateSaleInput) => {
         throw ApiError.notFound(`Product not found: ${item.productId}`);
       }
 
+      const validPrices: number[] = [product.price];
+      if (product.wholesalePrice != null) validPrices.push(product.wholesalePrice);
+      if (product.specialPrice != null) validPrices.push(product.specialPrice);
+
+      const priceMatch = validPrices.some(p => Math.abs(item.unitPrice - p) < 0.01);
+      if (!priceMatch) {
+        throw ApiError.badRequest(
+          `Precio inválido para "${product.name}". Esperado: ${validPrices.map(p => `$${p.toLocaleString('es-CO')}`).join(' / ')}`
+        );
+      }
+
       const stock = await Stock.findOne({
         tenantId: input.tenantId,
         branchId: input.branchId,
@@ -189,6 +200,10 @@ export const createSale = async (input: CreateSaleInput) => {
     const tax = input.tax || 0;
     const discount = input.discount || 0;
     const total = subtotal + tax - discount;
+
+    if (Math.abs(total - preTotal) > 0.01) {
+      throw ApiError.badRequest('Error al calcular el total de la venta. Intenta de nuevo.');
+    }
 
     if (discount > Math.round(maxAllowedDiscountAmount)) {
       throw ApiError.badRequest(
@@ -256,13 +271,17 @@ export const getSales = async (
 
   if (status) query.status = status;
   if (paymentMethod) query.paymentMethod = paymentMethod;
-  if (customerName) query.customerName = { $regex: customerName, $options: 'i' };
+  if (customerName) {
+    const escapedCustomerName = customerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query.customerName = { $regex: escapedCustomerName, $options: 'i' };
+  }
   if (userId) query.userId = userId;
 
   if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
-      { saleNumber: { $regex: search, $options: 'i' } },
-      { customerName: { $regex: search, $options: 'i' } },
+      { saleNumber: { $regex: escaped, $options: 'i' } },
+      { customerName: { $regex: escaped, $options: 'i' } },
     ];
   }
 
@@ -314,13 +333,17 @@ export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFi
   }
 
   if (paymentMethod) match.paymentMethod = paymentMethod;
-  if (customerName) match.customerName = { $regex: customerName, $options: 'i' };
+  if (customerName) {
+    const escapedCustomerName = customerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    match.customerName = { $regex: escapedCustomerName, $options: 'i' };
+  }
   if (userId) match.userId = new mongoose.Types.ObjectId(userId);
 
   if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     match.$or = [
-      { saleNumber: { $regex: search, $options: 'i' } },
-      { customerName: { $regex: search, $options: 'i' } },
+      { saleNumber: { $regex: escaped, $options: 'i' } },
+      { customerName: { $regex: escaped, $options: 'i' } },
     ];
   }
 

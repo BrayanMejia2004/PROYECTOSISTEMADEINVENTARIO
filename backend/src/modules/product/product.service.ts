@@ -344,6 +344,7 @@ interface ImportProductInput {
   sellOutOfStock?: boolean;
   unit: string;
   initialStock?: number;
+  historicalSales?: number;
 }
 
 export const importProducts = async (tenantId: string, products: ImportProductInput[], branchId?: string, skipDuplicates = false) => {
@@ -453,6 +454,7 @@ export const importProducts = async (tenantId: string, products: ImportProductIn
         maxStock: p.maxStock ?? 0,
         sellOutOfStock: p.sellOutOfStock ?? false,
         unit,
+        historicalSales: p.historicalSales ?? 0,
       },
     });
   }

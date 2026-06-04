@@ -68,3 +68,12 @@ export const getBranchComparison = async (req: AuthRequest, res: Response, next:
     next(error);
   }
 };
+
+export const getHistoricalSummary = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const summary = await reportService.getHistoricalSummary(req.user!.tenantId);
+    sendSuccess(res, 'Historical summary', summary);
+  } catch (error) {
+    next(error);
+  }
+};

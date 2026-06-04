@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { validate } from '../../middlewares/validate/validate.middleware';
+import { sanitizePagination } from '../../middlewares/validate/query.middleware';
 import { checkPermission } from '../../middlewares/authorize/authorize.middleware';
 import { authenticate } from '../../middlewares/auth/auth.middleware';
 import { resolveTenant as resolveTenantMiddleware } from '../../middlewares/tenant/tenant.middleware';
@@ -10,9 +11,9 @@ const router = Router();
 
 router.use(authenticate, resolveTenantMiddleware);
 
-router.get('/transfers', checkPermission('sales:read', true), saleController.getTransferSales);
+router.get('/transfers', checkPermission('sales:read', true), sanitizePagination, saleController.getTransferSales);
 router.get('/summary', checkPermission('sales:read', true), saleController.getSalesSummary);
-router.get('/', checkPermission('sales:read', true), saleController.getSales);
+router.get('/', checkPermission('sales:read', true), sanitizePagination, saleController.getSales);
 router.get('/by-number/:saleNumber', checkPermission('sales:read', true), saleController.getSaleByNumber);
 router.post('/', checkPermission('sales:create', true), validate(createSaleSchema), saleController.createSale);
 router.get('/:id/pdf', checkPermission('sales:read', true), saleController.getSalePdf);

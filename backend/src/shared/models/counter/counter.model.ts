@@ -7,7 +7,7 @@ export interface ICounter extends Document {
 }
 
 const counterSchema = new mongoose.Schema({
-  tenantId: { type: String, required: true },
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
   key: { type: String, required: true },
   seq: { type: Number, default: 0 },
 });

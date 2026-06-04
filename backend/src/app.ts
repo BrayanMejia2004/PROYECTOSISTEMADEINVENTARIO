@@ -1,5 +1,6 @@
 import express from 'express';
-import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -12,7 +13,25 @@ import { notFound } from './middlewares/notFound/notFound.middleware';
 
 const app = express();
 
-app.use(helmet());
+app.use((_req, res, next) => {
+  res.setHeader('X-Request-ID', uuidv4());
+  next();
+});
+
+app.use(cookieParser());
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.cloudinary.com"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'"],
+    },
+  },
+}));
 const allowedOrigins = env.CORS_ORIGINS.split(',').map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, callback) => {
@@ -26,8 +45,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use(express.json({ limit: '5mb' }));
 
 const limiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
@@ -35,7 +53,9 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
+app.use(morgan(':method :url :status :response-time ms', {
+  stream: { write: (msg) => logger.info(msg.trim()) },
+}));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

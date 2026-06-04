@@ -6,11 +6,10 @@ import { User, Tenant } from '../types';
 interface AuthContextType {
   user: User | null;
   tenant: Tenant | null;
-  token: string | null;
   loading: boolean;
   login: (email: string, password: string, tenantSlug: string) => Promise<void>;
   registerTenant: (data: any) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -19,24 +18,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+    fetchProfile();
+  }, []);
 
   const fetchProfile = async () => {
     try {
       const { data } = await api.get(ENDPOINTS.PROFILE);
       setUser(data.data.user);
       setTenant(data.data.tenant);
-    } catch (error) {
-      logout();
+    } catch (_error) {
+      // No autenticado, ignorar silenciosamente
     } finally {
       setLoading(false);
     }
@@ -44,21 +38,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string, tenantSlug: string) => {
     const { data } = await api.post(ENDPOINTS.LOGIN, { email, password, tenantSlug });
-    localStorage.setItem('token', data.data.token);
-    setToken(data.data.token);
     setUser(data.data.user);
     setTenant(data.data.tenant);
   };
 
-  const registerTenant = async (data: any) => {
-    await api.post(ENDPOINTS.REGISTER_TENANT, data);
+  const registerTenant = async (registerData: any) => {
+    await api.post(ENDPOINTS.REGISTER_TENANT, registerData);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await api.post(ENDPOINTS.LOGOUT);
+    } catch (_error) {
+      // Ignorar error en logout
+    }
     sessionStorage.removeItem('pos-carts');
     sessionStorage.removeItem('pos-cajas');
-    setToken(null);
     setUser(null);
     setTenant(null);
   };
@@ -68,12 +63,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         tenant,
-        token,
         loading,
         login,
         registerTenant,
         logout,
-        isAuthenticated: !!token,
+        isAuthenticated: !!user,
       }}
     >
       {children}

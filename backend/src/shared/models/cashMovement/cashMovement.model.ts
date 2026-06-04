@@ -10,5 +10,6 @@ const cashMovementSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 cashMovementSchema.index({ shiftId: 1, createdAt: -1 });
+cashMovementSchema.index({ tenantId: 1, branchId: 1, shiftId: 1 });
 
 export default mongoose.model('CashMovement', cashMovementSchema);
