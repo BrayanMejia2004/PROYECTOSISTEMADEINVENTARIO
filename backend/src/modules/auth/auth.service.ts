@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../shared/utils/jwt/jwt';
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../shared/utils/jwt/jwt';
 import Tenant from '../../shared/models/tenant/tenant.model';
 import User from '../../shared/models/user/user.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
@@ -19,6 +19,23 @@ interface LoginInput {
   password: string;
   tenantSlug: string;
 }
+
+const generateTokens = (user: any, tenant: any) => {
+  const accessToken = signAccessToken({
+    userId: user._id.toString(),
+    tenantId: tenant._id.toString(),
+    role: user.role,
+    branchId: user.branchId?.toString() ?? undefined,
+    tokenVersion: user.tokenVersion ?? 0,
+  });
+
+  const refreshToken = signRefreshToken({
+    userId: user._id.toString(),
+    tokenVersion: user.tokenVersion ?? 0,
+  });
+
+  return { accessToken, refreshToken };
+};
 
 export const registerTenant = async (input: RegisterTenantInput) => {
   const session = await mongoose.startSession();
@@ -52,14 +69,11 @@ export const registerTenant = async (input: RegisterTenantInput) => {
     await session.commitTransaction();
     session.endSession();
 
-    const token = signToken({
-      userId: user._id.toString(),
-      tenantId: tenant._id.toString(),
-      role: user.role,
-    });
+    const { accessToken, refreshToken } = generateTokens(user, tenant);
 
     return {
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user._id.toString(),
         email: user.email,
@@ -116,23 +130,18 @@ export const login = async (input: LoginInput) => {
     await user.save();
   }
 
-    const token = signToken({
-      userId: user._id.toString(),
-      tenantId: tenant._id.toString(),
-      role: user.role,
-      branchId: user.branchId?.toString() ?? undefined,
-      tokenVersion: user.tokenVersion ?? 0,
-    });
+  const { accessToken, refreshToken } = generateTokens(user, tenant);
 
   return {
-    token,
+    accessToken,
+    refreshToken,
     user: {
       id: user._id.toString(),
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-    branchId: user.branchId?.toString() ?? undefined,
+      branchId: user.branchId?.toString() ?? undefined,
     },
     tenant: {
       id: tenant._id.toString(),
@@ -140,6 +149,63 @@ export const login = async (input: LoginInput) => {
       slug: tenant.slug,
     },
   };
+};
+
+export const refreshTokens = async (refreshToken: string) => {
+  let payload;
+  try {
+    payload = verifyRefreshToken(refreshToken);
+  } catch {
+    throw ApiError.unauthorized('Refresh token inválido o expirado');
+  }
+
+  const user = await User.findById(payload.userId);
+  if (!user || !user.isActive) {
+    throw ApiError.unauthorized('Usuario no encontrado o inactivo');
+  }
+
+  if (user.tokenVersion !== payload.tokenVersion) {
+    throw ApiError.unauthorized('Sesión inválida. Inicia sesión nuevamente.');
+  }
+
+  const tenant = await Tenant.findById(user.tenantId);
+  if (!tenant || !tenant.isActive) {
+    throw ApiError.unauthorized('Tenant no encontrado o inactivo');
+  }
+
+  const accessToken = signAccessToken({
+    userId: user._id.toString(),
+    tenantId: tenant._id.toString(),
+    role: user.role,
+    branchId: user.branchId?.toString() ?? undefined,
+    tokenVersion: user.tokenVersion,
+  });
+
+  return {
+    accessToken,
+    user: {
+      id: user._id.toString(),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      branchId: user.branchId?.toString() ?? undefined,
+    },
+    tenant: {
+      id: tenant._id.toString(),
+      name: tenant.name,
+      slug: tenant.slug,
+    },
+  };
+};
+
+export const logout = async (refreshToken: string) => {
+  try {
+    const payload = verifyRefreshToken(refreshToken);
+    await User.findByIdAndUpdate(payload.userId, { $inc: { tokenVersion: 1 } });
+  } catch {
+    // Si el refresh token ya es inválido, igual limpiamos la cookie
+  }
 };
 
 export const getProfile = async (userId: string, tenantId: string) => {

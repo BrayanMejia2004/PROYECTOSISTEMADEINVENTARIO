@@ -1,13 +1,6 @@
 import api from '../../api/axios';
 import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse } from '../../types';
-import { User, Tenant } from '../../types';
-
-interface LoginResponse {
-  token: string;
-  user: User;
-  tenant: Tenant;
-}
+import { ApiResponse, LoginResponse, RefreshResponse } from '../../types';
 
 interface RegisterTenantInput {
   tenantName: string;
@@ -33,7 +26,16 @@ export const registerTenant = async (input: RegisterTenantInput): Promise<LoginR
   return data.data;
 };
 
-export const getProfile = async (): Promise<{ user: User; tenant: Tenant }> => {
-  const { data } = await api.get<ApiResponse<{ user: User; tenant: Tenant }>>(ENDPOINTS.PROFILE);
+export const refreshToken = async (): Promise<RefreshResponse> => {
+  const { data } = await api.post<ApiResponse<RefreshResponse>>(ENDPOINTS.REFRESH_TOKEN);
   return data.data;
+};
+
+export const getProfile = async (): Promise<{ user: import('../../types').User; tenant: import('../../types').Tenant }> => {
+  const { data } = await api.get<ApiResponse<{ user: import('../../types').User; tenant: import('../../types').Tenant }>>(ENDPOINTS.PROFILE);
+  return data.data;
+};
+
+export const logout = async (): Promise<void> => {
+  await api.post(ENDPOINTS.LOGOUT);
 };

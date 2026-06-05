@@ -2,6 +2,7 @@ export const ENDPOINTS = {
   // Auth
   LOGIN: '/auth/login',
   REGISTER_TENANT: '/auth/register-tenant',
+  REFRESH_TOKEN: '/auth/refresh',
   PROFILE: '/auth/profile',
   LOGOUT: '/auth/logout',
 

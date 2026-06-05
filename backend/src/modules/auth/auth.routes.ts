@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../../middlewares/validate/validate.middleware';
-import { registerTenant, login, getProfile } from './auth.controller';
+import { registerTenant, login, refresh, logout, getProfile } from './auth.controller';
 import { authenticate } from '../../middlewares/auth/auth.middleware';
 import { resolveTenant } from '../../middlewares/tenant/tenant.middleware';
 import { registerSchema, loginSchema } from './auth.schema';
@@ -23,10 +23,8 @@ const registerLimiter = rateLimit({
 
 router.post('/register-tenant', registerLimiter, validate(registerSchema), registerTenant);
 router.post('/login', loginLimiter, validate(loginSchema), login);
+router.post('/refresh', refresh);
 router.get('/profile', authenticate, resolveTenant, getProfile);
-router.post('/logout', (_req, res) => {
-  res.clearCookie('token', { path: '/' });
-  sendSuccess(res, 'Logged out');
-});
+router.post('/logout', logout);
 
 export default router;

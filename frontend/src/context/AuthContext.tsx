@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import api from '../api/axios';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import api, { setAccessToken } from '../api/axios';
 import { ENDPOINTS } from '../api/endpoints';
-import { User, Tenant } from '../types';
+import { User, Tenant, LoginResponse } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -21,42 +21,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProfile();
+    const tryRefresh = async () => {
+      try {
+        const { data } = await api.post(ENDPOINTS.REFRESH_TOKEN);
+        if (data.data?.accessToken) {
+          setAccessToken(data.data.accessToken);
+          setUser(data.data.user);
+          setTenant(data.data.tenant);
+        }
+      } catch {
+        // No hay sesión
+      } finally {
+        setLoading(false);
+      }
+    };
+    tryRefresh();
   }, []);
 
-  const fetchProfile = async () => {
-    try {
-      const { data } = await api.get(ENDPOINTS.PROFILE);
-      setUser(data.data.user);
-      setTenant(data.data.tenant);
-    } catch (_error) {
-      // No autenticado, ignorar silenciosamente
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (email: string, password: string, tenantSlug: string) => {
-    const { data } = await api.post(ENDPOINTS.LOGIN, { email, password, tenantSlug });
+  const login = useCallback(async (email: string, password: string, tenantSlug: string) => {
+    const { data } = await api.post<{ success: boolean; data: LoginResponse }>(ENDPOINTS.LOGIN, {
+      email,
+      password,
+      tenantSlug,
+    });
+    setAccessToken(data.data.accessToken);
     setUser(data.data.user);
     setTenant(data.data.tenant);
-  };
+  }, []);
 
-  const registerTenant = async (registerData: any) => {
-    await api.post(ENDPOINTS.REGISTER_TENANT, registerData);
-  };
+  const registerTenant = useCallback(async (registerData: any) => {
+    const { data } = await api.post<{ success: boolean; data: LoginResponse }>(ENDPOINTS.REGISTER_TENANT, registerData);
+    setAccessToken(data.data.accessToken);
+    setUser(data.data.user);
+    setTenant(data.data.tenant);
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post(ENDPOINTS.LOGOUT);
-    } catch (_error) {
+    } catch {
       // Ignorar error en logout
     }
+    setAccessToken(null);
     sessionStorage.removeItem('pos-carts');
     sessionStorage.removeItem('pos-cajas');
     setUser(null);
     setTenant(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

@@ -23,7 +23,7 @@ export const RegisterTenantPage = () => {
     try {
       const { confirmPassword: _, ...payload } = data;
       await registerTenant(payload);
-      navigate('/login');
+      navigate('/');
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Error al registrar. Verifica los datos.');
     }

@@ -159,3 +159,15 @@ export interface ApiResponse<T> {
     totalPages: number;
   };
 }
+
+export interface LoginResponse {
+  accessToken: string;
+  user: User;
+  tenant: Tenant;
+}
+
+export interface RefreshResponse {
+  accessToken: string;
+  user: User;
+  tenant: Tenant;
+}
