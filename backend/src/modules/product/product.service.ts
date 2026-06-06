@@ -235,6 +235,15 @@ export const getProductById = async (productId: string, tenantId: string, branch
 
 export const createProduct = async (input: CreateProductInput) => {
   const { branchId, stock, ...productFields } = input;
+
+  if (productFields.brandId && !mongoose.Types.ObjectId.isValid(productFields.brandId)) {
+    let brand = await Brand.findOne({ tenantId: input.tenantId, name: productFields.brandId });
+    if (!brand) {
+      brand = await Brand.create({ tenantId: input.tenantId, name: productFields.brandId });
+    }
+    productFields.brandId = brand._id.toString();
+  }
+
   const product = new Product(productFields);
   await product.save();
 

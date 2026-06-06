@@ -6,7 +6,7 @@ export const createProductSchema = z.object({
   name: z.string().min(2, 'Nombre mínimo 2 caracteres').max(200),
   description: z.string().max(2000).optional(),
   departmentId: z.string().min(1, 'Departamento requerido'),
-  brandId: z.string().min(1, 'Marca requerida'),
+  brandId: z.string().optional().transform(v => v === '' ? undefined : v),
   supplierId: z.string().optional().transform(v => v === '' ? undefined : v),
   image: z.string().optional(),
   costPrice: z.number().min(0, 'Precio costo debe ser positivo'),

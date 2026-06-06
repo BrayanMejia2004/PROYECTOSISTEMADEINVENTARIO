@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductForm } from '../schemas';
 import { useCreateProduct, useUpdateProduct, useProduct } from '../hooks';
 import { useDepartments } from '../../departments/hooks';
-import { useBrands } from '../../brands/hooks';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,7 +20,6 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const { user } = useAuth();
   const { data: productData } = useProduct(productId || '');
   const { data: departments } = useDepartments();
-  const { data: brands } = useBrands({ limit: 1000 });
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const [confirmSave, setConfirmSave] = useState(false);
@@ -189,12 +187,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
             </div>
             <div>
               <label className={labelClass}>Marca</label>
-              <select {...register('brandId')} className={inputClass}>
-                <option value="">Seleccionar marca</option>
-                {brands?.data?.map((brand: any) => (
-                  <option key={brand._id} value={brand._id}>{brand.name}</option>
-                ))}
-              </select>
+              <input {...register('brandId')} className={inputClass} placeholder="Nombre de la marca" />
               {errors.brandId && <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>}
             </div>
             <div className="md:col-span-2">
