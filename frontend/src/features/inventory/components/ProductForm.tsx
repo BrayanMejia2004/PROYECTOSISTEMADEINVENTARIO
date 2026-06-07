@@ -1,12 +1,12 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductForm } from '../schemas';
-import { useCreateProduct, useUpdateProduct, useProduct } from '../hooks';
+import { useCreateProduct, useUpdateProduct, useProduct, useUploadProductImage } from '../hooks';
 import { useDepartments } from '../../departments/hooks';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Package, DollarSign, FileText, Box } from 'lucide-react';
+import { Package, DollarSign, FileText, Box, Image, X, Loader2 } from 'lucide-react';
 import { NumberInput } from '../../../components/ui/NumberInput';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
@@ -24,7 +24,9 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const [confirmSave, setConfirmSave] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
+  const [uploading, setUploading] = useState(false);
   const pendingFormData = useRef<ProductForm | null>(null);
+  const { mutateAsync: uploadImage } = useUploadProductImage();
 
   const {
     register,
@@ -45,6 +47,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const profitPercent = watch('profitPercent');
   const price = watch('price');
 
+  const imageUrl = watch('image');
   const manualPrice = useRef(false);
 
   const calculatedPrice = useMemo(() => {
@@ -128,6 +131,24 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     pendingFormData.current = null;
   };
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setValue('image', url);
+    } catch {
+      setValue('image', '');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setValue('image', '');
+  };
+
   const inputClass = "w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
   const labelClass = "block text-sm font-medium text-brand-text mb-1.5";
   const req = (label: string) => <>{label} <span className="text-red-400">*</span></>;
@@ -191,8 +212,40 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
               {errors.brandId && <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>}
             </div>
             <div className="md:col-span-2">
-              <label className={labelClass}>URL Imagen</label>
-              <input {...register('image')} className={inputClass} placeholder="https://..." />
+              <label className={labelClass}>Imagen del Producto</label>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text hover:border-brand/40 transition-colors">
+                  {uploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Image className="w-4 h-4" />
+                  )}
+                  <span>{uploading ? 'Subiendo...' : 'Seleccionar imagen'}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    className="hidden"
+                    onChange={handleImageSelect}
+                    disabled={uploading}
+                  />
+                </label>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-red-200 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Eliminar
+                  </button>
+                )}
+              </div>
+              {imageUrl && (
+                <div className="mt-3 relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <input type="hidden" {...register('image')} />
               {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image.message}</p>}
             </div>
           </div>

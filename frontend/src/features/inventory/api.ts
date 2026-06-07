@@ -62,6 +62,15 @@ export const importProducts = async (body: { products: any[]; skipDuplicates?: b
   return data;
 };
 
+export const uploadProductImage = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const { data } = await api.post(ENDPOINTS.PRODUCTS_UPLOAD_IMAGE, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.data.url;
+};
+
 export const getExportUrl = () => {
   const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
   return `${base}${ENDPOINTS.PRODUCTS_EXPORT}`;

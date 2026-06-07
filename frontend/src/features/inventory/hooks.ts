@@ -79,6 +79,12 @@ export const useInitializeStock = () => {
   });
 };
 
+export const useUploadProductImage = () => {
+  return useMutation({
+    mutationFn: inventoryApi.uploadProductImage,
+  });
+};
+
 export const useImportProducts = () => {
   const queryClient = useQueryClient();
   return useMutation({
