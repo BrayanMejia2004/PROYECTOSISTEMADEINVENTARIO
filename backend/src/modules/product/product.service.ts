@@ -244,6 +244,28 @@ export const createProduct = async (input: CreateProductInput) => {
     productFields.brandId = brand._id.toString();
   }
 
+  const duplicate = await Product.findOne({
+    tenantId: input.tenantId,
+    isActive: true,
+    $or: [
+      { name: productFields.name },
+      { sku: productFields.sku },
+      ...(productFields.barcode ? [{ barcode: productFields.barcode }] : []),
+    ],
+  });
+
+  if (duplicate) {
+    if (duplicate.name === productFields.name) {
+      throw ApiError.conflict('Ya existe un producto activo con este nombre');
+    }
+    if (duplicate.sku === productFields.sku) {
+      throw ApiError.conflict('Ya existe un producto activo con este SKU');
+    }
+    if (productFields.barcode && duplicate.barcode === productFields.barcode) {
+      throw ApiError.conflict('Ya existe un producto activo con este código de barras');
+    }
+  }
+
   const product = new Product(productFields);
   await product.save();
 
@@ -292,6 +314,32 @@ export const updateProduct = async (productId: string, tenantId: string, branchI
   for (const field of OBJECT_ID_FIELDS) {
     if (cleanUpdates[field] === '' || cleanUpdates[field] === null) {
       delete cleanUpdates[field];
+    }
+  }
+
+  if (cleanUpdates.name || cleanUpdates.sku || cleanUpdates.barcode !== undefined) {
+    const orConditions: any[] = [];
+    if (cleanUpdates.name) orConditions.push({ name: cleanUpdates.name });
+    if (cleanUpdates.sku) orConditions.push({ sku: cleanUpdates.sku });
+    if (cleanUpdates.barcode !== undefined) orConditions.push({ barcode: cleanUpdates.barcode });
+
+    const duplicate = await Product.findOne({
+      tenantId,
+      _id: { $ne: productId },
+      isActive: true,
+      $or: orConditions,
+    });
+
+    if (duplicate) {
+      if (cleanUpdates.name && duplicate.name === cleanUpdates.name) {
+        throw ApiError.conflict('Ya existe otro producto activo con este nombre');
+      }
+      if (cleanUpdates.sku && duplicate.sku === cleanUpdates.sku) {
+        throw ApiError.conflict('Ya existe otro producto activo con este SKU');
+      }
+      if (cleanUpdates.barcode !== undefined && duplicate.barcode === cleanUpdates.barcode) {
+        throw ApiError.conflict('Ya existe otro producto activo con este código de barras');
+      }
     }
   }
 
