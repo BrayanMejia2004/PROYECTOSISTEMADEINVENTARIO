@@ -108,7 +108,3 @@ Frontend (Vercel) ─── API ─── Backend (Render) ─── MongoDB (At
 - Información del tenant (nombre, NIT, dirección)
 
 ---
-
-## Capturas de pantalla
-
-![alt text](<capturaPantalla/Captura de pantalla 2026-06-06 193628.png>)
