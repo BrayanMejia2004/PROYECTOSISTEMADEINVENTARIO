@@ -10,6 +10,7 @@ import { Package, DollarSign, FileText, Box, Image, X, Loader2 } from 'lucide-re
 import { NumberInput } from '../../../components/ui/NumberInput';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
+import toast from 'react-hot-toast';
 
 interface ProductFormProps {
   productId?: string;
@@ -114,16 +115,26 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     if (productId) {
       updateProduct(
         { id: productId, input: data },
-        { onSuccess: () => {
-          setShowSuccess('Producto actualizado exitosamente');
-          setTimeout(() => navigate('/inventory'), 1500);
-        }}
+        {
+          onSuccess: () => {
+            setShowSuccess('Producto actualizado exitosamente');
+            setTimeout(() => navigate('/inventory'), 1500);
+          },
+          onError: (err: any) => {
+            const msg = err?.response?.data?.message || 'Error al actualizar el producto';
+            toast.error(msg);
+          },
+        }
       );
     } else {
       createProduct(data, {
         onSuccess: () => {
           setShowSuccess('Producto creado exitosamente');
           setTimeout(() => navigate('/inventory'), 1500);
+        },
+        onError: (err: any) => {
+          const msg = err?.response?.data?.message || 'Error al crear el producto';
+          toast.error(msg);
         },
       });
     }
