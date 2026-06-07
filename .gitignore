@@ -12,3 +12,4 @@ backend/.env.local
 frontend/playwright-report/
 frontend/test-results/
 frontend/e2e/
+capturaPantalla/*

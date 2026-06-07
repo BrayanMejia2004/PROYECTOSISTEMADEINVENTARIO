@@ -111,4 +111,4 @@ Frontend (Vercel) ─── API ─── Backend (Render) ─── MongoDB (At
 
 ## Capturas de pantalla
 
-*(Agrega aquí capturas del dashboard, POS, inventario y reportes)*
+![alt text](<capturaPantalla/Captura de pantalla 2026-06-06 193628.png>)
