@@ -20,3 +20,15 @@ export const updateTenant = async (req: AuthRequest, res: Response, next: NextFu
     next(error);
   }
 };
+
+export const uploadLogo = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      return sendSuccess(res, 'No image provided', null);
+    }
+    const tenant = await tenantService.uploadLogo(req.user!.tenantId, req.file);
+    sendSuccess(res, 'Logo uploaded', tenant);
+  } catch (error) {
+    next(error);
+  }
+};

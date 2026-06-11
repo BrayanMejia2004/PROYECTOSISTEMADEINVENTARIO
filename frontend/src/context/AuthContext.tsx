@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string, tenantSlug: string) => Promise<void>;
   registerTenant: (data: any) => Promise<void>;
   logout: () => Promise<void>;
+  refreshTenant: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -56,6 +57,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setTenant(data.data.tenant);
   }, []);
 
+  const refreshTenant = useCallback(async () => {
+    try {
+      const { data } = await api.get(ENDPOINTS.TENANT);
+      if (data.data) {
+        setTenant(data.data);
+      }
+    } catch {
+      // Ignorar error
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post(ENDPOINTS.LOGOUT);
@@ -78,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         registerTenant,
         logout,
+        refreshTenant,
         isAuthenticated: !!user,
       }}
     >

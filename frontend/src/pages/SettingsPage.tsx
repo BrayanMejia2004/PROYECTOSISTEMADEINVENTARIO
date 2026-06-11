@@ -1,19 +1,23 @@
-import { useTenant, useBranches, useUpdateTenant, useCreateBranch, useUpdateBranch, useDeleteBranch } from '../features/settings/hooks';
+import { useTenant, useBranches, useUpdateTenant, useCreateBranch, useUpdateBranch, useDeleteBranch, useUploadLogo } from '../features/settings/hooks';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { tenantSettingsSchema, branchSchema, type TenantSettingsForm, type BranchForm } from '../features/settings/schemas';
-import { Settings, Building2, Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { Settings, Building2, Palette, Plus, X, Pencil, Trash2, Image, Loader2 } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { SuccessToast } from '../components/ui/SuccessToast';
+import toast from 'react-hot-toast';
 
 export const SettingsPage = () => {
+  const { refreshTenant } = useAuth();
   const { data: tenant } = useTenant();
   const { data: branches } = useBranches();
   const { mutate: updateTenant, isPending: isUpdatingTenant } = useUpdateTenant();
   const { mutate: createBranch, isPending: isCreatingBranch } = useCreateBranch();
   const { mutate: updateBranch, isPending: isUpdatingBranch } = useUpdateBranch();
   const { mutate: deleteBranch } = useDeleteBranch();
+  const { mutateAsync: uploadLogoMutation, isPending: isUploadingLogo } = useUploadLogo();
   const [activeTab, setActiveTab] = useState('tenant');
   const [showBranchForm, setShowBranchForm] = useState(false);
   const [editingBranch, setEditingBranch] = useState<any>(null);
@@ -21,6 +25,7 @@ export const SettingsPage = () => {
   const [confirmTenantSave, setConfirmTenantSave] = useState(false);
   const [confirmBranchSave, setConfirmBranchSave] = useState<{ open: boolean; isEdit: boolean }>({ open: false, isEdit: false });
   const [showSuccess, setShowSuccess] = useState('');
+  const [brandColor, setBrandColor] = useState('#2D8A4E');
   const pendingTenantData = useRef<TenantSettingsForm | null>(null);
   const pendingBranchData = useRef<BranchForm | null>(null);
 
@@ -42,6 +47,7 @@ export const SettingsPage = () => {
         address: tenant.data.address,
         nit: tenant.data.nit,
       });
+      if (tenant.data.brandColor) setBrandColor(tenant.data.brandColor);
     }
   }, [tenant?.data, resetTenant]);
 
@@ -53,11 +59,38 @@ export const SettingsPage = () => {
   const handleConfirmTenantSave = () => {
     if (pendingTenantData.current) {
       updateTenant(pendingTenantData.current, {
-        onSuccess: () => setShowSuccess('Configuración guardada exitosamente'),
+        onSuccess: () => {
+          setShowSuccess('Configuración guardada exitosamente');
+          refreshTenant();
+        },
       });
     }
     setConfirmTenantSave(false);
     pendingTenantData.current = null;
+  };
+
+  const handleSaveBrandColor = () => {
+    updateTenant({ brandColor } as any, {
+      onSuccess: () => {
+        setShowSuccess('Color guardado exitosamente');
+        refreshTenant();
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.message || 'Error al guardar el color');
+      },
+    });
+  };
+
+  const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      await uploadLogoMutation(file);
+      setShowSuccess('Logo actualizado exitosamente');
+      refreshTenant();
+    } catch {
+      toast.error('Error al subir el logo');
+    }
   };
 
   const {
@@ -120,7 +153,7 @@ export const SettingsPage = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-sans font-bold text-brand-text">Configuración</h1>
-        <p className="text-sm text-brand-muted mt-1">Administra tu empresa y sucursales</p>
+        <p className="text-sm text-brand-muted mt-1">Administra tu empresa, sucursales y personalización</p>
       </div>
 
       <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
@@ -132,6 +165,15 @@ export const SettingsPage = () => {
         >
           <Settings className="w-4 h-4" />
           Tenant
+        </button>
+        <button
+          onClick={() => setActiveTab('branding')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            activeTab === 'branding' ? 'bg-white text-brand-text shadow-sm' : 'text-brand-muted hover:text-brand-text'
+          }`}
+        >
+          <Palette className="w-4 h-4" />
+          Personalización
         </button>
         <button
           onClick={() => setActiveTab('branches')}
@@ -180,6 +222,76 @@ export const SettingsPage = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {activeTab === 'branding' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-sans font-semibold text-brand-text mb-4">Logo de la Empresa</h3>
+            <p className="text-sm text-brand-muted mb-4">Sube el logo de tu empresa para que aparezca en el sistema.</p>
+            <div className="flex items-center gap-6">
+              <div className="w-28 h-28 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0">
+                {tenant?.data?.logo ? (
+                  <img src={tenant.data.logo} alt="Logo" className="w-full h-full object-contain p-2" />
+                ) : (
+                  <Image className="w-8 h-8 text-gray-300" />
+                )}
+              </div>
+              <div>
+                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text hover:border-brand/40 transition-colors">
+                  {isUploadingLogo ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Image className="w-4 h-4" />
+                  )}
+                  <span>{isUploadingLogo ? 'Subiendo...' : 'Seleccionar imagen'}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    className="hidden"
+                    onChange={handleUploadLogo}
+                    disabled={isUploadingLogo}
+                  />
+                </label>
+                <p className="text-xs text-brand-muted mt-2">JPEG, PNG, WebP o AVIF. Máximo 5 MB.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h3 className="font-sans font-semibold text-brand-text mb-4">Color Corporativo</h3>
+            <p className="text-sm text-brand-muted mb-4">Elige el color principal que identificará a tu empresa en el sistema.</p>
+            <div className="flex items-center gap-4">
+              <input
+                type="color"
+                value={brandColor}
+                onChange={(e) => setBrandColor(e.target.value)}
+                className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0"
+              />
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={brandColor}
+                  onChange={(e) => setBrandColor(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+                  placeholder="#2D8A4E"
+                />
+              </div>
+              <button
+                onClick={handleSaveBrandColor}
+                className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0"
+              >
+                Guardar color
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-sm text-brand-muted">Vista previa:</span>
+              <div className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: brandColor }}>
+                <span className="text-white text-sm font-medium">InventoPro</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

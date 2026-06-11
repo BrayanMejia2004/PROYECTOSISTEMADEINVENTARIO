@@ -16,6 +16,10 @@ export interface Tenant {
   phone?: string;
   address?: string;
   nit?: string;
+  logo?: string;
+  brandColor?: string;
+  brandColorLight?: string;
+  brandColorDark?: string;
   isActive: boolean;
 }
 

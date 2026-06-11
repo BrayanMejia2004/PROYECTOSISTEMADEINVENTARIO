@@ -55,3 +55,13 @@ export const useDeleteBranch = () => {
     },
   });
 };
+
+export const useUploadLogo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: settingsApi.uploadLogo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant'] });
+    },
+  });
+};

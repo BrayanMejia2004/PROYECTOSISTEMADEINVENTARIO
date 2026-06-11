@@ -31,3 +31,12 @@ export const deleteBranch = async (id: string): Promise<ApiResponse<null>> => {
   const { data } = await api.delete<ApiResponse<null>>(`${ENDPOINTS.BRANCHES}/${id}`);
   return data;
 };
+
+export const uploadLogo = async (file: File): Promise<ApiResponse<Tenant>> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const { data } = await api.post<ApiResponse<Tenant>>(`${ENDPOINTS.TENANT}/logo`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};

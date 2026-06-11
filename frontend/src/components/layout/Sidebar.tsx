@@ -42,11 +42,15 @@ export const Sidebar = ({ isOpen, onClose, desktopOpen }: SidebarProps) => {
         isOpen ? "translate-x-0" : "-translate-x-full",
         desktopOpen ? "lg:translate-x-0" : "lg:-translate-x-full"
       )}>
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
-            <Store className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-sans font-semibold text-base text-white/90">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 min-h-[60px]">
+          {tenant?.logo ? (
+            <img src={tenant.logo} alt={tenant.name} className="h-9 w-auto max-w-[120px] object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center shrink-0">
+              <Store className="w-4 h-4 text-white" />
+            </div>
+          )}
+          <span className="font-sans font-semibold text-base text-white/90 truncate">
             {tenant?.name || 'InventoPro'}
           </span>
         </div>
