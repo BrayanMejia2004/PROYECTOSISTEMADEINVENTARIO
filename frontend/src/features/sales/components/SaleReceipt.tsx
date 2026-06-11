@@ -61,20 +61,26 @@ export const SaleReceipt = ({ sale, onClose }: SaleReceiptProps) => {
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 80mm;
-                padding: 3mm 4mm;
+                width: 72mm;
+                padding: 2mm 4mm;
                 font-family: 'Courier New', Courier, monospace;
                 font-size: 10px;
                 line-height: 1.35;
                 color: #000;
+                overflow-wrap: break-word;
+                word-break: break-word;
               }
-              @page { margin: 0; size: 80mm auto; }
+              .receipt-print img { max-width: 60mm; height: auto; }
+              @page { margin: 0; size: 80mm 200mm; }
             }
           `}</style>
 
           <div className="receipt-print space-y-3">
             {/* Business header */}
             <div className="text-center border-b-2 border-dashed border-gray-300 pb-3">
+              {tenant?.logo && (
+                <img src={tenant.logo} alt={tenant.name} className="mx-auto mb-1 max-h-12" />
+              )}
               <p className="text-sm font-bold uppercase tracking-wider">{tenant?.name || 'Mi Empresa'}</p>
               {tenant?.nit && <p className="text-[10px] mt-0.5">NIT: {tenant.nit}</p>}
               {tenant?.address && <p className="text-[10px]">{tenant.address}</p>}
@@ -108,8 +114,8 @@ export const SaleReceipt = ({ sale, onClose }: SaleReceiptProps) => {
               {sale.items.map((item: any, index: number) => (
                 <div key={index} className="mb-1.5">
                   <div className="flex justify-between">
-                    <span className="flex-1 truncate">{item.productName}</span>
-                    <span className="text-right">{formatCurrency(item.total)}</span>
+                    <span className="flex-1 break-words mr-1 max-w-[75%]">{item.productName}</span>
+                    <span className="text-right shrink-0">{formatCurrency(item.total)}</span>
                   </div>
                   <div className="text-[9px] text-gray-500">
                     Cant: {item.quantity} x {formatCurrency(item.unitPrice)}
