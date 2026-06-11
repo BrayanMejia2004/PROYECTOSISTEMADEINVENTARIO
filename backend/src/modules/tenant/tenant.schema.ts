@@ -11,4 +11,5 @@ export const updateSettingsSchema = z.object({
   brandColor: hexColor,
   brandColorLight: hexColor,
   brandColorDark: hexColor,
+  brandSidebar: hexColor,
 });

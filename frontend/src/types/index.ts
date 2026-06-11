@@ -20,6 +20,7 @@ export interface Tenant {
   brandColor?: string;
   brandColorLight?: string;
   brandColorDark?: string;
+  brandSidebar?: string;
   isActive: boolean;
 }
 

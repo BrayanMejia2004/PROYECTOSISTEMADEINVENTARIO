@@ -37,11 +37,11 @@ export const Sidebar = ({ isOpen, onClose, desktopOpen }: SidebarProps) => {
     <>
       {isOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={onClose} />}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-64 min-h-screen bg-brand-sidebar flex flex-col shrink-0",
+        "fixed inset-y-0 left-0 z-40 w-64 min-h-screen flex flex-col shrink-0",
         "transform transition-transform duration-200 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full",
         desktopOpen ? "lg:translate-x-0" : "lg:-translate-x-full"
-      )}>
+      )} style={{ backgroundColor: tenant?.brandSidebar || '#1E293B' }}>
         <div className="flex flex-col items-center gap-2 px-5 py-5 border-b border-white/10">
           {tenant?.logo ? (
             <img src={tenant.logo} alt={tenant.name} className="h-10 w-auto max-w-[140px] object-contain" />
