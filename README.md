@@ -106,5 +106,3 @@ Frontend (Vercel) ─── API ─── Backend (Render) ─── MongoDB (At
 - Logo de la empresa
 - Colores corporativos
 - Información del tenant (nombre, NIT, dirección)
-
----
