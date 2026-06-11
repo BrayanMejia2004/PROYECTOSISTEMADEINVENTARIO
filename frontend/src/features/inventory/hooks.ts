@@ -80,8 +80,12 @@ export const useInitializeStock = () => {
 };
 
 export const useUploadProductImage = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: inventoryApi.uploadProductImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
   });
 };
 

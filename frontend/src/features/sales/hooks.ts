@@ -31,6 +31,10 @@ export const useCreateSale = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['sales', 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
+      queryClient.invalidateQueries({ queryKey: ['lowStock'] });
+      queryClient.invalidateQueries({ queryKey: ['outOfStock'] });
     },
   });
 };
@@ -42,6 +46,10 @@ export const useRefundSale = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['sales', 'summary'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
+      queryClient.invalidateQueries({ queryKey: ['lowStock'] });
+      queryClient.invalidateQueries({ queryKey: ['outOfStock'] });
     },
   });
 };
@@ -99,6 +107,7 @@ export const useCreateMovement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cashMovements'] });
       queryClient.invalidateQueries({ queryKey: ['cashierShift'] });
+      queryClient.invalidateQueries({ queryKey: ['sales', 'summary'] });
     },
   });
 };
