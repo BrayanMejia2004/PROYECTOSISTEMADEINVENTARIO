@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Sale } from '../../../types';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatDateTime } from '../../../lib/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { X, CheckCircle, Printer } from 'lucide-react';
 
@@ -55,88 +55,152 @@ export const SaleReceipt = ({ sale, onClose }: SaleReceiptProps) => {
         <div ref={printRef} className="p-6 print:p-0">
           <style>{`
             @media print {
-              @page { margin: 0; size: 80mm auto; }
-              body { margin: 0; padding: 0; }
-              * { box-shadow: none !important; text-shadow: none !important; }
+              body * { visibility: hidden; }
+              .receipt-print, .receipt-print * { visibility: visible; }
               .receipt-print {
-                width: 72mm;
-                padding: 1.5mm 4mm;
-                margin: 0 auto;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 80mm;
+                padding: 3mm 4mm;
                 font-family: 'Courier New', Courier, monospace;
-                font-size: 9px;
-                line-height: 1.2;
+                font-size: 10px;
+                line-height: 1.35;
                 color: #000;
-                overflow-wrap: break-word;
-                word-break: break-word;
               }
-              .receipt-print img { max-width: 50mm; max-height: 10mm; }
+              @page { margin: 0; size: 80mm auto; }
             }
           `}</style>
 
-          <div className="receipt-print">
-            <div className="text-center border-b border-dashed border-gray-400 pb-2 mb-2">
-              {tenant?.logo && (
-                <img src={tenant.logo} alt={tenant.name} className="mx-auto mb-1" />
-              )}
-              <div className="font-bold text-xs uppercase">{tenant?.name || 'Mi Empresa'}</div>
-              {tenant?.nit && <div className="text-[8px]">NIT: {tenant.nit}</div>}
-              {tenant?.address && <div className="text-[8px]">{tenant.address}</div>}
-              {tenant?.phone && <div className="text-[8px]">Tel: {tenant.phone}</div>}
+          <div className="receipt-print space-y-3">
+            {/* Business header */}
+            <div className="text-center border-b-2 border-dashed border-gray-300 pb-3">
+              <p className="text-sm font-bold uppercase tracking-wider">{tenant?.name || 'Mi Empresa'}</p>
+              {tenant?.nit && <p className="text-[10px] mt-0.5">NIT: {tenant.nit}</p>}
+              {tenant?.address && <p className="text-[10px]">{tenant.address}</p>}
+              {tenant?.phone && <p className="text-[10px]">Tel: {tenant.phone}</p>}
             </div>
 
-            <div className="text-[8px] mb-2">
-              <div className="flex justify-between"><span>Ticket:</span><span>{sale.saleNumber}</span></div>
-              <div className="flex justify-between"><span>Fecha:</span><span>{new Date(sale.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
-              <div className="flex justify-between"><span>Cajero:</span><span>{user?.firstName} {user?.lastName}</span></div>
-            </div>
-
-            <div className="border-t border-dashed border-gray-400 mb-1" />
-
-            <div className="text-[8px] mb-1">
-              <div className="flex justify-between font-bold mb-0.5">
-                <span>Artículo</span><span>Total</span>
+            {/* Ticket metadata */}
+            <div className="text-[10px] space-y-0.5">
+              <div className="flex justify-between">
+                <span>Ticket:</span>
+                <span>{sale.saleNumber}</span>
               </div>
-              {sale.items.map((item: any, i: number) => (
-                <div key={i} className="mb-0.5">
+              <div className="flex justify-between">
+                <span>Fecha:</span>
+                <span>{formatDateTime(sale.createdAt)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Cajero:</span>
+                <span>{user?.firstName} {user?.lastName}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-dashed border-gray-400" />
+
+            {/* Items */}
+            <div className="text-[10px]">
+              <div className="flex justify-between font-bold mb-1">
+                <span>Artículo</span>
+                <span>Total</span>
+              </div>
+              {sale.items.map((item: any, index: number) => (
+                <div key={index} className="mb-1.5">
                   <div className="flex justify-between">
-                    <span className="max-w-[75%] break-words">{item.productName}</span>
-                    <span className="shrink-0">{formatCurrency(item.total)}</span>
+                    <span className="flex-1 truncate">{item.productName}</span>
+                    <span className="text-right">{formatCurrency(item.total)}</span>
                   </div>
-                  <div className="text-[7px] text-gray-500">Cant: {item.quantity} x {formatCurrency(item.unitPrice)}</div>
+                  <div className="text-[9px] text-gray-500">
+                    Cant: {item.quantity} x {formatCurrency(item.unitPrice)}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-dashed border-gray-400 mb-1" />
+            <div className="border-t border-dashed border-gray-400" />
 
-            <div className="text-[8px] mb-1">
-              <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(sale.subtotal)}</span></div>
-              {sale.tax > 0 && <div className="flex justify-between"><span>Impuestos</span><span>{formatCurrency(sale.tax)}</span></div>}
-              {sale.discount > 0 && <div className="flex justify-between text-red-600"><span>Descuento</span><span>-{formatCurrency(sale.discount)}</span></div>}
-              <div className="flex justify-between font-bold text-[10px] border-t border-gray-400 pt-0.5 mt-0.5">
-                <span>TOTAL</span><span>{formatCurrency(sale.total)}</span>
+            {/* Totals */}
+            <div className="text-[10px] space-y-0.5">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>{formatCurrency(sale.subtotal)}</span>
+              </div>
+              {sale.tax > 0 && (
+                <div className="flex justify-between">
+                  <span>Impuestos</span>
+                  <span>{formatCurrency(sale.tax)}</span>
+                </div>
+              )}
+              {sale.discount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Descuento</span>
+                  <span>-{formatCurrency(sale.discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-sm border-t border-gray-400 pt-1 mt-1">
+                <span>TOTAL</span>
+                <span>{formatCurrency(sale.total)}</span>
               </div>
             </div>
 
-            <div className="border-t border-dashed border-gray-400 mb-1" />
+            <div className="border-t border-dashed border-gray-400" />
 
-            <div className="text-[8px] mb-1">
-              <div className="flex justify-between"><span>Método de pago:</span><span>{paymentLabel}</span></div>
-              {sale.exchangeFromSaleId && sale.exchangeCredit && (
+            {/* Payment details */}
+            <div className="text-[10px] space-y-0.5">
+              <div className="flex justify-between">
+                <span>Método de pago:</span>
+                <span>{paymentLabel}</span>
+              </div>
+              {sale.exchangeFromSaleId && sale.exchangeCredit ? (
                 <>
-                  <div className="flex justify-between"><span>Crédito intercambio:</span><span>{formatCurrency(sale.exchangeCredit)}</span></div>
-                  {sale.total > sale.exchangeCredit && <div className="flex justify-between font-bold"><span>Pagado adicional:</span><span>{formatCurrency(sale.total - sale.exchangeCredit)}</span></div>}
+                  <div className="flex justify-between">
+                    <span>Crédito intercambio:</span>
+                    <span>{formatCurrency(sale.exchangeCredit)}</span>
+                  </div>
+                  {sale.total > sale.exchangeCredit && (
+                    <div className="flex justify-between font-bold">
+                      <span>Pagado adicional:</span>
+                      <span>{formatCurrency(sale.total - sale.exchangeCredit)}</span>
+                    </div>
+                  )}
                 </>
+              ) : null}
+              {sale.paymentMethod === 'transfer' && sale.transferBank && (
+                <div className="flex justify-between">
+                  <span>Banco origen:</span>
+                  <span>{sale.transferBank}</span>
+                </div>
               )}
-              {sale.paymentMethod === 'transfer' && sale.transferBank && <div className="flex justify-between"><span>Banco:</span><span>{sale.transferBank}</span></div>}
-              {sale.paymentMethod === 'transfer' && sale.transferReference && <div className="flex justify-between"><span>Ref:</span><span>{sale.transferReference}</span></div>}
-              {sale.paymentMethod === 'card' && sale.cardBank && <div className="flex justify-between"><span>Banco:</span><span>{sale.cardBank}</span></div>}
-              {sale.paymentMethod === 'card' && sale.cardReference && <div className="flex justify-between"><span>Ref:</span><span>{sale.cardReference}</span></div>}
-              {sale.customerName && <div className="flex justify-between border-t border-gray-300 pt-0.5 mt-0.5"><span>Cliente:</span><span>{sale.customerName}</span></div>}
+              {sale.paymentMethod === 'transfer' && sale.transferReference && (
+                <div className="flex justify-between">
+                  <span>Referencia:</span>
+                  <span>{sale.transferReference}</span>
+                </div>
+              )}
+              {sale.paymentMethod === 'card' && sale.cardBank && (
+                <div className="flex justify-between">
+                  <span>Banco:</span>
+                  <span>{sale.cardBank}</span>
+                </div>
+              )}
+              {sale.paymentMethod === 'card' && sale.cardReference && (
+                <div className="flex justify-between">
+                  <span>Referencia:</span>
+                  <span>{sale.cardReference}</span>
+                </div>
+              )}
+              {sale.customerName && (
+                <div className="flex justify-between pt-1 border-t border-gray-200">
+                  <span>Cliente:</span>
+                  <span>{sale.customerName}</span>
+                </div>
+              )}
             </div>
 
-            <div className="text-center text-[8px] pt-1 border-t border-dashed border-gray-400">
-              <div className="font-bold text-[9px]">¡Gracias por su compra!</div>
+            {/* Footer */}
+            <div className="text-center text-[10px] pt-2 border-t border-dashed border-gray-300">
+              <p className="font-bold text-xs">¡Gracias por su compra!</p>
             </div>
           </div>
         </div>

@@ -29,9 +29,9 @@ const variantStyles = {
   },
   success: {
     icon: CheckCircle2,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-    buttonBg: 'bg-green-600 hover:bg-green-700 focus:ring-green-500',
+    iconBg: 'bg-brand/10',
+    iconColor: 'text-brand',
+    buttonBg: 'bg-brand hover:bg-brand-dark focus:ring-brand',
     buttonText: 'text-white',
   },
 };
