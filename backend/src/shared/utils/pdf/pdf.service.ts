@@ -27,7 +27,6 @@ interface SaleData {
   tenantEmail?: string;
   tenantPhone?: string;
   tenantAddress?: string;
-  tenantLogo?: string;
   branchName: string;
 }
 
@@ -40,31 +39,11 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-const MARGIN = 12;
-const PAGE_WIDTH = 227;
-const PRINTABLE_WIDTH = PAGE_WIDTH - MARGIN * 2;
-
-const fetchImageBuffer = async (url: string): Promise<Buffer | null> => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch {
-    return null;
-  }
-};
-
-export const generateSalePdf = async (sale: SaleData): Promise<Buffer> => {
-  let logoBuffer: Buffer | null = null;
-  if (sale.tenantLogo) {
-    logoBuffer = await fetchImageBuffer(sale.tenantLogo);
-  }
-
+export const generateSalePdf = (sale: SaleData): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
-      size: [PAGE_WIDTH, 1000],
-      margin: MARGIN,
+      size: 'A4',
+      margin: 50,
       info: {
         Title: `Venta ${sale.saleNumber}`,
         Author: sale.tenantName,
@@ -76,126 +55,118 @@ export const generateSalePdf = async (sale: SaleData): Promise<Buffer> => {
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
     const left = doc.page.margins.left;
 
     const center = (text: string, size: number, opts: any = {}) => {
       doc.fontSize(size).font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').text(text, { align: 'center', ...opts });
     };
 
-    if (logoBuffer) {
-      const maxLogoW = 100;
-      const maxLogoH = 50;
-      doc.image(logoBuffer, left + (PRINTABLE_WIDTH - maxLogoW) / 2, doc.y, {
-        fit: [maxLogoW, maxLogoH],
-        align: 'center',
-      });
-      doc.moveDown(0.5);
-    }
+    center(sale.tenantName, 18, { bold: true });
+    doc.moveDown(0.2);
 
-    center(sale.tenantName, 14, { bold: true });
-    doc.moveDown(0.15);
+    if (sale.tenantNit) center(`NIT: ${sale.tenantNit}`, 9);
+    if (sale.tenantAddress) center(sale.tenantAddress, 9);
+    if (sale.tenantPhone) center(`Tel: ${sale.tenantPhone}`, 9);
+    if (sale.tenantEmail) center(sale.tenantEmail, 9);
+    center(`Sucursal: ${sale.branchName}`, 9);
 
-    if (sale.tenantNit) center(`NIT: ${sale.tenantNit}`, 8);
-    if (sale.tenantAddress) center(sale.tenantAddress, 8);
-    if (sale.tenantPhone) center(`Tel: ${sale.tenantPhone}`, 8);
-    if (sale.tenantEmail) center(sale.tenantEmail, 8);
-    center(`Suc. ${sale.branchName}`, 8);
+    doc.moveDown(0.8);
+    doc.moveTo(left, doc.y).lineTo(left + pageWidth, doc.y).stroke('#cccccc');
+    doc.moveDown(0.6);
 
-    doc.moveDown(0.4);
-    doc.moveTo(left, doc.y).lineTo(left + PRINTABLE_WIDTH, doc.y).stroke('#cccccc');
+    center('Comprobante de Venta', 14, { bold: true });
     doc.moveDown(0.3);
+    center(`N°: ${sale.saleNumber}`, 10);
+    center(`Fecha: ${sale.createdAt.toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 9);
 
-    center('COMPROBANTE DE VENTA', 11, { bold: true });
-    doc.moveDown(0.15);
-    center(`N° ${sale.saleNumber}`, 9);
-    center(sale.createdAt.toLocaleDateString('es-CL', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit',
-    }), 8);
+    doc.moveDown(0.8);
+    doc.moveTo(left, doc.y).lineTo(left + pageWidth, doc.y).stroke('#cccccc');
+    doc.moveDown(0.5);
 
-    doc.moveDown(0.4);
-    doc.moveTo(left, doc.y).lineTo(left + PRINTABLE_WIDTH, doc.y).stroke('#cccccc');
-    doc.moveDown(0.3);
+    doc.font('Helvetica-Bold').fontSize(11).text('Datos del Cliente');
+    doc.font('Helvetica').fontSize(10);
+    doc.text(`Cliente: ${sale.customerName || '—'}`);
+    doc.text(`Vendedor: ${sale.userName || '—'}`);
+    doc.moveDown(0.5);
 
-    doc.font('Helvetica-Bold').fontSize(9).text(`Cliente: ${sale.customerName || '—'}`);
-    doc.font('Helvetica').fontSize(8).text(`Vendedor: ${sale.userName || '—'}`);
-    doc.moveDown(0.3);
+    doc.moveTo(left, doc.y).lineTo(left + pageWidth, doc.y).stroke('#cccccc');
+    doc.moveDown(0.5);
 
-    doc.moveTo(left, doc.y).lineTo(left + PRINTABLE_WIDTH, doc.y).stroke('#cccccc');
-    doc.moveDown(0.3);
-
-    doc.font('Helvetica-Bold').fontSize(9).text('Método de Pago');
-    doc.font('Helvetica').fontSize(8);
+    doc.font('Helvetica-Bold').fontSize(11).text('Método de Pago');
+    doc.font('Helvetica').fontSize(10);
     const paymentLabels: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia' };
     doc.text(paymentLabels[sale.paymentMethod] || sale.paymentMethod);
 
     if (sale.paymentMethod === 'transfer') {
-      doc.moveDown(0.15);
-      if (sale.transferBank) doc.fontSize(8).text(`Banco: ${sale.transferBank}`);
-      if (sale.transferReference) doc.fontSize(8).text(`Ref: ${sale.transferReference}`);
-      if (sale.transferAmount != null) doc.fontSize(8).text(`Monto: ${formatCurrency(sale.transferAmount)}`);
+      doc.moveDown(0.3);
+      if (sale.transferBank) doc.text(`Banco origen: ${sale.transferBank}`);
+      if (sale.transferReference) doc.text(`Referencia: ${sale.transferReference}`);
+      if (sale.transferAmount != null) doc.text(`Monto transferido: ${formatCurrency(sale.transferAmount)}`);
     }
+
     if (sale.paymentMethod === 'card') {
-      doc.moveDown(0.15);
-      if (sale.cardBank) doc.fontSize(8).text(`Entidad: ${sale.cardBank}`);
-      if (sale.cardReference) doc.fontSize(8).text(`Ref: ${sale.cardReference}`);
+      doc.moveDown(0.3);
+      if (sale.cardBank) doc.text(`Banco o entidad: ${sale.cardBank}`);
+      if (sale.cardReference) doc.text(`Referencia: ${sale.cardReference}`);
     }
 
+    doc.moveDown(0.5);
+    doc.moveTo(left, doc.y).lineTo(left + pageWidth, doc.y).stroke('#cccccc');
+    doc.moveDown(0.5);
+
+    const tableTop = doc.y;
+    doc.font('Helvetica-Bold').fontSize(10);
+
+    const col1 = left;
+    const col2 = left + pageWidth - 180;
+    const col3 = left + pageWidth - 120;
+    const col4 = left + pageWidth - 60;
+
+    doc.text('Producto', col1, tableTop);
+    doc.text('Cant.', col2, tableTop, { width: 60, align: 'center' });
+    doc.text('Precio', col3, tableTop, { width: 60, align: 'center' });
+    doc.text('Total', col4, tableTop, { width: 60, align: 'right' });
+
     doc.moveDown(0.3);
-    doc.moveTo(left, doc.y).lineTo(left + PRINTABLE_WIDTH, doc.y).stroke('#cccccc');
+    doc.moveTo(left, doc.y).lineTo(left + pageWidth, doc.y).stroke('#cccccc');
     doc.moveDown(0.3);
 
-    const colCant = PRINTABLE_WIDTH - 130;
-    const colPrice = PRINTABLE_WIDTH - 70;
-    const colTotal = PRINTABLE_WIDTH - 5;
-    const colProdWidth = colCant - left - 8;
-
-    doc.font('Helvetica-Bold').fontSize(8);
-    doc.text('Producto', left, doc.y, { width: colProdWidth });
-    doc.text('Cant', colCant, doc.y - doc.currentLineHeight(), { width: 60, align: 'center' });
-    doc.text('P.U.', colPrice, doc.y - doc.currentLineHeight(), { width: 60, align: 'center' });
-    doc.text('Total', colTotal, doc.y - doc.currentLineHeight(), { width: 60, align: 'right' });
-
-    doc.moveDown(0.15);
-    doc.moveTo(left, doc.y).lineTo(left + PRINTABLE_WIDTH, doc.y).stroke('#cccccc');
-    doc.moveDown(0.15);
-
-    doc.font('Helvetica').fontSize(7.5);
+    doc.font('Helvetica').fontSize(9);
     for (const item of sale.items) {
       const y = doc.y;
-      doc.text(item.productName, left, y, { width: colProdWidth });
-      doc.text(String(item.quantity), colCant, y, { width: 40, align: 'center' });
-      doc.text(formatCurrency(item.unitPrice), colPrice, y, { width: 50, align: 'center' });
-      doc.text(formatCurrency(item.total), colTotal, y, { width: 65, align: 'right' });
-      doc.moveDown(0.6);
+      doc.text(item.productName, col1, y, { width: col2 - col1 - 10 });
+      doc.text(String(item.quantity), col2, y, { width: 60, align: 'center' });
+      doc.text(formatCurrency(item.unitPrice), col3, y, { width: 60, align: 'center' });
+      doc.text(formatCurrency(item.total), col4, y, { width: 60, align: 'right' });
+      doc.moveDown(0.8);
     }
 
-    doc.moveTo(left, doc.y).lineTo(left + PRINTABLE_WIDTH, doc.y).stroke('#cccccc');
-    doc.moveDown(0.3);
+    doc.moveTo(left, doc.y).lineTo(left + pageWidth, doc.y).stroke('#cccccc');
+    doc.moveDown(0.5);
 
-    const totalWidth = 160;
-    const totalX = left + PRINTABLE_WIDTH - totalWidth;
+    doc.font('Helvetica').fontSize(10);
+    const totalX = left + pageWidth - 200;
+    const totalWidth = 200;
 
     const line = (label: string, value: string, bold = false) => {
       if (bold) doc.font('Helvetica-Bold');
       else doc.font('Helvetica');
-      doc.text(label, totalX, doc.y, { width: totalWidth - 80 });
-      doc.text(value, totalX + totalWidth - 80, doc.y - doc.currentLineHeight(), { width: 80, align: 'right' });
-      doc.moveDown(0.3);
+      doc.text(label, totalX, doc.y, { width: 100 });
+      doc.text(value, totalX + 100, doc.y - doc.currentLineHeight(), { width: 100, align: 'right' });
+      doc.moveDown(0.4);
     };
 
-    doc.fontSize(8);
     line('Subtotal:', formatCurrency(sale.subtotal));
     if (sale.discount > 0) line('Descuento:', `-${formatCurrency(sale.discount)}`);
     if (sale.tax > 0) line('IVA:', formatCurrency(sale.tax));
-    doc.moveDown(0.1);
+    doc.moveDown(0.2);
     doc.moveTo(totalX, doc.y).lineTo(totalX + totalWidth, doc.y).stroke('#cccccc');
-    doc.moveDown(0.1);
-    doc.fontSize(9);
-    line('TOTAL:', formatCurrency(sale.total), true);
+    doc.moveDown(0.2);
+    line('Total:', formatCurrency(sale.total), true);
 
-    doc.moveDown(1);
-    doc.fontSize(7).font('Helvetica').fillColor('#999999');
+    doc.moveDown(2);
+    doc.fontSize(8).font('Helvetica').fillColor('#999999');
     doc.text('Documento generado electrónicamente.', { align: 'center' });
 
     doc.end();
