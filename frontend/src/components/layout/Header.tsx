@@ -26,9 +26,6 @@ export const Header = ({ onMenuToggle, onDesktopMenuToggle }: HeaderProps) => {
         >
           <Menu className="w-5 h-5" />
         </button>
-        {tenant?.logo && (
-          <img src={tenant.logo} alt={tenant.name} className="h-8 w-auto max-w-[100px] object-contain shrink-0" />
-        )}
         <h2 className="text-lg font-sans font-semibold text-brand-text truncate">
           {tenant?.name}
         </h2>

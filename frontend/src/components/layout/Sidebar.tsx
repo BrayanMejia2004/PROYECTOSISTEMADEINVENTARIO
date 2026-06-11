@@ -50,7 +50,7 @@ export const Sidebar = ({ isOpen, onClose, desktopOpen }: SidebarProps) => {
               <Store className="w-5 h-5 text-white" />
             </div>
           )}
-          <span className="font-sans font-semibold text-sm text-white/90 truncate max-w-full text-center leading-tight">
+          <span className="font-sans font-semibold text-base text-white/90 truncate max-w-full text-center leading-tight">
             {tenant?.name || 'InventoPro'}
           </span>
         </div>
