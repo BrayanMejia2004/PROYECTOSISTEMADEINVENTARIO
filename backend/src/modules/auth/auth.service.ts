@@ -37,6 +37,17 @@ const generateTokens = (user: any, tenant: any) => {
   return { accessToken, refreshToken };
 };
 
+const mapTenant = (tenant: any) => ({
+  id: tenant._id.toString(),
+  name: tenant.name,
+  slug: tenant.slug,
+  logo: tenant.logo,
+  brandColor: tenant.brandColor,
+  brandColorLight: tenant.brandColorLight,
+  brandColorDark: tenant.brandColorDark,
+  brandSidebar: tenant.brandSidebar,
+});
+
 export const registerTenant = async (input: RegisterTenantInput) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -81,11 +92,7 @@ export const registerTenant = async (input: RegisterTenantInput) => {
         lastName: user.lastName,
         role: user.role,
       },
-      tenant: {
-        id: tenant._id.toString(),
-        name: tenant.name,
-        slug: tenant.slug,
-      },
+      tenant: mapTenant(tenant),
     };
   } catch (error) {
     await session.abortTransaction();
@@ -143,11 +150,7 @@ export const login = async (input: LoginInput) => {
       role: user.role,
       branchId: user.branchId?.toString() ?? undefined,
     },
-    tenant: {
-      id: tenant._id.toString(),
-      name: tenant.name,
-      slug: tenant.slug,
-    },
+    tenant: mapTenant(tenant),
   };
 };
 
@@ -191,11 +194,7 @@ export const refreshTokens = async (refreshToken: string) => {
       role: user.role,
       branchId: user.branchId?.toString() ?? undefined,
     },
-    tenant: {
-      id: tenant._id.toString(),
-      name: tenant.name,
-      slug: tenant.slug,
-    },
+    tenant: mapTenant(tenant),
   };
 };
 
