@@ -15,6 +15,11 @@ export interface AuthRequest extends Request {
     phone?: string;
     address?: string;
     nit?: string;
+    logo?: string;
+    brandColor?: string;
+    brandColorLight?: string;
+    brandColorDark?: string;
+    brandSidebar?: string;
     isActive: boolean;
   };
 }

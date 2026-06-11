@@ -151,6 +151,7 @@ export const getSalePdf = async (req: AuthRequest, res: Response, next: NextFunc
       tenantEmail: req.tenant!.email,
       tenantPhone: req.tenant!.phone,
       tenantAddress: req.tenant!.address,
+      tenantLogo: req.tenant!.logo,
       branchName: branch?.name || 'Sucursal no especificada',
     });
 
