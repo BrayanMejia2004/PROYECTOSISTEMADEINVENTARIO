@@ -12,6 +12,10 @@ import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
 import toast from 'react-hot-toast';
 
+const inputClass = "w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
+const labelClass = "block text-sm font-medium text-brand-text mb-1.5";
+const req = (label: string) => <>{label} <span className="text-red-400">*</span></>;
+
 interface ProductFormProps {
   productId?: string;
 }
@@ -159,10 +163,6 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const handleRemoveImage = () => {
     setValue('image', '');
   };
-
-  const inputClass = "w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
-  const labelClass = "block text-sm font-medium text-brand-text mb-1.5";
-  const req = (label: string) => <>{label} <span className="text-red-400">*</span></>;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">

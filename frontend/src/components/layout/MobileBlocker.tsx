@@ -4,12 +4,13 @@ import { Store } from 'lucide-react';
 const BREAKPOINT = 640;
 
 export const MobileBlocker = ({ children }: { children: React.ReactNode }) => {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < BREAKPOINT);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(`(max-width: ${BREAKPOINT - 1}px)`).matches);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < BREAKPOINT);
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    const mq = window.matchMedia(`(max-width: ${BREAKPOINT - 1}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
 
   if (isMobile) {
