@@ -1,20 +1,18 @@
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { productSchema, type ProductForm } from '../schemas';
+import { productSchema, type ProductForm as ProductFormType } from '../schemas';
 import { useCreateProduct, useUpdateProduct, useProduct, useUploadProductImage } from '../hooks';
 import { useDepartments } from '../../departments/hooks';
-import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Package, DollarSign, FileText, Box, Image, X, Loader2 } from 'lucide-react';
-import { NumberInput } from '../../../components/ui/NumberInput';
+import { Package } from 'lucide-react';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { SuccessToast } from '../../../components/ui/SuccessToast';
 import toast from 'react-hot-toast';
-
-const inputClass = "w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
-const labelClass = "block text-sm font-medium text-brand-text mb-1.5";
-const req = (label: string) => <>{label} <span className="text-red-400">*</span></>;
+import { BasicInfoSection } from './sections/BasicInfoSection';
+import { PriceSection } from './sections/PriceSection';
+import { TaxSection } from './sections/TaxSection';
+import { InventorySection } from './sections/InventorySection';
 
 interface ProductFormProps {
   productId?: string;
@@ -22,7 +20,6 @@ interface ProductFormProps {
 
 export const ProductForm = ({ productId }: ProductFormProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { data: productData } = useProduct(productId || '');
   const { data: departments } = useDepartments();
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
@@ -30,19 +27,11 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const [confirmSave, setConfirmSave] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
-  const pendingFormData = useRef<ProductForm | null>(null);
+  const pendingFormData = useRef<ProductFormType | null>(null);
   const { mutateAsync: uploadImage } = useUploadProductImage();
+  const manualPrice = useRef(false);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-    reset,
-    watch,
-    setValue,
-
-  } = useForm<ProductForm>({
+  const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm<ProductFormType>({
     resolver: zodResolver(productSchema),
   });
 
@@ -51,9 +40,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const costPrice = watch('costPrice');
   const profitPercent = watch('profitPercent');
   const price = watch('price');
-
   const imageUrl = watch('image');
-  const manualPrice = useRef(false);
 
   const calculatedPrice = useMemo(() => {
     if (costPrice > 0 && profitPercent > 0) {
@@ -63,85 +50,44 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   }, [costPrice, profitPercent]);
 
   useEffect(() => {
-    if (!manualPrice.current) {
-      setValue('price', calculatedPrice);
-    }
+    if (!manualPrice.current) setValue('price', calculatedPrice);
   }, [calculatedPrice, setValue]);
 
   useEffect(() => {
     if (manualPrice.current && costPrice > 0 && price > 0) {
-      const calcProfit = Math.round((1 - costPrice / price) * 100 * 10) / 10;
-      setValue('profitPercent', Math.min(100, Math.max(0, calcProfit)));
+      setValue('profitPercent', Math.min(100, Math.max(0, Math.round((1 - costPrice / price) * 100 * 10) / 10)));
     }
   }, [costPrice]);
 
   useEffect(() => {
     if (productData?.data) {
-      const cp = productData.data.costPrice;
-      const pr = productData.data.price;
-      const pp = pr > cp ? Math.round((1 - cp / pr) * 100 * 10) / 10 : 0;
+      const d = productData.data;
       manualPrice.current = true;
       reset({
-        sku: productData.data.sku,
-        barcode: productData.data.barcode || '',
-        name: productData.data.name,
-        description: productData.data.description || '',
-        departmentId: productData.data.departmentId || '',
-        brandId: productData.data.brandId || '',
-        supplierId: productData.data.supplierId || '',
-        image: productData.data.image || '',
-        costPrice: cp,
-        profitPercent: pp,
-        price: pr,
-        wholesalePrice: productData.data.wholesalePrice || undefined,
-        specialPrice: productData.data.specialPrice || undefined,
-        applyTax: productData.data.applyTax,
-        taxPercentage: productData.data.taxPercentage,
-        allowsDiscount: productData.data.allowsDiscount,
-        maxDiscount: productData.data.maxDiscount,
-        stock: productData.data.stock ?? 0,
-        minStock: productData.data.minStock,
-        maxStock: productData.data.maxStock,
-        sellOutOfStock: productData.data.sellOutOfStock,
-        unit: productData.data.unit,
+        sku: d.sku, barcode: d.barcode || '', name: d.name,
+        description: d.description || '', departmentId: d.departmentId || '',
+        brandId: d.brandId || '', supplierId: d.supplierId || '', image: d.image || '',
+        costPrice: d.costPrice, profitPercent: d.price > d.costPrice ? Math.round((1 - d.costPrice / d.price) * 1000) / 10 : 0,
+        price: d.price, wholesalePrice: d.wholesalePrice || undefined,
+        specialPrice: d.specialPrice || undefined, applyTax: d.applyTax,
+        taxPercentage: d.taxPercentage, allowsDiscount: d.allowsDiscount,
+        maxDiscount: d.maxDiscount, stock: d.stock ?? 0, minStock: d.minStock,
+        maxStock: d.maxStock, sellOutOfStock: d.sellOutOfStock, unit: d.unit,
       });
     }
   }, [productData, reset]);
 
-  const onSubmit = (data: ProductForm) => {
-    pendingFormData.current = data;
-    setConfirmSave(true);
-  };
+  const onSubmit = (data: ProductFormType) => { pendingFormData.current = data; setConfirmSave(true); };
 
   const handleConfirmSave = () => {
     const data = pendingFormData.current;
     if (!data) return;
-    if (productId) {
-      updateProduct(
-        { id: productId, input: data },
-        {
-          onSuccess: () => {
-            setShowSuccess('Producto actualizado exitosamente');
-            setTimeout(() => navigate('/inventory'), 1500);
-          },
-          onError: (err: any) => {
-            const msg = err?.response?.data?.message || 'Error al actualizar el producto';
-            toast.error(msg);
-          },
-        }
-      );
-    } else {
-      createProduct(data, {
-        onSuccess: () => {
-          setShowSuccess('Producto creado exitosamente');
-          setTimeout(() => navigate('/inventory'), 1500);
-        },
-        onError: (err: any) => {
-          const msg = err?.response?.data?.message || 'Error al crear el producto';
-          toast.error(msg);
-        },
-      });
-    }
+    const cb = {
+      onSuccess: () => { setShowSuccess(productId ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente'); setTimeout(() => navigate('/inventory'), 1500); },
+      onError: (err: any) => toast.error(err?.response?.data?.message || 'Error al guardar el producto'),
+    };
+    if (productId) updateProduct({ id: productId, input: data }, cb);
+    else createProduct(data, cb);
     setConfirmSave(false);
     pendingFormData.current = null;
   };
@@ -150,19 +96,14 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    try {
-      const url = await uploadImage(file);
-      setValue('image', url);
-    } catch {
-      setValue('image', '');
-    } finally {
-      setUploading(false);
-    }
+    try { setValue('image', await uploadImage(file)); }
+    catch { setValue('image', ''); }
+    finally { setUploading(false); }
   };
 
-  const handleRemoveImage = () => {
-    setValue('image', '');
-  };
+  const handleRemoveImage = () => setValue('image', '');
+
+  const sectionProps = { register, control, errors, setValue, departments, uploading, imageUrl, onImageSelect: handleImageSelect, onRemoveImage: handleRemoveImage };
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
@@ -171,256 +112,33 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
           <Package className="w-5 h-5 text-brand" />
         </div>
         <div>
-          <h3 className="font-sans font-semibold text-brand-text">
-            {productId ? 'Editar Producto' : 'Nuevo Producto'}
-          </h3>
-          <p className="text-xs text-brand-muted">
-            {productId ? 'Actualiza los datos del producto' : 'Ingresa los datos del nuevo producto'}
-          </p>
+          <h3 className="font-sans font-semibold text-brand-text">{productId ? 'Editar Producto' : 'Nuevo Producto'}</h3>
+          <p className="text-xs text-brand-muted">{productId ? 'Actualiza los datos del producto' : 'Ingresa los datos del nuevo producto'}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        {/* Section 1: Información Básica */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="w-4 h-4 text-brand" />
-            <h4 className="text-sm font-semibold text-brand-text uppercase tracking-wider">Información Básica</h4>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>{req('SKU')}</label>
-              <input {...register('sku')} className={inputClass} />
-              {errors.sku && <p className="text-red-500 text-xs mt-1">{errors.sku.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>{req('Código de Barras')}</label>
-              <input {...register('barcode')} className={inputClass} />
-              {errors.barcode && <p className="text-red-500 text-xs mt-1">{errors.barcode.message}</p>}
-            </div>
-            <div className="md:col-span-2">
-              <label className={labelClass}>{req('Nombre')}</label>
-              <input {...register('name')} className={inputClass} />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
-            </div>
-            <div className="md:col-span-2">
-              <label className={labelClass}>Descripción</label>
-              <textarea {...register('description')} rows={3} className={`${inputClass} resize-none`} />
-            </div>
-            <div>
-              <label className={labelClass}>{req('Departamento')}</label>
-              <select {...register('departmentId')} className={inputClass}>
-                <option value="">Seleccionar departamento</option>
-                {departments?.data?.map((dept: any) => (
-                  <option key={dept._id} value={dept._id}>{dept.name}</option>
-                ))}
-              </select>
-              {errors.departmentId && <p className="text-red-500 text-xs mt-1">{errors.departmentId.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>Marca</label>
-              <input {...register('brandId')} className={inputClass} placeholder="Nombre de la marca" />
-              {errors.brandId && <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>}
-            </div>
-            <div className="md:col-span-2">
-              <label className={labelClass}>Imagen del Producto</label>
-              <div className="flex items-center gap-3">
-                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text hover:border-brand/40 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Image className="w-4 h-4" />
-                  )}
-                  <span>{uploading ? 'Subiendo...' : 'Seleccionar imagen'}</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/avif"
-                    className="hidden"
-                    onChange={handleImageSelect}
-                    disabled={uploading}
-                  />
-                </label>
-                {imageUrl && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-red-200 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                    Eliminar
-                  </button>
-                )}
-              </div>
-              {imageUrl && (
-                <div className="mt-3 relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                </div>
-              )}
-              <input type="hidden" {...register('image')} />
-              {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image.message}</p>}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Precios */}
-        <div className="border-t border-gray-100 pt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="w-4 h-4 text-brand" />
-            <h4 className="text-sm font-semibold text-brand-text uppercase tracking-wider">Precios</h4>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>{req('Precio Costo')}</label>
-              <Controller name="costPrice" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} decimals={2} className={inputClass} />
-              )} />
-              {errors.costPrice && <p className="text-red-500 text-xs mt-1">{errors.costPrice.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>{req('Ganancia %')}</label>
-              <Controller name="profitPercent" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => { field.onChange(v === '' ? undefined : v); if (v !== '') manualPrice.current = false; }} min={0} max={100} decimals={1} className={inputClass} placeholder="Ej: 20" />
-              )} />
-              {errors.profitPercent && <p className="text-red-500 text-xs mt-1">{errors.profitPercent.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>{req('Precio Venta')}</label>
-              <Controller name="price" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => { field.onChange(v === '' ? undefined : v); if (v !== '' && v > 0 && costPrice > 0) { manualPrice.current = true; const cp = Math.round((1 - costPrice / v) * 100 * 10) / 10; setValue('profitPercent', Math.min(100, Math.max(0, cp))); } }} decimals={2} className={inputClass} />
-              )} />
-              {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>Precio Mayoreo</label>
-              <Controller name="wholesalePrice" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} decimals={2} className={inputClass} />
-              )} />
-            </div>
-            <div>
-              <label className={labelClass}>Precio Especial</label>
-              <Controller name="specialPrice" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} decimals={2} className={inputClass} />
-              )} />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: IVA */}
-        <div className="border-t border-gray-100 pt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Package className="w-4 h-4 text-brand" />
-            <h4 className="text-sm font-semibold text-brand-text uppercase tracking-wider">IVA</h4>
-          </div>
-          <div className="space-y-4">
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input {...register('applyTax')} type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand/20" />
-              <span className="text-sm text-brand-text">Aplica IVA</span>
-            </label>
-            {applyTax && (
-              <div className="max-w-xs">
-                <label className={labelClass}>Porcentaje IVA (%)</label>
-                <Controller name="taxPercentage" control={control} render={({ field }) => (
-                  <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} max={100} decimals={2} className={inputClass} />
-                )} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Section 4: Inventario */}
-        <div className="border-t border-gray-100 pt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Box className="w-4 h-4 text-brand" />
-            <h4 className="text-sm font-semibold text-brand-text uppercase tracking-wider">Inventario</h4>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <label className={labelClass}>{req('Stock Inicial')}</label>
-              <Controller name="stock" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
-              )} />
-              {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>Stock Mínimo</label>
-              <Controller name="minStock" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
-              )} />
-              {errors.minStock && <p className="text-red-500 text-xs mt-1">{errors.minStock.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>Stock Máximo</label>
-              <Controller name="maxStock" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} className={inputClass} />
-              )} />
-              {errors.maxStock && <p className="text-red-500 text-xs mt-1">{errors.maxStock.message}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>{req('Unidad de Medida')}</label>
-              <select {...register('unit')} className={inputClass}>
-                <option value="">Seleccionar unidad</option>
-                <option value="unit">Unidad</option>
-                <option value="kg">Kilogramo</option>
-                <option value="g">Gramo</option>
-                <option value="l">Litro</option>
-                <option value="ml">Mililitro</option>
-                <option value="box">Caja</option>
-                <option value="pack">Paquete</option>
-              </select>
-              {errors.unit && <p className="text-red-500 text-xs mt-1">{errors.unit.message}</p>}
-            </div>
-          </div>
-          <label className="flex items-center gap-2.5 cursor-pointer mb-4">
-            <input {...register('sellOutOfStock')} type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand/20" />
-            <span className="text-sm text-brand-text">Permitir venta sin stock</span>
-          </label>
-          <label className="flex items-center gap-2.5 cursor-pointer mb-4">
-            <input {...register('allowsDiscount')} type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand/20" />
-            <span className="text-sm text-brand-text">Permite descuento</span>
-          </label>
-          {allowsDiscount && (
-            <div className="max-w-xs mb-4">
-              <label className={labelClass}>Descuento Máximo (%)</label>
-              <Controller name="maxDiscount" control={control} render={({ field }) => (
-                <NumberInput value={field.value ?? ''} onChange={(v) => field.onChange(v === '' ? undefined : v)} min={0} max={100} decimals={2} className={inputClass} />
-              )} />
-            </div>
-          )}
-        </div>
+        <BasicInfoSection {...sectionProps} />
+        <PriceSection {...sectionProps} costPrice={costPrice} manualPrice={manualPrice} />
+        <TaxSection {...sectionProps} applyTax={applyTax} />
+        <InventorySection {...sectionProps} allowsDiscount={allowsDiscount} />
 
         <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-          <button
-            type="submit"
-            disabled={isCreating || isUpdating}
-            className="bg-brand text-white px-5 py-2.5 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-2.5 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
             {isCreating || isUpdating ? 'Guardando...' : productId ? 'Actualizar' : 'Crear Producto'}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate('/inventory')}
-            className="px-5 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text hover:border-gray-300 transition-colors"
-          >
+          <button type="button" onClick={() => navigate('/inventory')} className="px-5 py-2.5 rounded-lg border border-gray-200 text-sm text-brand-muted hover:text-brand-text hover:border-gray-300 transition-colors">
             Cancelar
           </button>
         </div>
       </form>
 
-      <ConfirmDialog
-        open={confirmSave}
-        onClose={() => setConfirmSave(false)}
-        onConfirm={handleConfirmSave}
+      <ConfirmDialog open={confirmSave} onClose={() => setConfirmSave(false)} onConfirm={handleConfirmSave}
         title={productId ? 'Guardar cambios' : 'Crear producto'}
         message={productId ? '¿Estás seguro de guardar los cambios en este producto?' : '¿Estás seguro de crear este nuevo producto?'}
-        confirmText={productId ? 'Guardar cambios' : 'Crear producto'}
-        variant="success"
-      />
+        confirmText={productId ? 'Guardar cambios' : 'Crear producto'} variant="success" />
 
-      <SuccessToast
-        open={!!showSuccess}
-        onClose={() => setShowSuccess('')}
-        message={showSuccess}
-      />
+      <SuccessToast open={!!showSuccess} onClose={() => setShowSuccess('')} message={showSuccess} />
     </div>
   );
 };
