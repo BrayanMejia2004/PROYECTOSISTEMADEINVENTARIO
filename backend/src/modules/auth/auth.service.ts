@@ -155,47 +155,47 @@ export const login = async (input: LoginInput) => {
 };
 
 export const refreshTokens = async (refreshToken: string) => {
-  let payload;
   try {
-    payload = verifyRefreshToken(refreshToken);
-  } catch {
-    throw ApiError.unauthorized('Refresh token inválido o expirado');
-  }
+    const payload = verifyRefreshToken(refreshToken);
 
-  const user = await User.findById(payload.userId);
-  if (!user || !user.isActive) {
-    throw ApiError.unauthorized('Usuario no encontrado o inactivo');
-  }
+    const user = await User.findById(payload.userId);
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized('Usuario no encontrado o inactivo');
+    }
 
-  if (user.tokenVersion !== payload.tokenVersion) {
-    throw ApiError.unauthorized('Sesión inválida. Inicia sesión nuevamente.');
-  }
+    if (user.tokenVersion !== payload.tokenVersion) {
+      throw ApiError.unauthorized('Sesión inválida. Inicia sesión nuevamente.');
+    }
 
-  const tenant = await Tenant.findById(user.tenantId);
-  if (!tenant || !tenant.isActive) {
-    throw ApiError.unauthorized('Tenant no encontrado o inactivo');
-  }
+    const tenant = await Tenant.findById(user.tenantId);
+    if (!tenant || !tenant.isActive) {
+      throw ApiError.unauthorized('Tenant no encontrado o inactivo');
+    }
 
-  const accessToken = signAccessToken({
-    userId: user._id.toString(),
-    tenantId: tenant._id.toString(),
-    role: user.role,
-    branchId: user.branchId?.toString() ?? undefined,
-    tokenVersion: user.tokenVersion,
-  });
-
-  return {
-    accessToken,
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
+    const accessToken = signAccessToken({
+      userId: user._id.toString(),
+      tenantId: tenant._id.toString(),
       role: user.role,
       branchId: user.branchId?.toString() ?? undefined,
-    },
-    tenant: mapTenant(tenant),
-  };
+      tokenVersion: user.tokenVersion,
+    });
+
+    return {
+      accessToken,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        branchId: user.branchId?.toString() ?? undefined,
+      },
+      tenant: mapTenant(tenant),
+    };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw ApiError.unauthorized('Sesión inválida. Inicia sesión nuevamente.');
+  }
 };
 
 export const logout = async (refreshToken: string) => {
