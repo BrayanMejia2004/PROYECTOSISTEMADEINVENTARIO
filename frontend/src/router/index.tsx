@@ -5,23 +5,21 @@ import { PermissionRoute } from './PermissionRoute';
 import { AppShell } from '../components/layout/AppShell';
 import { PageLoader } from '../components/ui/PageLoader';
 
-const loadPage = (path: string, name: string) => lazy(() => import(path).then(m => ({ default: (m as any)[name] })));
-
-const LoginPage = loadPage('../pages/LoginPage', 'LoginPage');
-const RegisterTenantPage = loadPage('../pages/RegisterTenantPage', 'RegisterTenantPage');
-const DashboardPage = loadPage('../pages/DashboardPage', 'DashboardPage');
-const CashierShiftPage = loadPage('../pages/CashierShiftPage', 'CashierShiftPage');
-const InventoryPage = loadPage('../pages/InventoryPage', 'InventoryPage');
-const DepartmentsPage = loadPage('../pages/DepartmentsPage', 'DepartmentsPage');
-const PosPage = loadPage('../pages/PosPage', 'PosPage');
-const SalesPage = loadPage('../pages/SalesPage', 'SalesPage');
-const SuppliersPage = loadPage('../pages/SuppliersPage', 'SuppliersPage');
-const ReportsPage = loadPage('../pages/ReportsPage', 'ReportsPage');
-const UsersPage = loadPage('../pages/UsersPage', 'UsersPage');
-const CustomersPage = loadPage('../pages/CustomersPage', 'CustomersPage');
-const SettingsPage = loadPage('../pages/SettingsPage', 'SettingsPage');
-const ProductFormPage = loadPage('../pages/ProductFormPage', 'ProductFormPage');
-const NotFoundPage = loadPage('../pages/NotFoundPage', 'NotFoundPage');
+const LoginPage = lazy(() => import('../pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterTenantPage = lazy(() => import('../pages/RegisterTenantPage').then(m => ({ default: m.RegisterTenantPage })));
+const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const CashierShiftPage = lazy(() => import('../pages/CashierShiftPage').then(m => ({ default: m.CashierShiftPage })));
+const InventoryPage = lazy(() => import('../pages/InventoryPage').then(m => ({ default: m.InventoryPage })));
+const DepartmentsPage = lazy(() => import('../pages/DepartmentsPage').then(m => ({ default: m.DepartmentsPage })));
+const PosPage = lazy(() => import('../pages/PosPage').then(m => ({ default: m.PosPage })));
+const SalesPage = lazy(() => import('../pages/SalesPage').then(m => ({ default: m.SalesPage })));
+const SuppliersPage = lazy(() => import('../pages/SuppliersPage').then(m => ({ default: m.SuppliersPage })));
+const ReportsPage = lazy(() => import('../pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const UsersPage = lazy(() => import('../pages/UsersPage').then(m => ({ default: m.UsersPage })));
+const CustomersPage = lazy(() => import('../pages/CustomersPage').then(m => ({ default: m.CustomersPage })));
+const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const ProductFormPage = lazy(() => import('../pages/ProductFormPage').then(m => ({ default: m.ProductFormPage })));
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 const L = (Component: React.LazyExoticComponent<React.ComponentType<any>>) => (
   <Suspense fallback={<PageLoader />}><Component /></Suspense>
