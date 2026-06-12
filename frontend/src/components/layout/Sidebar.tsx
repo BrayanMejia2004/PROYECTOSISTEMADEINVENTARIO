@@ -38,7 +38,7 @@ export const Sidebar = ({ isOpen, onClose, desktopOpen }: SidebarProps) => {
       {isOpen && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={onClose} />}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-64 min-h-screen flex flex-col shrink-0",
-        "transform transition-transform duration-200 ease-in-out",
+        "transform transition-transform duration-200 ease-out",
         isOpen ? "translate-x-0" : "-translate-x-full",
         desktopOpen ? "lg:translate-x-0" : "lg:-translate-x-full"
       )} style={{ backgroundColor: tenant?.brandSidebar || '#1E293B' }}>
