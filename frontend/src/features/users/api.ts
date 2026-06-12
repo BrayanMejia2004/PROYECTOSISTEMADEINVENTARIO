@@ -1,6 +1,6 @@
 import api from '../../api/axios';
 import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse, User } from '../types';
+import { ApiResponse, User } from '../../types';
 
 export const getUsers = async (params?: { role?: string; page?: number; limit?: number }): Promise<ApiResponse<User[]>> => {
   const { data } = await api.get<ApiResponse<User[]>>(ENDPOINTS.USERS, { params });

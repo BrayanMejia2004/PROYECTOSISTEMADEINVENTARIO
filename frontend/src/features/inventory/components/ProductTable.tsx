@@ -34,7 +34,7 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
   const { hasPermission } = usePermission();
   const isAdmin = userRole === 'admin';
 
-  const products = data?.data || [];
+  const products: Product[] = data?.data || [];
   const meta = data?.meta;
 
   const columns = [

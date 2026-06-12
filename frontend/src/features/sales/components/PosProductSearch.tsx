@@ -37,7 +37,7 @@ export const PosProductSearch = ({ onAddToCart, cartItems = [] }: PosProductSear
       const product = res.data;
       if (product) {
         onAddToCart({
-          productId: product._id,
+          productId: product.id,
           productName: product.name,
           sku: product.sku,
           barcode: product.barcode,

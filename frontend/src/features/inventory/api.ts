@@ -1,6 +1,6 @@
 import api from '../../api/axios';
 import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse, Product, Stock } from '../../../types';
+import { ApiResponse, Product, Stock } from '../../types';
 
 export const getProductByBarcode = async (barcode: string): Promise<ApiResponse<Product | null>> => {
   const { data } = await api.get<ApiResponse<Product | null>>(`${ENDPOINTS.PRODUCTS_BARCODE}/${barcode}`);

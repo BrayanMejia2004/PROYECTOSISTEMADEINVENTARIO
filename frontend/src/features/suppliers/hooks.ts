@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as supplierApi from './api';
+import type { Supplier } from '../../types';
 
 export const useSuppliers = (params?: { page?: number; limit?: number }) => {
   return useQuery({

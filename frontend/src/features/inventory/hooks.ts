@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as inventoryApi from './api';
+import type { Product } from '../../types';
 
 export const useProducts = (params?: { page?: number; limit?: number; search?: string; branchId?: string }) => {
   return useQuery({
