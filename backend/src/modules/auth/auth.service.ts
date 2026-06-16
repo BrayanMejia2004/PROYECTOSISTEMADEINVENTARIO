@@ -4,6 +4,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../sha
 import Tenant from '../../shared/models/tenant/tenant.model';
 import User from '../../shared/models/user/user.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import { eventBus, Events } from '../../shared/utils/eventBus';
 
 interface RegisterTenantInput {
   tenantName: string;
@@ -139,6 +140,11 @@ export const login = async (input: LoginInput) => {
 
   const { accessToken, refreshToken } = generateTokens(user, tenant);
 
+  eventBus.emit(Events.USER_LOGIN, {
+    userId: user._id.toString(),
+    tenantId: tenant._id.toString(),
+  });
+
   return {
     accessToken,
     refreshToken,
@@ -201,7 +207,13 @@ export const refreshTokens = async (refreshToken: string) => {
 export const logout = async (refreshToken: string) => {
   try {
     const payload = verifyRefreshToken(refreshToken);
-    await User.findByIdAndUpdate(payload.userId, { $inc: { tokenVersion: 1 } });
+    const user = await User.findByIdAndUpdate(payload.userId, { $inc: { tokenVersion: 1 } });
+    if (user) {
+      eventBus.emit(Events.USER_LOGOUT, {
+        userId: payload.userId,
+        tenantId: user.tenantId.toString(),
+      });
+    }
   } catch {
     // Si el refresh token ya es inválido, igual limpiamos la cookie
   }

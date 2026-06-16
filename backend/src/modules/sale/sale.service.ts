@@ -8,6 +8,10 @@ import * as customerService from '../customer/customer.service';
 import { moveStock } from '../stock/stock.service';
 import { generateSaleNumber } from '../../shared/utils/sequenceGenerator/sequenceGenerator';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import { eventBus, Events } from '../../shared/utils/eventBus';
+import { paymentContext } from './paymentStrategies';
+import type { PaymentInput } from './paymentStrategies';
+import { saleStateMachine } from './saleStateMachine';
 
 interface SaleItemInput {
   productId: string;
@@ -76,61 +80,32 @@ export const createSale = async (input: CreateSaleInput) => {
     throw ApiError.badRequest('No hay una caja abierta. Debe abrir la caja antes de realizar ventas.');
   }
 
+  let preSubtotal = 0;
+  for (const item of input.items) {
+    preSubtotal += item.quantity * item.unitPrice;
+  }
+  const preTax = input.tax || 0;
+  const preDiscount = input.discount || 0;
+  const preTotal = preSubtotal + preTax - preDiscount;
+
+  const strategy = paymentContext.get(input.paymentMethod);
+  const paymentInput: PaymentInput = {
+    tenantId: input.tenantId,
+    customerName: input.customerName,
+    paymentMethod: input.paymentMethod,
+    exchangeFromSaleId: input.exchangeFromSaleId,
+    exchangeCredit: input.exchangeCredit,
+    total: preTotal,
+  };
+
+  // payment-specific validation (exchange, etc.)
+  await strategy.validate(paymentInput);
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const saleNumber = await generateSaleNumber(input.tenantId);
-
-    let preSubtotal = 0;
-    for (const item of input.items) {
-      preSubtotal += item.quantity * item.unitPrice;
-    }
-    const preTax = input.tax || 0;
-    const preDiscount = input.discount || 0;
-    const preTotal = preSubtotal + preTax - preDiscount;
-
-    if (input.exchangeFromSaleId) {
-      const originalSale = await Sale.findOne({
-        _id: input.exchangeFromSaleId,
-        tenantId: input.tenantId,
-      }).session(session);
-
-      if (!originalSale) throw ApiError.notFound('Venta original no encontrada');
-      if (originalSale.status !== 'refunded')
-        throw ApiError.badRequest('La venta original debe estar devuelta antes de hacer un intercambio');
-
-      const usedAgg = await Sale.aggregate([
-        { $match: { exchangeFromSaleId: originalSale._id, tenantId: new mongoose.Types.ObjectId(input.tenantId) } },
-        { $group: { _id: null, total: { $sum: '$exchangeCredit' } } },
-      ]).allowDiskUse(true).session(session);
-      const usedCredit = usedAgg[0]?.total || 0;
-      const availableCredit = originalSale.total - usedCredit;
-
-      if (availableCredit <= 0)
-        throw ApiError.badRequest('Esta venta ya fue intercambiada completamente y no tiene crédito disponible');
-
-      if ((input.exchangeCredit || 0) > availableCredit)
-        throw ApiError.badRequest(
-          `Crédito insuficiente. Disponible: $${availableCredit.toLocaleString('es-CO')}`
-        );
-
-      if (originalSale.customerName && input.customerName?.toLowerCase() !== originalSale.customerName.toLowerCase())
-        throw ApiError.badRequest(
-          `El cliente debe ser "${originalSale.customerName}" (coincidir con la venta original)`
-        );
-
-      if (preTotal < availableCredit)
-        throw ApiError.badRequest('El total de la venta debe ser mayor o igual al crédito disponible');
-
-      if (preTotal > (input.exchangeCredit || 0)) {
-        if (!input.paymentMethod || input.paymentMethod === 'exchange') {
-          throw ApiError.badRequest(
-            `El excedente de $${(preTotal - (input.exchangeCredit || 0)).toLocaleString('es-CO')} requiere un método de pago`
-          );
-        }
-      }
-    }
 
     let subtotal = 0;
     const saleItems: any[] = [];
@@ -223,24 +198,32 @@ export const createSale = async (input: CreateSaleInput) => {
       tax,
       discount,
       total,
-      paymentMethod: input.exchangeFromSaleId && total <= (input.exchangeCredit || 0) ? 'exchange' : input.paymentMethod,
+      paymentMethod: strategy.determineFinalMethod(paymentInput, total),
       status: 'completed',
       transferReference: input.transferReference,
       transferAmount: input.transferAmount,
       transferBank: input.transferBank,
       cardBank: input.cardBank,
       cardReference: input.cardReference,
-      exchangeFromSaleId: input.exchangeFromSaleId,
-      exchangeCredit: input.exchangeCredit || 0,
+      ...strategy.getSaleFields(paymentInput),
     });
 
     await sale.save({ session });
     await session.commitTransaction();
     session.endSession();
 
-    if (customerId) {
-      customerService.recordPurchase(customerId, input.tenantId, total).catch(() => {});
-    }
+    eventBus.emit(Events.SALE_CREATED, {
+      saleId: sale._id.toString(),
+      saleNumber,
+      tenantId: input.tenantId,
+      branchId: input.branchId,
+      userId: input.userId,
+      customerId,
+      customerName: input.customerName,
+      total,
+      paymentMethod: sale.paymentMethod,
+      items: saleItems.map(i => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice })),
+    });
 
     return sale;
   } catch (error) {
@@ -520,7 +503,9 @@ export const refundSale = async (saleId: string, tenantId: string, branchId: str
     if (branchId) query.branchId = branchId;
     const sale = await Sale.findOne(query).session(session);
     if (!sale) throw ApiError.notFound('Sale not found');
-    if (sale.status !== 'completed') throw ApiError.badRequest('Only completed sales can be refunded');
+    if (!saleStateMachine.canRefund(sale.status as any)) {
+      throw ApiError.badRequest(`No se puede devolver una venta en estado "${sale.status}"`);
+    }
 
     for (const item of sale.items) {
       await moveStock({
@@ -539,6 +524,14 @@ export const refundSale = async (saleId: string, tenantId: string, branchId: str
     await sale.save({ session });
     await session.commitTransaction();
     session.endSession();
+
+    eventBus.emit(Events.SALE_REFUNDED, {
+      saleId: sale._id.toString(),
+      saleNumber: sale.saleNumber,
+      tenantId,
+      branchId,
+      total: sale.total,
+    });
 
     return sale;
   } catch (error) {

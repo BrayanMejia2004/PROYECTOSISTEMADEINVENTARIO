@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 import CashierShift from '../../shared/models/cashierShift/cashierShift.model';
 import CashMovement from '../../shared/models/cashMovement/cashMovement.model';
-import { Sale } from '../../shared/models/sale/sale.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import * as saleService from '../sale/sale.service';
+import { shiftStateMachine } from './shiftStateMachine';
 
 interface OpenShiftInput {
   tenantId: string;
@@ -74,12 +74,13 @@ export const closeShift = async (input: CloseShiftInput) => {
     _id: input.shiftId,
     tenantId: input.tenantId,
     branchId: input.branchId,
-    status: 'open',
   });
 
   if (!shift) {
-    throw ApiError.notFound('Caja no encontrada o ya está cerrada');
+    throw ApiError.notFound('Caja no encontrada');
   }
+
+  shiftStateMachine.transition(shift.status as any, 'closed');
 
   const today = new Date(shift.openedAt);
   const endOfToday = new Date();
@@ -172,11 +173,14 @@ export const createMovement = async (input: CreateMovementInput) => {
     _id: input.shiftId,
     tenantId: input.tenantId,
     branchId: input.branchId,
-    status: 'open',
   });
 
   if (!shift) {
-    throw ApiError.badRequest('No hay una caja abierta para registrar movimientos');
+    throw ApiError.notFound('Turno de caja no encontrado');
+  }
+
+  if (!shiftStateMachine.canRegisterMovement(shift.status as any)) {
+    throw ApiError.badRequest('No se pueden registrar movimientos en un turno cerrado');
   }
 
   const movement = new CashMovement({

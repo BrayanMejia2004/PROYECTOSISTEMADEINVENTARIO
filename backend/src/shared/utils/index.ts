@@ -3,3 +3,11 @@ export { sendSuccess, sendPaginated } from './apiResponse/ApiResponse';
 export { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from './jwt/jwt';
 export { generateSaleNumber } from './sequenceGenerator/sequenceGenerator';
 export { generateSalePdf } from './pdf/pdf.service';
+export { eventBus, Events } from './eventBus';
+export type {
+  SaleCreatedEvent,
+  SaleRefundedEvent,
+  StockMovedEvent,
+  UserLoginEvent,
+  UserLogoutEvent,
+} from './eventBus';

@@ -7,6 +7,8 @@ import Brand from '../../shared/models/brand/brand.model';
 import * as stockService from '../stock/stock.service';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import ExcelJS from 'exceljs';
+import { ProductImportFacade } from './productImportFacade';
+import type { ImportProductInput, ImportResult } from './productImportFacade';
 
 interface GetProductsOptions {
   tenantId: string;
@@ -381,194 +383,14 @@ export const deleteProduct = async (productId: string, tenantId: string) => {
   return product;
 };
 
-interface ImportProductInput {
-  sku: string;
-  barcode: string;
-  name: string;
-  description?: string;
-  categoryName: string;
-  brandId?: string;
-  costPrice: number;
-  price: number;
-  wholesalePrice?: number;
-  specialPrice?: number;
-  applyTax?: boolean;
-  taxPercentage?: number;
-  allowsDiscount?: boolean;
-  maxDiscount?: number;
-  minStock?: number;
-  maxStock?: number;
-  sellOutOfStock?: boolean;
-  unit: string;
-  initialStock?: number;
-  historicalSales?: number;
-}
-
-export const importProducts = async (tenantId: string, products: ImportProductInput[], branchId?: string, skipDuplicates = false) => {
-  const errors: Array<{ row: number; message: string }> = [];
-  let createdCount = 0;
-
-  const departmentNames = [...new Set(products.map(p => p.categoryName).filter(Boolean))];
-  const existingDepartments = await Department.find({ tenantId, name: { $in: departmentNames } });
-  const departmentMap = new Map(existingDepartments.map(d => [d.name, d._id.toString()]));
-
-  for (const name of departmentNames) {
-    if (!departmentMap.has(name)) {
-      const dept = await Department.create({ tenantId, branchId, name });
-      departmentMap.set(name, dept._id.toString());
-    }
-  }
-
-  const brandNames = [...new Set(products.map(p => p.brandId).filter(Boolean))] as string[];
-  const brandMap = new Map<string, string>();
-
-  for (const name of brandNames) {
-    if (mongoose.Types.ObjectId.isValid(name)) {
-      const existingBrand = await Brand.findOne({ tenantId, _id: name });
-      if (existingBrand) {
-        brandMap.set(name, existingBrand._id.toString());
-        continue;
-      }
-    }
-    if (!brandMap.has(name)) {
-      const existingBrand = await Brand.findOne({ tenantId, name });
-      if (existingBrand) {
-        brandMap.set(name, existingBrand._id.toString());
-      } else {
-        const brand = await Brand.create({ tenantId, branchId, name });
-        brandMap.set(name, brand._id.toString());
-      }
-    }
-  }
-
-  const existingSKUs = new Set<string>(
-    (await Product.find({ tenantId }).select('sku').lean()).map(p => p.sku)
-  );
-
-  const UNIT_MAP: Record<string, string> = {
-    unidad: 'unit', unidades: 'unit',
-    kilo: 'kg', kilos: 'kg',
-    gramo: 'g', gramos: 'g',
-    litro: 'l', litros: 'l',
-    mililitro: 'ml', mililitros: 'ml',
-    caja: 'box', cajas: 'box',
-    paquete: 'pack', paquetes: 'pack',
-  };
-
-  interface ValidProduct {
-    row: number;
-    data: Record<string, any>;
-    original: ImportProductInput;
-  }
-
-  const validProducts: ValidProduct[] = [];
-
-  for (let i = 0; i < products.length; i++) {
-    const p = products[i];
-    const row = i + 2;
-
-    if (!p.sku) { errors.push({ row, message: 'SKU requerido' }); continue; }
-    if (!p.name || p.name.length < 2) { errors.push({ row, message: 'Nombre mínimo 2 caracteres' }); continue; }
-    if (!p.barcode) { errors.push({ row, message: 'Código de barras requerido' }); continue; }
-    if (!p.categoryName) { errors.push({ row, message: 'Categoría requerida' }); continue; }
-    if (p.costPrice == null || p.costPrice < 0) { errors.push({ row, message: 'Precio costo inválido' }); continue; }
-    if (p.price == null || p.price < 0) { errors.push({ row, message: 'Precio venta inválido' }); continue; }
-    if (p.minStock != null && p.minStock < 0) { errors.push({ row, message: 'Stock mínimo inválido' }); continue; }
-    if (p.maxStock != null && p.maxStock < 0) { errors.push({ row, message: 'Stock máximo inválido' }); continue; }
-    if (!p.unit) { errors.push({ row, message: 'Unidad requerida' }); continue; }
-    if (p.initialStock == null || p.initialStock < 0) { errors.push({ row, message: 'Stock inicial inválido' }); continue; }
-
-    if (existingSKUs.has(p.sku)) {
-      if (skipDuplicates) continue;
-      errors.push({ row, message: `SKU "${p.sku}" ya existe` });
-      continue;
-    }
-    existingSKUs.add(p.sku);
-
-    const normalized = p.unit?.toLowerCase().trim();
-    const unit = UNIT_MAP[normalized] || p.unit;
-
-    validProducts.push({
-      row,
-      original: p,
-      data: {
-        tenantId,
-        sku: p.sku,
-        barcode: p.barcode,
-        name: p.name,
-        description: p.description,
-        departmentId: departmentMap.get(p.categoryName),
-        brandId: p.brandId ? (brandMap.get(p.brandId) || undefined) : undefined,
-        costPrice: p.costPrice,
-        price: p.price,
-        wholesalePrice: p.wholesalePrice,
-        specialPrice: p.specialPrice,
-        applyTax: p.applyTax ?? false,
-        taxPercentage: p.taxPercentage ?? 0,
-        allowsDiscount: p.allowsDiscount ?? false,
-        maxDiscount: p.maxDiscount ?? 0,
-        minStock: p.minStock ?? 0,
-        maxStock: p.maxStock ?? 0,
-        sellOutOfStock: p.sellOutOfStock ?? false,
-        unit,
-        historicalSales: p.historicalSales ?? 0,
-      },
-    });
-  }
-
-  const BATCH_SIZE = 500;
-  for (let i = 0; i < validProducts.length; i += BATCH_SIZE) {
-    const batch = validProducts.slice(i, i + BATCH_SIZE);
-    const operations = batch.map(vp => ({
-      insertOne: { document: vp.data },
-    }));
-
-    try {
-      const result = await Product.bulkWrite(operations, { ordered: false });
-      const insertedIds = Object.values(result.insertedIds).map((id: any) => id.toString());
-
-      if (branchId && branchId.trim()) {
-        const stockDocs = batch.map((vp, idx) => ({
-          tenantId,
-          branchId,
-          productId: insertedIds[idx],
-          quantity: vp.original.initialStock || 0,
-          price: vp.original.price,
-          isLowStock: (vp.original.initialStock || 0) <= (vp.original.minStock || 0),
-        }));
-        const stockFiltered = stockDocs.filter(s => s.productId);
-        if (stockFiltered.length > 0) {
-          try {
-            await Stock.insertMany(stockFiltered, { ordered: false });
-
-            const movements = stockFiltered
-              .filter(s => s.quantity > 0)
-              .map(s => ({
-                tenantId: s.tenantId,
-                branchId: s.branchId,
-                productId: s.productId,
-                type: 'adjustment' as const,
-                quantity: s.quantity,
-                previousQuantity: 0,
-                newQuantity: s.quantity,
-                note: 'Initial stock (import)',
-              }));
-            if (movements.length > 0) {
-              await StockMovement.insertMany(movements, { ordered: false });
-            }
-          } catch {
-            batch.forEach(vp => errors.push({ row: vp.row, message: `Producto creado pero no se pudo inicializar stock: ${vp.data.name}` }));
-          }
-        }
-      }
-
-      createdCount += batch.length;
-    } catch (err: any) {
-      batch.forEach(vp => errors.push({ row: vp.row, message: err.message || 'Error al insertar producto' }));
-    }
-  }
-
-  return { created: createdCount, errors };
+export const importProducts = async (
+  tenantId: string,
+  products: ImportProductInput[],
+  branchId?: string,
+  skipDuplicates = false
+): Promise<ImportResult> => {
+  const facade = new ProductImportFacade();
+  return facade.import(tenantId, products, branchId, skipDuplicates);
 };
 
 const BATCH_SIZE = 500;

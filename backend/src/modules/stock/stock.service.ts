@@ -4,6 +4,7 @@ import StockMovement from '../../shared/models/stockMovement/stockMovement.model
 import Product from '../../shared/models/product/product.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { MovementType } from '../../shared/models/stockMovement/stockMovement.model';
+import { eventBus, Events } from '../../shared/utils/eventBus';
 
 interface MoveStockInput {
   tenantId: string;
@@ -60,6 +61,15 @@ export const moveStock = async (input: MoveStockInput): Promise<void> => {
     referenceId,
   });
   await movement.save({ session });
+
+  eventBus.emit(Events.STOCK_MOVED, {
+    tenantId,
+    branchId,
+    productId,
+    type,
+    quantity,
+    newQuantity,
+  });
 };
 
 export const getStockByBranch = async (
