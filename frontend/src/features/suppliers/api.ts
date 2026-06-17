@@ -1,6 +1,6 @@
-import api from '../../api/axios';
-import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse, Supplier } from '../../types';
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
+import { ApiResponse, Supplier } from '@/types';
 
 export const getSuppliers = async (params?: { page?: number; limit?: number }): Promise<ApiResponse<Supplier[]>> => {
   const { data } = await api.get<ApiResponse<Supplier[]>>(ENDPOINTS.SUPPLIERS, { params });

@@ -4,8 +4,6 @@ export const Events = {
   STOCK_MOVED: 'stock:moved',
   USER_LOGIN: 'user:login',
   USER_LOGOUT: 'user:logout',
-  PRODUCT_CREATED: 'product:created',
-  PRODUCT_UPDATED: 'product:updated',
 } as const;
 
 export interface SaleCreatedEvent {

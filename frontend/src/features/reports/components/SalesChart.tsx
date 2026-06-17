@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getSalesReport } from '../api';
+import { getSalesReport } from '@/features/reports/api';
 import { TrendingUp } from 'lucide-react';
+import type { DailySalesData } from '@/types';
 
 export const SalesChart = () => {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<DailySalesData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

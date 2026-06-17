@@ -1,22 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PermissionRoute } from './PermissionRoute';
-import { AppShell } from '../components/layout/AppShell';
-import { LoginPage } from '../pages/LoginPage';
-import { RegisterTenantPage } from '../pages/RegisterTenantPage';
-import { DashboardPage } from '../pages/DashboardPage';
-import { CashierShiftPage } from '../pages/CashierShiftPage';
-import { InventoryPage } from '../pages/InventoryPage';
-import { DepartmentsPage } from '../pages/DepartmentsPage';
-import { PosPage } from '../pages/PosPage';
-import { SalesPage } from '../pages/SalesPage';
-import { SuppliersPage } from '../pages/SuppliersPage';
-import { ReportsPage } from '../pages/ReportsPage';
-import { UsersPage } from '../pages/UsersPage';
-import { CustomersPage } from '../pages/CustomersPage';
-import { SettingsPage } from '../pages/SettingsPage';
-import { ProductFormPage } from '../pages/ProductFormPage';
-import { NotFoundPage } from '../pages/NotFoundPage';
+import { AppShell } from '@/components/layout/AppShell';
+import { LoginPage } from '@/pages/LoginPage';
+import { RegisterTenantPage } from '@/pages/RegisterTenantPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { CashierShiftPage } from '@/pages/CashierShiftPage';
+import { InventoryPage } from '@/pages/InventoryPage';
+import { DepartmentsPage } from '@/pages/DepartmentsPage';
+import { PosPage } from '@/pages/PosPage';
+import { SalesPage } from '@/pages/SalesPage';
+import { SuppliersPage } from '@/pages/SuppliersPage';
+import { ReportsPage } from '@/pages/ReportsPage';
+import { UsersPage } from '@/pages/UsersPage';
+import { CustomersPage } from '@/pages/CustomersPage';
+import { SettingsPage } from '@/pages/SettingsPage';
+import { ProductFormPage } from '@/pages/ProductFormPage';
+import { NotFoundPage } from '@/pages/NotFoundPage';
 
 export const AppRouter = () => {
   return (

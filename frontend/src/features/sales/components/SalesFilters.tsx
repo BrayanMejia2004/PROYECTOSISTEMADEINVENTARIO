@@ -1,21 +1,23 @@
 import { useState } from 'react';
 import { Filter, X, Search } from 'lucide-react';
-import { useUsers } from '../../users/hooks';
-import { NumberInput } from '../../../components/ui/NumberInput';
+import { useUsers } from '@/features/users/hooks';
+import { NumberInput } from '@/components/ui/NumberInput';
+
+export interface SalesFilterState {
+  search?: string;
+  status?: string;
+  paymentMethod?: string;
+  customerName?: string;
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+  minTotal?: number;
+  maxTotal?: number;
+}
 
 interface SalesFiltersProps {
-  filters: {
-    search?: string;
-    status?: string;
-    paymentMethod?: string;
-    customerName?: string;
-    userId?: string;
-    startDate?: string;
-    endDate?: string;
-    minTotal?: number;
-    maxTotal?: number;
-  };
-  onChange: (filters: any) => void;
+  filters: SalesFilterState;
+  onChange: (filters: SalesFilterState) => void;
 }
 
 export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
@@ -37,7 +39,7 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
     });
   };
 
-  const update = (key: string, value: any) => {
+  const update = (key: string, value: string | number | undefined) => {
     onChange({ ...filters, [key]: value || undefined });
   };
 

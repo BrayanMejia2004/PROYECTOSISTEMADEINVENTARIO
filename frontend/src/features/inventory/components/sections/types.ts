@@ -1,5 +1,5 @@
 import type { UseFormRegister, Control, FormState, UseFormSetValue } from 'react-hook-form';
-import type { ProductForm } from '../../schemas';
+import type { ProductForm } from '@/features/inventory/schemas';
 
 export interface SectionProps {
   register: UseFormRegister<ProductForm>;

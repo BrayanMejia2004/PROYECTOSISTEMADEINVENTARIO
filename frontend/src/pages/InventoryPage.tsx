@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { usePermission } from '../hooks/usePermission';
-import { ProductTable } from '../features/inventory/components/ProductTable';
-import { ImportModal } from '../features/inventory/components/ImportModal';
-import { useBranches } from '../features/settings/hooks';
+import { useAuth } from '@/hooks/useAuth';
+import { usePermission } from '@/hooks/usePermission';
+import { ProductTable } from '@/features/inventory/components/ProductTable';
+import { ImportModal } from '@/features/inventory/components/ImportModal';
+import { useBranches } from '@/features/settings/hooks';
 import { useState } from 'react';
 import { saveAs } from 'file-saver';
+import toast from 'react-hot-toast';
 import { Store, Plus, Package, Upload, Download } from 'lucide-react';
 
 export const InventoryPage = () => {
@@ -26,7 +27,7 @@ export const InventoryPage = () => {
       const blob = await res.blob();
       saveAs(blob, `inventario-${Date.now()}.xlsx`);
     } catch {
-      // silent
+      toast.error('Error al exportar. Verifica la conexión e intenta de nuevo.');
     }
   };
 

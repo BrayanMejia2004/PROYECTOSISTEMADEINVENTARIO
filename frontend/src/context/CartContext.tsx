@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { CartItem } from '../features/sales/types';
+import { CartItem } from '@/features/sales/types';
 
 const CAJAS_KEY = 'pos-cajas';
 const CARTS_KEY = 'pos-carts';

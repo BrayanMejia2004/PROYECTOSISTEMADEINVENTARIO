@@ -4,6 +4,7 @@ import Branch from '../../shared/models/branch/branch.model';
 import Tenant from '../../shared/models/tenant/tenant.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { AuditLog } from '../../shared/models/auditLog/auditLog.model';
+import { logger } from '../../config/logger/logger';
 
 interface CreateUserInput {
   tenantId: string;
@@ -78,7 +79,7 @@ export const createUser = async (input: CreateUserInput, auditUserId?: string) =
     entity: 'user',
     entityId: user._id.toString(),
     details: { email: input.email, role: input.role, branchId: input.branchId },
-  }).catch(() => {});
+  }).catch((err) => logger.error('Audit log failed [user:create]', err));
 
   return user.toObject({ virtuals: false, versionKey: false, transform: (doc, ret: any) => { delete ret.password; return ret; } });
 };
@@ -127,7 +128,7 @@ export const updateUser = async (userId: string, tenantId: string, input: Update
       entity: 'user',
       entityId: userId,
       details: { changes },
-    }).catch(() => {});
+    }).catch((err) => logger.error('Audit log failed [user:update]', err));
   }
 
   return user.toObject({ virtuals: false, versionKey: false, transform: (doc, ret: any) => { delete ret.password; return ret; } });
@@ -150,7 +151,7 @@ export const deleteUser = async (userId: string, tenantId: string, requestingUse
     entity: 'user',
     entityId: userId,
     details: { email: user.email, role: user.role },
-  }).catch(() => {});
+  }).catch((err) => logger.error('Audit log failed [user:delete]', err));
 
   return user;
 };

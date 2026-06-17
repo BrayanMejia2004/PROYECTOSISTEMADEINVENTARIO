@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Settings, Building2, Palette } from 'lucide-react';
-import { TenantTab } from '../features/settings/components/TenantTab';
-import { BrandingTab } from '../features/settings/components/BrandingTab';
-import { BranchesTab } from '../features/settings/components/BranchesTab';
+import { TenantTab } from '@/features/settings/components/TenantTab';
+import { BrandingTab } from '@/features/settings/components/BrandingTab';
+import { BranchesTab } from '@/features/settings/components/BranchesTab';
 
 const tabs = [
   { key: 'tenant', label: 'Tenant', icon: Settings },

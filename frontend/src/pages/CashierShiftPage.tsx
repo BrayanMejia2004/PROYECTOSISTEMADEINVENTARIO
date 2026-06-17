@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Wallet, Lock, Filter, ShoppingCart } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useCurrentShift, useOpenShift, useCloseShift, useShifts } from '../features/sales/hooks';
+import { useAuth } from '@/hooks/useAuth';
+import { useCurrentShift, useOpenShift, useCloseShift, useShifts } from '@/features/sales/hooks';
 import { useCartSummary } from '@/context/CartContext';
-import { openShiftSchema, type OpenShiftForm } from '../features/sales/schemas';
+import { openShiftSchema, type OpenShiftForm } from '@/features/sales/schemas';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ShiftSummary } from '../features/sales/components/ShiftSummary';
-import { ShiftCloseReceipt } from '../features/sales/components/ShiftCloseReceipt';
-import { AdminShiftDetail } from '../features/sales/components/AdminShiftDetail';
-import { CashMovements } from '../features/sales/components/CashMovements';
-import { formatCurrency, formatNumber } from '../lib/utils';
-import { NumberInput } from '../components/ui/NumberInput';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { ShiftSummary } from '@/features/sales/components/ShiftSummary';
+import { ShiftCloseReceipt } from '@/features/sales/components/ShiftCloseReceipt';
+import { AdminShiftDetail } from '@/features/sales/components/AdminShiftDetail';
+import { CashMovements } from '@/features/sales/components/CashMovements';
+import { formatCurrency, formatNumber } from '@/lib/utils';
+import { NumberInput } from '@/components/ui/NumberInput';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export const CashierShiftPage = () => {
   const { user } = useAuth();

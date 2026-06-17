@@ -1,18 +1,18 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import type { IBranch } from '../types';
+import type { Branch } from '@/types';
 
 interface BranchContextType {
-  activeBranch: IBranch | null;
-  setActiveBranch: (branch: IBranch) => void;
-  branches: IBranch[];
-  setBranches: (branches: IBranch[]) => void;
+  activeBranch: Branch | null;
+  setActiveBranch: (branch: Branch) => void;
+  branches: Branch[];
+  setBranches: (branches: Branch[]) => void;
 }
 
 const BranchContext = createContext<BranchContextType | undefined>(undefined);
 
 export const BranchProvider = ({ children }: { children: ReactNode }) => {
-  const [activeBranch, setActiveBranch] = useState<IBranch | null>(null);
-  const [branches, setBranches] = useState<IBranch[]>([]);
+  const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   return (
     <BranchContext.Provider

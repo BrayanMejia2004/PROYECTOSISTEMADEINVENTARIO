@@ -12,13 +12,6 @@ export const tenantSettingsSchema = z.object({
   nit: z.string().regex(taxIdRegex, 'NIT inválido').optional().or(z.literal('')),
 });
 
-export const brandingSchema = z.object({
-  brandColor: z.string().regex(hexColorRegex, 'Color hex inválido (ej: #2D8A4E)').optional(),
-  brandColorLight: z.string().regex(hexColorRegex, 'Color hex inválido').optional(),
-  brandColorDark: z.string().regex(hexColorRegex, 'Color hex inválido').optional(),
-  brandSidebar: z.string().regex(hexColorRegex, 'Color hex inválido').optional(),
-});
-
 export const branchSchema = z.object({
   name: z.string().min(2, 'Nombre mínimo 2 caracteres'),
   address: z.string().optional(),
@@ -26,5 +19,4 @@ export const branchSchema = z.object({
 });
 
 export type TenantSettingsForm = z.infer<typeof tenantSettingsSchema>;
-export type BrandingForm = z.infer<typeof brandingSchema>;
 export type BranchForm = z.infer<typeof branchSchema>;

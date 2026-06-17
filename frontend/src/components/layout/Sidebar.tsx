@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { usePermission } from '../../hooks/usePermission';
-import { useBranches } from '../../features/settings/hooks';
-import { cn } from '../../lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { usePermission } from '@/hooks/usePermission';
+import { useBranches } from '@/features/settings/hooks';
+import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Package,

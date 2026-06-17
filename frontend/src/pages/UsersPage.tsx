@@ -1,14 +1,14 @@
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../features/users/hooks';
-import { useBranches } from '../features/settings/hooks';
-import { formatDate, formatNumber } from '../lib/utils';
-import { usePermission } from '../hooks/usePermission';
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/features/users/hooks';
+import { useBranches } from '@/features/settings/hooks';
+import { formatDate, formatNumber } from '@/lib/utils';
+import { usePermission } from '@/hooks/usePermission';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { userSchema, type UserForm } from '../features/users/schemas';
+import { userSchema, type UserForm } from '@/features/users/schemas';
 import { UserCircle, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { SuccessToast } from '../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const UsersPage = () => {
   const [page, setPage] = useState(1);

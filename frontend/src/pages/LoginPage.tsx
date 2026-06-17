@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { getErrorMessage } from '@/lib/utils';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,8 +32,8 @@ export const LoginPage = () => {
     try {
       await login(data.email, data.password, data.tenantSlug);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al iniciar sesión'));
     }
   };
 

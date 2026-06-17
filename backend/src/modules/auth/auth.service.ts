@@ -21,7 +21,7 @@ interface LoginInput {
   tenantSlug: string;
 }
 
-const generateTokens = (user: any, tenant: any) => {
+const generateTokens = (user: Record<string, any>, tenant: Record<string, any>) => {
   const accessToken = signAccessToken({
     userId: user._id.toString(),
     tenantId: tenant._id.toString(),
@@ -38,8 +38,8 @@ const generateTokens = (user: any, tenant: any) => {
   return { accessToken, refreshToken };
 };
 
-const mapTenant = (tenant: any) => ({
-  id: tenant._id.toString(),
+const mapTenant = (tenant: Record<string, any>) => ({
+  _id: tenant._id.toString(),
   name: tenant.name,
   slug: tenant.slug,
   logo: tenant.logo,
@@ -49,52 +49,52 @@ const mapTenant = (tenant: any) => ({
   brandSidebar: tenant.brandSidebar,
 });
 
-export const registerTenant = async (input: RegisterTenantInput) => {
+const buildAuthResponse = (user: Record<string, any>, tenant: Record<string, any>, accessToken: string, refreshToken: string) => ({
+  accessToken,
+  refreshToken,
+  user: {
+    _id: user._id.toString(),
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    branchId: user.branchId?.toString() ?? undefined,
+  },
+  tenant: mapTenant(tenant),
+});
+
+const handleFailedLoginAttempt = async (user: any) => {
+  user.loginAttempts = (user.loginAttempts ?? 0) + 1;
+  if (user.loginAttempts >= 5) {
+    user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+    user.loginAttempts = 0;
+    await user.save();
+    throw ApiError.unauthorized('Cuenta bloqueada por 15 minutos tras múltiples intentos fallidos.');
+  }
+  await user.save();
+  throw ApiError.unauthorized('Invalid credentials');
+};
+
+const createTenantUserPair = async (input: RegisterTenantInput) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-
   try {
     const existingTenant = await Tenant.findOne({ slug: input.tenantSlug }).session(session);
-    if (existingTenant) {
-      throw ApiError.conflict('Tenant slug already exists');
-    }
+    if (existingTenant) throw ApiError.conflict('Tenant slug already exists');
 
-    const tenant = new Tenant({
-      slug: input.tenantSlug,
-      name: input.tenantName,
-      email: input.email,
-    });
+    const tenant = new Tenant({ slug: input.tenantSlug, name: input.tenantName, email: input.email });
     await tenant.save({ session });
 
     const hashedPassword = await bcrypt.hash(input.password, 12);
     const user = new User({
-      tenantId: tenant._id.toString(),
-      email: input.email,
-      password: hashedPassword,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      role: 'owner',
-      isActive: true,
+      tenantId: tenant._id.toString(), email: input.email, password: hashedPassword,
+      firstName: input.firstName, lastName: input.lastName, role: 'owner', isActive: true,
     });
     await user.save({ session });
 
     await session.commitTransaction();
     session.endSession();
-
-    const { accessToken, refreshToken } = generateTokens(user, tenant);
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
-      tenant: mapTenant(tenant),
-    };
+    return { user, tenant };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -102,35 +102,25 @@ export const registerTenant = async (input: RegisterTenantInput) => {
   }
 };
 
+export const registerTenant = async (input: RegisterTenantInput) => {
+  const { user, tenant } = await createTenantUserPair(input);
+  const tokens = generateTokens(user, tenant);
+  return buildAuthResponse(user, tenant, tokens.accessToken, tokens.refreshToken);
+};
+
 export const login = async (input: LoginInput) => {
   const tenant = await Tenant.findOne({ slug: input.tenantSlug });
-  if (!tenant || !tenant.isActive) {
-    throw ApiError.unauthorized('Invalid credentials');
-  }
+  if (!tenant || !tenant.isActive) throw ApiError.unauthorized('Invalid credentials');
 
-  const user = await User.findOne({ tenantId: tenant._id.toString(), email: input.email })
-    .select('+password');
-  if (!user || !user.isActive) {
-    throw ApiError.unauthorized('Invalid credentials');
-  }
-
+  const user = await User.findOne({ tenantId: tenant._id.toString(), email: input.email }).select('+password');
+  if (!user || !user.isActive) throw ApiError.unauthorized('Invalid credentials');
   if (user.lockedUntil && user.lockedUntil > new Date()) {
     const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
     throw ApiError.unauthorized(`Cuenta bloqueada. Intenta de nuevo en ${minutesLeft} minuto(s).`);
   }
 
   const isMatch = await bcrypt.compare(input.password, user.password);
-  if (!isMatch) {
-    user.loginAttempts = (user.loginAttempts ?? 0) + 1;
-    if (user.loginAttempts >= 5) {
-      user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
-      user.loginAttempts = 0;
-      await user.save();
-      throw ApiError.unauthorized('Cuenta bloqueada por 15 minutos tras múltiples intentos fallidos.');
-    }
-    await user.save();
-    throw ApiError.unauthorized('Invalid credentials');
-  }
+  if (!isMatch) await handleFailedLoginAttempt(user);
 
   if (user.loginAttempts > 0) {
     user.loginAttempts = 0;
@@ -138,26 +128,14 @@ export const login = async (input: LoginInput) => {
     await user.save();
   }
 
-  const { accessToken, refreshToken } = generateTokens(user, tenant);
+  const tokens = generateTokens(user, tenant);
 
   eventBus.emit(Events.USER_LOGIN, {
     userId: user._id.toString(),
     tenantId: tenant._id.toString(),
   });
 
-  return {
-    accessToken,
-    refreshToken,
-    user: {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      branchId: user.branchId?.toString() ?? undefined,
-    },
-    tenant: mapTenant(tenant),
-  };
+  return buildAuthResponse(user, tenant, tokens.accessToken, tokens.refreshToken);
 };
 
 export const refreshTokens = async (refreshToken: string) => {
@@ -189,7 +167,7 @@ export const refreshTokens = async (refreshToken: string) => {
     return {
       accessToken,
       user: {
-        id: user._id.toString(),
+        _id: user._id.toString(),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,

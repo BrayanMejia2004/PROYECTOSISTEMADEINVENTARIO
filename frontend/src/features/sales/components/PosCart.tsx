@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { CartItem } from '../types';
-import { formatCurrency } from '../../../lib/utils';
+import { CartItem } from '@/features/sales/types';
+import { formatCurrency } from '@/lib/utils';
 import { PosCustomerSelect } from './PosCustomerSelect';
 import { PaymentModal } from './PaymentModal';
 import { Trash2, ShoppingCart, Minus, Plus, Banknote, AlertCircle } from 'lucide-react';

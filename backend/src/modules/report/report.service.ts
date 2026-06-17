@@ -2,6 +2,14 @@ import mongoose from 'mongoose';
 import { Sale } from '../../shared/models/sale/sale.model';
 import Stock from '../../shared/models/stock/stock.model';
 import Product from '../../shared/models/product/product.model';
+import type {
+  DailySalesAggregation,
+  SalesTotalsAggregation,
+  BranchInventoryAggregation,
+  ProductProfitAggregation,
+  BranchComparisonAggregation,
+  HistoricalSummaryAggregation,
+} from '../../shared/types/queries';
 
 export interface SalesReportOptions {
   tenantId: string;
@@ -15,11 +23,7 @@ export interface InventoryReportOptions {
   branchId?: string;
 }
 
-export interface ReportResult {
-  [key: string]: any;
-}
-
-interface ReportStrategy<TInput = any, TOutput = ReportResult> {
+interface ReportStrategy<TInput = any, TOutput = any> {
   readonly name: string;
   generate(input: TInput): Promise<TOutput>;
 }
@@ -29,7 +33,7 @@ class SalesReportStrategy implements ReportStrategy<SalesReportOptions> {
 
   async generate(options: SalesReportOptions) {
     const { tenantId, branchId, startDate, endDate } = options;
-    const match: any = {
+    const match: Record<string, any> = {
       tenantId: new mongoose.Types.ObjectId(tenantId),
       createdAt: { $gte: startDate, $lte: endDate },
       status: 'completed',
@@ -37,7 +41,7 @@ class SalesReportStrategy implements ReportStrategy<SalesReportOptions> {
     if (branchId) match.branchId = new mongoose.Types.ObjectId(branchId);
 
     const [report, totals] = await Promise.all([
-      Sale.aggregate([
+      Sale.aggregate<DailySalesAggregation>([
         { $match: match },
         {
           $group: {
@@ -51,7 +55,7 @@ class SalesReportStrategy implements ReportStrategy<SalesReportOptions> {
         },
         { $sort: { _id: 1 } },
       ]).allowDiskUse(true),
-      Sale.aggregate([
+      Sale.aggregate<SalesTotalsAggregation>([
         { $match: match },
         {
           $group: {
@@ -75,10 +79,10 @@ class InventoryReportStrategy implements ReportStrategy<InventoryReportOptions> 
 
   async generate(options: InventoryReportOptions) {
     const { tenantId, branchId } = options;
-    const match: any = { tenantId: new mongoose.Types.ObjectId(tenantId) };
+    const match: Record<string, any> = { tenantId: new mongoose.Types.ObjectId(tenantId) };
     if (branchId) match.branchId = new mongoose.Types.ObjectId(branchId);
 
-    const report = await Stock.aggregate([
+    const report = await Stock.aggregate<BranchInventoryAggregation>([
       { $match: match },
       { $addFields: { productIdObj: { $toObjectId: '$productId' } } },
       {
@@ -131,7 +135,7 @@ class ProfitabilityReportStrategy implements ReportStrategy<ProfitabilityOptions
 
   async generate(options: ProfitabilityOptions) {
     const { tenantId, startDate, endDate, branchId } = options;
-    const match: any = {
+    const match: Record<string, any> = {
       tenantId: new mongoose.Types.ObjectId(tenantId),
       status: 'completed',
     };
@@ -144,7 +148,7 @@ class ProfitabilityReportStrategy implements ReportStrategy<ProfitabilityOptions
 
     if (branchId) match.branchId = new mongoose.Types.ObjectId(branchId);
 
-    const report = await Sale.aggregate([
+    const report = await Sale.aggregate<ProductProfitAggregation>([
       { $match: match },
       { $unwind: '$items' },
       {
@@ -193,7 +197,7 @@ class BranchComparisonStrategy implements ReportStrategy<BranchComparisonOptions
 
   async generate(options: BranchComparisonOptions) {
     const { tenantId, startDate, endDate } = options;
-    const report = await Sale.aggregate([
+    const report = await Sale.aggregate<BranchComparisonAggregation>([
       {
         $match: {
           tenantId: new mongoose.Types.ObjectId(tenantId),
@@ -281,7 +285,7 @@ class ReportContext {
     return strategy as T;
   }
 
-  async generate(name: string, input: any): Promise<ReportResult> {
+  async generate(name: string, input: any): Promise<any> {
     const strategy = this.get<ReportStrategy>(name);
     return strategy.generate(input);
   }
@@ -313,4 +317,4 @@ export const getBranchComparison = (tenantId: string, startDate: Date, endDate: 
 export const getHistoricalSummary = (tenantId: string) =>
   context.generate('historical-summary', tenantId);
 
-export { ReportContext, context as reportContext };
+

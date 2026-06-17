@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getProfitabilityReport, getHistoricalSummary } from '../api';
-import { formatCurrency, formatNumber } from '../../../lib/utils';
+import { getProfitabilityReport, getHistoricalSummary } from '@/features/reports/api';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import { DollarSign, AlertCircle } from 'lucide-react';
 
 export const InventoryCostCard = () => {

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useProducts } from '../hooks';
-import { getProductByBarcode } from '../../../features/inventory/api';
-import { formatCurrency, formatNumber } from '../../../lib/utils';
-import { CartItem } from '../types';
+import { useProducts } from '@/features/sales/hooks';
+import { getProductByBarcode } from '@/features/inventory/api';
+import { formatCurrency, formatNumber } from '@/lib/utils';
+import { CartItem } from '@/features/sales/types';
 import { Search, Barcode, Plus, Package, Loader2 } from 'lucide-react';
 
 interface PosProductSearchProps {

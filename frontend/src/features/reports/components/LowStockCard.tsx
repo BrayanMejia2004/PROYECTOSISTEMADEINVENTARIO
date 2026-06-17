@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useLowStock } from '../../inventory/hooks';
-import { useAuth } from '../../../hooks/useAuth';
-import { useBranches } from '../../settings/hooks';
+import { useLowStock } from '@/features/inventory/hooks';
+import { useAuth } from '@/hooks/useAuth';
+import { useBranches } from '@/features/settings/hooks';
 import { AlertTriangle, Package, Filter } from 'lucide-react';
-import { formatNumber } from '../../../lib/utils';
+import { formatNumber } from '@/lib/utils';
 
 export const LowStockCard = () => {
   const { user } = useAuth();

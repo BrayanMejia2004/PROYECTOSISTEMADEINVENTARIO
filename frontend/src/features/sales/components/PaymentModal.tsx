@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { formatCurrency } from '../../../lib/utils';
-import { NumberInput } from '../../../components/ui/NumberInput';
+import { formatCurrency } from '@/lib/utils';
+import { NumberInput } from '@/components/ui/NumberInput';
 import { Banknote, CreditCard, Building2, RotateCcw, X, ArrowRight, CheckCircle, Hash, Search, AlertCircle, Loader2 } from 'lucide-react';
-import { useSaleByNumber } from '../hooks';
-import { Sale } from '../../../types';
+import { useSaleByNumber } from '@/features/sales/hooks';
+import { Sale } from '@/types';
 
 const BANKS = [
   'Bancolombia', 'Nequi', 'Davivienda', 'Daviplata', 'BBVA',

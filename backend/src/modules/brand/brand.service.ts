@@ -1,5 +1,6 @@
 import Brand from '../../shared/models/brand/brand.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import type { BranchScopedFilter } from '../../shared/types/queries';
 
 interface CreateBrandInput {
   tenantId: string;
@@ -14,7 +15,7 @@ interface UpdateBrandInput {
 
 export const getBrands = async (tenantId: string, branchId?: string, options?: { page?: number; limit?: number }) => {
   const { page = 1, limit = 10 } = options || {};
-  const query: any = { tenantId };
+  const query: BranchScopedFilter = { tenantId };
   if (branchId) {
     query.$or = [
       { branchId },
@@ -29,7 +30,7 @@ export const getBrands = async (tenantId: string, branchId?: string, options?: {
 };
 
 export const getBrandById = async (brandId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: brandId, tenantId };
+  const query: BranchScopedFilter = { _id: brandId, tenantId };
   if (branchId) {
     query.$or = [
       { branchId },
@@ -52,7 +53,7 @@ export const createBrand = async (input: CreateBrandInput) => {
 };
 
 export const updateBrand = async (brandId: string, tenantId: string, branchId: string | undefined, input: UpdateBrandInput) => {
-  const query: any = { _id: brandId, tenantId };
+  const query: BranchScopedFilter = { _id: brandId, tenantId };
   if (branchId) {
     query.$or = [
       { branchId },
@@ -67,7 +68,7 @@ export const updateBrand = async (brandId: string, tenantId: string, branchId: s
 };
 
 export const deleteBrand = async (brandId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: brandId, tenantId };
+  const query: BranchScopedFilter = { _id: brandId, tenantId };
   if (branchId) {
     query.$or = [
       { branchId },

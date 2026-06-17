@@ -1,6 +1,6 @@
-import api from '../../api/axios';
-import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse, Department } from '../../types';
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
+import { ApiResponse, Department } from '@/types';
 
 export const getDepartments = async (params?: { page?: number; limit?: number }): Promise<ApiResponse<Department[]>> => {
   const { data } = await api.get<ApiResponse<Department[]>>(ENDPOINTS.DEPARTMENTS, { params });

@@ -1,9 +1,9 @@
-import { SalesChart } from '../features/reports/components/SalesChart';
-import { StockValueCard } from '../features/reports/components/StockValueCard';
-import { StockPriceValueCard } from '../features/reports/components/StockPriceValueCard';
-import { InventoryCostCard } from '../features/reports/components/InventoryCostCard';
-import { SalesProfitCard } from '../features/reports/components/SalesProfitCard';
-import { BranchComparison } from '../features/reports/components/BranchComparison';
+import { SalesChart } from '@/features/reports/components/SalesChart';
+import { StockValueCard } from '@/features/reports/components/StockValueCard';
+import { StockPriceValueCard } from '@/features/reports/components/StockPriceValueCard';
+import { InventoryCostCard } from '@/features/reports/components/InventoryCostCard';
+import { SalesProfitCard } from '@/features/reports/components/SalesProfitCard';
+import { BranchComparison } from '@/features/reports/components/BranchComparison';
 import { BarChart3 } from 'lucide-react';
 
 export const ReportsPage = () => {

@@ -1,9 +1,10 @@
 import { Wallet, X, ArrowDownRight, ArrowUpRight, Loader2 } from 'lucide-react';
-import { useMovements } from '../hooks';
-import { formatCurrency } from '../../../lib/utils';
+import { useMovements } from '@/features/sales/hooks';
+import { formatCurrency } from '@/lib/utils';
+import type { CashierShift, CashMovement } from '@/types';
 
 interface AdminShiftDetailProps {
-  shift: any;
+  shift: CashierShift;
   onClose: () => void;
 }
 
@@ -88,7 +89,7 @@ export const AdminShiftDetail = ({ shift, onClose }: AdminShiftDetailProps) => {
               </div>
             ) : (
               <div className="space-y-2">
-                {movements.map((m: any) => (
+                {movements.map((m: CashMovement) => (
                   <div
                     key={m._id}
                     className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100/50 transition-colors"

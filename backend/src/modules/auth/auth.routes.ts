@@ -5,8 +5,6 @@ import { registerTenant, login, refresh, logout, getProfile } from './auth.contr
 import { authenticate } from '../../middlewares/auth/auth.middleware';
 import { resolveTenant } from '../../middlewares/tenant/tenant.middleware';
 import { registerSchema, loginSchema } from './auth.schema';
-import { sendSuccess } from '../../shared/utils/apiResponse/ApiResponse';
-
 const router = Router();
 
 const loginLimiter = rateLimit({

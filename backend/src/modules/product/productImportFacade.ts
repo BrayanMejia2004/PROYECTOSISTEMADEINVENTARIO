@@ -164,9 +164,10 @@ class StockInitializer {
       if (movements.length > 0) {
         await StockMovement.insertMany(movements, { ordered: false });
       }
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
       for (const p of products) {
-        errors.push({ row: p.row, message: `Producto creado pero no se pudo inicializar stock` });
+        errors.push({ row: p.row, message: `Producto creado pero no se pudo inicializar stock: ${msg}` });
       }
     }
   }

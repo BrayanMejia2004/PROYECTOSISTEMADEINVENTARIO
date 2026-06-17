@@ -1,12 +1,12 @@
-import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../features/suppliers/hooks';
+import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/features/suppliers/hooks';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supplierSchema, type SupplierForm } from '../features/suppliers/schemas';
-import { formatDate, formatNumber } from '../lib/utils';
+import { supplierSchema, type SupplierForm } from '@/features/suppliers/schemas';
+import { formatDate, formatNumber } from '@/lib/utils';
 import { Plus, Users, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { SuccessToast } from '../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const SuppliersPage = () => {
   const [page, setPage] = useState(1);

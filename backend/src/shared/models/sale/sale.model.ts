@@ -41,4 +41,3 @@ saleSchema.index({ tenantId: 1, createdAt: 1, status: 1 });
 saleSchema.index({ tenantId: 1, customerId: 1 });
 
 export const Sale = mongoose.model('Sale', saleSchema);
-export const SaleItem = saleItemSchema;

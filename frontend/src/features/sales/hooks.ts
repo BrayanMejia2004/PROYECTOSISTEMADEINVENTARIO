@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as salesApi from './api';
 
-export const useSales = (params?: Record<string, any>) => {
+export const useSales = (params?: Record<string, unknown>) => {
   return useQuery({
     queryKey: ['sales', params],
     queryFn: () => salesApi.getSales(params),

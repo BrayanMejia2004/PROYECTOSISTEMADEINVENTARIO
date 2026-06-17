@@ -1,6 +1,15 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+export function getErrorMessage(err: unknown, fallback = 'Error desconocido'): string {
+  if (err && typeof err === 'object') {
+    const axiosError = err as Record<string, any>;
+    if (axiosError.response?.data?.message) return axiosError.response.data.message;
+    if (axiosError.message) return axiosError.message;
+  }
+  return fallback;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }

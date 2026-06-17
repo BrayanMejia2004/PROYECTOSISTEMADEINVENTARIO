@@ -1,7 +1,7 @@
-type Listener<T = any> = (event: T) => void | Promise<void>;
+type Listener<T = unknown> = (event: T) => void | Promise<void>;
 
 export class EventBus {
-  private listeners = new Map<string, Set<Listener>>();
+  private listeners = new Map<string, Set<Function>>();
 
   on<T>(eventName: string, listener: Listener<T>): () => void {
     if (!this.listeners.has(eventName)) {

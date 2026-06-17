@@ -1,5 +1,6 @@
 import Supplier from '../../shared/models/supplier/supplier.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import type { BranchScopedFilter } from '../../shared/types/queries';
 
 interface CreateSupplierInput {
   tenantId: string;
@@ -22,7 +23,7 @@ interface UpdateSupplierInput {
   isActive?: boolean;
 }
 
-const buildBranchQuery = (query: any, branchId?: string) => {
+const buildBranchQuery = (query: BranchScopedFilter, branchId?: string) => {
   if (branchId) {
     query.$or = [
       { branchId },
@@ -33,7 +34,7 @@ const buildBranchQuery = (query: any, branchId?: string) => {
 
 export const getSuppliers = async (tenantId: string, branchId?: string, options?: { page?: number; limit?: number }) => {
   const { page = 1, limit = 10 } = options || {};
-  const query: any = { tenantId, isActive: true };
+  const query: BranchScopedFilter = { tenantId, isActive: true };
   buildBranchQuery(query, branchId);
   const [total, suppliers] = await Promise.all([
     Supplier.countDocuments(query),
@@ -43,7 +44,7 @@ export const getSuppliers = async (tenantId: string, branchId?: string, options?
 };
 
 export const getSupplierById = async (supplierId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: supplierId, tenantId };
+  const query: BranchScopedFilter = { _id: supplierId, tenantId };
   buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOne(query);
   if (!supplier) throw ApiError.notFound('Supplier not found');
@@ -57,7 +58,7 @@ export const createSupplier = async (input: CreateSupplierInput) => {
 };
 
 export const updateSupplier = async (supplierId: string, tenantId: string, branchId: string | undefined, input: UpdateSupplierInput) => {
-  const query: any = { _id: supplierId, tenantId };
+  const query: BranchScopedFilter = { _id: supplierId, tenantId };
   buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOne(query);
   if (!supplier) throw ApiError.notFound('Supplier not found');
@@ -68,7 +69,7 @@ export const updateSupplier = async (supplierId: string, tenantId: string, branc
 };
 
 export const deleteSupplier = async (supplierId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: supplierId, tenantId };
+  const query: BranchScopedFilter = { _id: supplierId, tenantId };
   buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOneAndDelete(query);
   if (!supplier) throw ApiError.notFound('Supplier not found');

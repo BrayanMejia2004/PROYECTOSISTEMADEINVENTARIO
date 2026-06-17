@@ -1,10 +1,11 @@
 import { Banknote, CreditCard, Building2, TrendingUp, Package } from 'lucide-react';
-import { useAuth } from '../../../hooks/useAuth';
-import { formatCurrency, formatNumber } from '../../../lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { formatCurrency, formatNumber } from '@/lib/utils';
+import type { CashierShift, SalesSummary } from '@/types';
 
 interface ShiftSummaryProps {
-  shift: any;
-  summary: any;
+  shift: CashierShift;
+  summary: SalesSummary;
 }
 
 export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { customerSchema, type CustomerForm } from '../../../features/customers/schemas';
-import { useCustomers, useCreateCustomer } from '../../../features/customers/hooks';
+import { customerSchema, type CustomerForm } from '@/features/customers/schemas';
+import { useCustomers, useCreateCustomer } from '@/features/customers/hooks';
 import { Search, Plus, X, User, Check } from 'lucide-react';
 
 interface PosCustomerSelectProps {

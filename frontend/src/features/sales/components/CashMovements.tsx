@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { CashMovementForm } from './CashMovementForm';
-import { useMovements, useCreateMovement } from '../hooks';
+import type { CashMovement } from '@/types';
+import { useMovements, useCreateMovement } from '@/features/sales/hooks';
 import { ArrowDownRight, ArrowUpRight, Plus, Loader2 } from 'lucide-react';
 
 interface CashMovementsProps {
@@ -46,7 +47,7 @@ export const CashMovements = ({ shiftId }: CashMovementsProps) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {movements.map((m: any) => (
+          {movements.map((m: CashMovement) => (
             <div
               key={m._id}
               className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100/50 transition-colors"

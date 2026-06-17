@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as inventoryApi from './api';
-import type { Product } from '../../types';
+import type { Product } from '@/types';
 
 export const useProducts = (params?: { page?: number; limit?: number; search?: string; branchId?: string }) => {
   return useQuery({
@@ -66,17 +66,6 @@ export const useOutOfStock = (branchId?: string) => {
   return useQuery({
     queryKey: ['outOfStock', branchId],
     queryFn: () => inventoryApi.getOutOfStock(branchId),
-  });
-};
-
-export const useInitializeStock = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: inventoryApi.initializeStock,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['stock'] });
-    },
   });
 };
 

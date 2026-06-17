@@ -5,6 +5,7 @@ import Product from '../../shared/models/product/product.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { MovementType } from '../../shared/models/stockMovement/stockMovement.model';
 import { eventBus, Events } from '../../shared/utils/eventBus';
+import type { PopulatedProductInfo, PopulatedBranchInfo, StockFilter } from '../../shared/types/queries';
 
 interface MoveStockInput {
   tenantId: string;
@@ -91,72 +92,59 @@ export const getStockByBranch = async (
   return { data: stock, meta: { total, page, limit } };
 };
 
-export const getLowStockAlerts = async (
-  tenantId: string,
-  branchId?: string,
-  page: number = 1,
-  limit: number = 50
-) => {
-  const query: any = { tenantId, isLowStock: true };
-  if (branchId) query.branchId = branchId;
-
-  const [total, stock] = await Promise.all([
-    Stock.countDocuments(query),
-    Stock.find(query)
-      .populate('productId', 'name sku minStock')
-      .sort({ quantity: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean(),
-  ]);
-
-  const data = stock.map(s => ({
-    productId: (s.productId as any)?._id?.toString() || s.productId,
+const mapPopulatedStock = (s: any) => {
+  const product = s.productId as unknown as PopulatedProductInfo;
+  return {
+    productId: product._id?.toString() || s.productId,
     branchId: s.branchId,
     quantity: s.quantity,
     price: s.price,
-    productName: (s.productId as any)?.name || 'Unknown',
-    sku: (s.productId as any)?.sku || '',
-    minStock: (s.productId as any)?.minStock || 0,
-  }));
-
-  return { data, meta: { total, page, limit } };
+    productName: product.name || 'Unknown',
+    sku: product.sku || '',
+    minStock: product.minStock || 0,
+  };
 };
 
-export const getOutOfStock = async (
-  tenantId: string,
-  branchId?: string,
-  page: number = 1,
-  limit: number = 100
-) => {
-  const query: any = { tenantId, quantity: 0 };
-  if (branchId) query.branchId = branchId;
+const mapOutOfStockItem = (s: any) => {
+  const product = s.productId as unknown as PopulatedProductInfo;
+  const branch = s.branchId as unknown as PopulatedBranchInfo;
+  return {
+    _id: s._id,
+    productId: product._id?.toString() || s.productId,
+    branchId: branch._id?.toString() || s.branchId,
+    quantity: s.quantity,
+    price: s.price,
+    productName: product.name || 'Unknown',
+    sku: product.sku || '',
+    barcode: product.barcode || '',
+    minStock: product.minStock || 0,
+    branchName: branch.name || 'Unknown',
+  };
+};
 
+const queryPopulatedStock = async <T>(query: StockFilter, populateFields: string, sort: any, page: number, limit: number, mapper: (s: any) => T) => {
   const [total, stock] = await Promise.all([
     Stock.countDocuments(query),
     Stock.find(query)
-      .populate('productId', 'name sku barcode minStock')
-      .populate('branchId', 'name')
-      .sort({ 'productId.name': 1 })
+      .populate('productId', populateFields)
+      .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit)
       .lean(),
   ]);
+  return { data: stock.map(mapper), meta: { total, page, limit } };
+};
 
-  const data = stock.map(s => ({
-    _id: (s as any)._id,
-    productId: (s.productId as any)?._id?.toString() || s.productId,
-    branchId: (s.branchId as any)?._id?.toString() || s.branchId,
-    quantity: s.quantity,
-    price: s.price,
-    productName: (s.productId as any)?.name || 'Unknown',
-    sku: (s.productId as any)?.sku || '',
-    barcode: (s.productId as any)?.barcode || '',
-    minStock: (s.productId as any)?.minStock || 0,
-    branchName: (s.branchId as any)?.name || 'Unknown',
-  }));
+export const getLowStockAlerts = async (tenantId: string, branchId?: string, page: number = 1, limit: number = 50) => {
+  const query: StockFilter = { tenantId, isLowStock: true };
+  if (branchId) query.branchId = branchId;
+  return queryPopulatedStock(query, 'name sku minStock', { quantity: 1 }, page, limit, mapPopulatedStock);
+};
 
-  return { data, meta: { total, page, limit } };
+export const getOutOfStock = async (tenantId: string, branchId?: string, page: number = 1, limit: number = 100) => {
+  const query: StockFilter = { tenantId, quantity: 0 };
+  if (branchId) query.branchId = branchId;
+  return queryPopulatedStock(query, 'name sku barcode minStock', { 'productId.name': 1 }, page, limit, mapOutOfStockItem);
 };
 
 export const initializeStock = async (

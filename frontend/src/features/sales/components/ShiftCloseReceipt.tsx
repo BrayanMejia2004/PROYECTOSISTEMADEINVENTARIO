@@ -1,6 +1,6 @@
 import { useRef } from 'react';
-import { useAuth } from '../../../hooks/useAuth';
-import { formatCurrency } from '../../../lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { formatCurrency } from '@/lib/utils';
 import { Printer, X } from 'lucide-react';
 
 interface ShiftCloseReceiptProps {

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { getBranchComparison } from '../api';
+import { getBranchComparison } from '@/features/reports/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Building2 } from 'lucide-react';
+import type { BranchComparisonData } from '@/types';
 
 export const BranchComparison = () => {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<BranchComparisonData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Navigate, Link, useParams } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { useCreateSale, useCurrentShift } from '../features/sales/hooks';
-import { useCart, useCajas } from '../context/CartContext';
-import { PosCart } from '../features/sales/components/PosCart';
-import { PosProductSearch } from '../features/sales/components/PosProductSearch';
-import { SaleReceipt } from '../features/sales/components/SaleReceipt';
+import { useAuth } from '@/hooks/useAuth';
+import { useCreateSale, useCurrentShift } from '@/features/sales/hooks';
+import { useCart, useCajas } from '@/context/CartContext';
+import { PosCart } from '@/features/sales/components/PosCart';
+import { PosProductSearch } from '@/features/sales/components/PosProductSearch';
+import { SaleReceipt } from '@/features/sales/components/SaleReceipt';
 import { Wallet, AlertCircle, X } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 
 export const PosPage = () => {
   const { user } = useAuth();
@@ -71,8 +72,8 @@ export const PosPage = () => {
           clearCart();
           setSaleKey((k) => k + 1);
         },
-        onError: (err: any) => {
-          setSaleError(err?.response?.data?.message || 'Error al procesar la venta');
+        onError: (err: Error) => {
+          setSaleError(getErrorMessage(err, 'Error al procesar la venta'));
         },
       }
     );

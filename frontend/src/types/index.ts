@@ -1,5 +1,5 @@
 export interface User {
-  id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -9,7 +9,7 @@ export interface User {
 }
 
 export interface Tenant {
-  id: string;
+  _id: string;
   name: string;
   slug: string;
   email: string;
@@ -25,7 +25,7 @@ export interface Tenant {
 }
 
 export interface Branch {
-  id: string;
+  _id: string;
   tenantId: string;
   name: string;
   address?: string;
@@ -74,19 +74,6 @@ export interface Stock {
   sku?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface StockMovement {
-  _id: string;
-  tenantId: string;
-  branchId: string;
-  productId: string;
-  type: 'sale' | 'return' | 'adjustment' | 'transfer';
-  quantity: number;
-  previousQuantity: number;
-  newQuantity: number;
-  note?: string;
-  createdAt: string;
 }
 
 export interface SaleItem {
@@ -151,6 +138,113 @@ export interface Supplier {
   address?: string;
   taxId?: string;
   isActive: boolean;
+}
+
+export interface CashierShift {
+  _id: string;
+  tenantId: string;
+  branchId: string;
+  userId: string;
+  openingBalance: number;
+  closingBalance?: number;
+  totalSales: number;
+  totalCash: number;
+  totalCard: number;
+  totalTransfer: number;
+  totalProfit: number;
+  totalEntries: number;
+  totalExits: number;
+  status: 'open' | 'closed';
+  openedAt: string;
+  closedAt?: string;
+  createdAt: string;
+  userName?: string;
+  branchName?: string;
+}
+
+export interface CashMovement {
+  _id: string;
+  tenantId: string;
+  branchId: string;
+  shiftId: string;
+  userId: string;
+  type: 'entry' | 'exit';
+  amount: number;
+  reason: string;
+  createdAt: string;
+  userName?: string;
+}
+
+export interface SalesSummary {
+  salesToday: number;
+  totalRevenue: number;
+  avgTicket: number;
+  cancelledCount: number;
+  totalProductsSold: number;
+  totalProfit: number;
+  totalCost: number;
+  cashTotal: number;
+  cashCount: number;
+  cardTotal: number;
+  cardCount: number;
+  transferTotal: number;
+  transferCount: number;
+}
+
+export interface DailySalesData {
+  _id: string;
+  totalSales: number;
+  count: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+}
+
+export interface BranchComparisonData {
+  _id: string;
+  totalSales: number;
+  count: number;
+  averageTicket: number;
+  branchName: string;
+}
+
+export interface ProductProfitData {
+  productName: string;
+  sku: string;
+  totalSold: number;
+  totalRevenue: number;
+  totalCost: number;
+  profit: number;
+  margin: number;
+}
+
+export interface BranchInventoryData {
+  _id: string;
+  branchName: string;
+  totalItems: number;
+  totalValue: number;
+  totalCost: number;
+  lowStock: number;
+}
+
+export interface CreateSaleInput {
+  customerName?: string;
+  customerPhone?: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+  tax?: number;
+  discount?: number;
+  paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
+  transferReference?: string;
+  transferAmount?: number;
+  transferBank?: string;
+  cardBank?: string;
+  cardReference?: string;
+  exchangeFromSaleId?: string;
+  exchangeCredit?: number;
 }
 
 export interface ApiResponse<T> {

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Sale } from '../../../types';
-import { formatCurrency, formatDateTime } from '../../../lib/utils';
-import { useAuth } from '../../../hooks/useAuth';
+import { Sale } from '@/types';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 import { X, CheckCircle, Printer } from 'lucide-react';
 
 interface SaleReceiptProps {

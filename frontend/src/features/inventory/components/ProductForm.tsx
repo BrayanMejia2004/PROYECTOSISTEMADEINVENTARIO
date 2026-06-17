@@ -1,14 +1,15 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { productSchema, type ProductForm as ProductFormType } from '../schemas';
-import { useCreateProduct, useUpdateProduct, useProduct, useUploadProductImage } from '../hooks';
-import { useDepartments } from '../../departments/hooks';
+import { productSchema, type ProductForm as ProductFormType } from '@/features/inventory/schemas';
+import { useCreateProduct, useUpdateProduct, useProduct, useUploadProductImage } from '@/features/inventory/hooks';
+import { useDepartments } from '@/features/departments/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Package } from 'lucide-react';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
-import { SuccessToast } from '../../../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/utils';
 import { BasicInfoSection } from './sections/BasicInfoSection';
 import { PriceSection } from './sections/PriceSection';
 import { TaxSection } from './sections/TaxSection';
@@ -84,7 +85,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     if (!data) return;
     const cb = {
       onSuccess: () => { setShowSuccess(productId ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente'); setTimeout(() => navigate('/inventory'), 1500); },
-      onError: (err: any) => toast.error(err?.response?.data?.message || 'Error al guardar el producto'),
+      onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el producto')),
     };
     if (productId) updateProduct({ id: productId, input: data }, cb);
     else createProduct(data, cb);
@@ -97,7 +98,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     if (!file) return;
     setUploading(true);
     try { setValue('image', await uploadImage(file)); }
-    catch { setValue('image', ''); }
+    catch { toast.error('Error al subir la imagen'); setValue('image', ''); }
     finally { setUploading(false); }
   };
 

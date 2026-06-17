@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useOutOfStock } from '../../inventory/hooks';
-import { useAuth } from '../../../hooks/useAuth';
-import { useBranches } from '../../settings/hooks';
-import { formatNumber } from '../../../lib/utils';
+import { useOutOfStock } from '@/features/inventory/hooks';
+import { useAuth } from '@/hooks/useAuth';
+import { useBranches } from '@/features/settings/hooks';
+import { formatNumber } from '@/lib/utils';
 import { PackageX, Store, Filter } from 'lucide-react';
 
 export const OutOfStockCard = () => {

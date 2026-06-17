@@ -1,5 +1,6 @@
 import Department from '../../shared/models/department/department.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import type { BranchScopedFilter } from '../../shared/types/queries';
 
 interface CreateDepartmentInput {
   tenantId: string;
@@ -16,7 +17,7 @@ interface UpdateDepartmentInput {
 
 export const getDepartments = async (tenantId: string, branchId?: string, options?: { page?: number; limit?: number }) => {
   const { page = 1, limit = 10 } = options || {};
-  const query: any = { tenantId };
+  const query: BranchScopedFilter = { tenantId };
   if (branchId) {
     query.$or = [
       { branchId },
@@ -31,7 +32,7 @@ export const getDepartments = async (tenantId: string, branchId?: string, option
 };
 
 export const getDepartmentById = async (departmentId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: departmentId, tenantId };
+  const query: BranchScopedFilter = { _id: departmentId, tenantId };
   if (branchId) {
     query.$or = [
       { branchId },
@@ -45,7 +46,7 @@ export const getDepartmentById = async (departmentId: string, tenantId: string, 
 
 export const createDepartment = async (input: CreateDepartmentInput) => {
   if (input.parentId) {
-    const parentQuery: any = { _id: input.parentId, tenantId: input.tenantId };
+    const parentQuery: BranchScopedFilter = { _id: input.parentId, tenantId: input.tenantId };
     if (input.branchId) {
       parentQuery.$or = [
         { branchId: input.branchId },
@@ -68,7 +69,7 @@ export const createDepartment = async (input: CreateDepartmentInput) => {
 };
 
 export const updateDepartment = async (departmentId: string, tenantId: string, branchId: string | undefined, input: UpdateDepartmentInput) => {
-  const query: any = { _id: departmentId, tenantId };
+  const query: BranchScopedFilter = { _id: departmentId, tenantId };
   if (branchId) {
     query.$or = [
       { branchId },
@@ -82,7 +83,7 @@ export const updateDepartment = async (departmentId: string, tenantId: string, b
     if (input.parentId === departmentId) {
       throw ApiError.badRequest('Department cannot be its own parent');
     }
-    const parentQuery: any = { _id: input.parentId, tenantId };
+    const parentQuery: BranchScopedFilter = { _id: input.parentId, tenantId };
     if (branchId) {
       parentQuery.$or = [
         { branchId },
@@ -99,7 +100,7 @@ export const updateDepartment = async (departmentId: string, tenantId: string, b
 };
 
 export const deleteDepartment = async (departmentId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: departmentId, tenantId };
+  const query: BranchScopedFilter = { _id: departmentId, tenantId };
   if (branchId) {
     query.$or = [
       { branchId },

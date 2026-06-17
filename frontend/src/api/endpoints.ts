@@ -29,7 +29,6 @@ export const ENDPOINTS = {
   PRODUCTS: '/products',
   PRODUCTS_BARCODE: '/products/barcode',
   PRODUCTS_IMPORT: '/products/import',
-  PRODUCTS_EXPORT: '/products/export',
   PRODUCTS_UPLOAD_IMAGE: '/products/upload-image',
 
   // Stock

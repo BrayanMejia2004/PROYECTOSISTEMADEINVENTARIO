@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useTenant, useUpdateTenant, useUploadLogo } from '../hooks';
-import { useAuth } from '../../../hooks/useAuth';
+import { useTenant, useUpdateTenant, useUploadLogo } from '@/features/settings/hooks';
+import { useAuth } from '@/hooks/useAuth';
 import { Image, Loader2 } from 'lucide-react';
-import { SuccessToast } from '../../../components/ui/SuccessToast';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 export const BrandingTab = () => {
   const { refreshTenant } = useAuth();
@@ -24,14 +25,14 @@ export const BrandingTab = () => {
   const handleSaveBrandColor = () => {
     updateTenant({ brandColor } as any, {
       onSuccess: () => { setShowSuccess('Color guardado exitosamente'); refreshTenant(); },
-      onError: (err: any) => toast.error(err?.response?.data?.message || 'Error al guardar el color'),
+      onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el color')),
     });
   };
 
   const handleSaveSidebarColor = () => {
     updateTenant({ brandSidebar } as any, {
       onSuccess: () => { setShowSuccess('Color del menú guardado exitosamente'); refreshTenant(); },
-      onError: (err: any) => toast.error(err?.response?.data?.message || 'Error al guardar el color'),
+      onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el color')),
     });
   };
 

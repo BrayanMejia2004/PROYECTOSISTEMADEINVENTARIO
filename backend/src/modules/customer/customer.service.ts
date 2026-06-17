@@ -1,5 +1,6 @@
 import Customer from '../../shared/models/customer/customer.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import type { CustomerFilter } from '../../shared/types/queries';
 
 interface CreateCustomerInput {
   tenantId: string;
@@ -24,7 +25,7 @@ export const getCustomers = async (
   options?: { search?: string; page?: number; limit?: number }
 ) => {
   const { search, page = 1, limit = 20 } = options || {};
-  const query: any = { tenantId, isActive: true };
+  const query: CustomerFilter = { tenantId, isActive: true };
 
   if (search) {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -45,7 +46,7 @@ export const getCustomers = async (
 };
 
 export const getCustomerById = async (customerId: string, tenantId: string) => {
-  const query: any = { _id: customerId, tenantId };
+  const query: CustomerFilter = { _id: customerId, tenantId };
   const customer = await Customer.findOne(query);
   if (!customer) throw ApiError.notFound('Customer not found');
   return customer;
@@ -53,7 +54,7 @@ export const getCustomerById = async (customerId: string, tenantId: string) => {
 
 export const findCustomerByNamePhone = async (tenantId: string, name: string, phone?: string) => {
   const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const query: any = { tenantId, name: { $regex: `^${escapedName}$`, $options: 'i' }, isActive: true };
+  const query: CustomerFilter = { tenantId, name: { $regex: `^${escapedName}$`, $options: 'i' }, isActive: true };
   if (phone) query.phone = phone;
   return Customer.findOne(query);
 };
@@ -65,7 +66,7 @@ export const createCustomer = async (input: CreateCustomerInput) => {
 };
 
 export const updateCustomer = async (customerId: string, tenantId: string, input: UpdateCustomerInput) => {
-  const query: any = { _id: customerId, tenantId };
+  const query: CustomerFilter = { _id: customerId, tenantId };
   const customer = await Customer.findOne(query);
   if (!customer) throw ApiError.notFound('Customer not found');
 
@@ -75,7 +76,7 @@ export const updateCustomer = async (customerId: string, tenantId: string, input
 };
 
 export const deleteCustomer = async (customerId: string, tenantId: string) => {
-  const query: any = { _id: customerId, tenantId };
+  const query: CustomerFilter = { _id: customerId, tenantId };
   const customer = await Customer.findOneAndDelete(query);
   if (!customer) throw ApiError.notFound('Customer not found');
   return customer;

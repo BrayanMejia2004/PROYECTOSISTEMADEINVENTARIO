@@ -1,8 +1,8 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { cashMovementSchema, type CashMovementForm as CashMovementFormData } from '../schemas';
+import { cashMovementSchema, type CashMovementForm as CashMovementFormData } from '@/features/sales/schemas';
 import { X, ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { NumberInput } from '../../../components/ui/NumberInput';
+import { NumberInput } from '@/components/ui/NumberInput';
 
 interface CashMovementFormProps {
   onSubmit: (data: CashMovementFormData) => void;

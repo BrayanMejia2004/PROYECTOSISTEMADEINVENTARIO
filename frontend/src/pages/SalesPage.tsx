@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
-import { useSales } from '../features/sales/hooks';
-import { SalesSummaryCards } from '../features/sales/components/SalesSummaryCards';
-import { SalesFilters } from '../features/sales/components/SalesFilters';
-import { SaleDetail } from '../features/sales/components/SaleDetail';
-import { useAuth } from '../hooks/useAuth';
-import { useBranches } from '../features/settings/hooks';
-import { useDebouncedValue } from '../hooks/useDebounce';
-import { formatCurrency, formatNumber, formatDate } from '../lib/utils';
+import { useSales } from '@/features/sales/hooks';
+import { SalesSummaryCards } from '@/features/sales/components/SalesSummaryCards';
+import { SalesFilters } from '@/features/sales/components/SalesFilters';
+import { SaleDetail } from '@/features/sales/components/SaleDetail';
+import { useAuth } from '@/hooks/useAuth';
+import { useBranches } from '@/features/settings/hooks';
+import { useDebouncedValue } from '@/hooks/useDebounce';
+import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { Store, Receipt, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, string> = {

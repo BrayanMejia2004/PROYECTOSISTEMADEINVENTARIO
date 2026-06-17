@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useBranches, useCreateBranch, useUpdateBranch, useDeleteBranch } from '../hooks';
-import { branchSchema, type BranchForm } from '../schemas';
+import { useBranches, useCreateBranch, useUpdateBranch, useDeleteBranch } from '@/features/settings/hooks';
+import { branchSchema, type BranchForm } from '@/features/settings/schemas';
 import { Building2, Plus, X, Pencil, Trash2 } from 'lucide-react';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
-import { SuccessToast } from '../../../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const BranchesTab = () => {
   const { data: branches } = useBranches();

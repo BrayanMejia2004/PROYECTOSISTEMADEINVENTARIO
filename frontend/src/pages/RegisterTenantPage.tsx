@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerTenantSchema, type RegisterTenantForm } from '../features/auth/schemas';
-import { useAuth } from '../hooks/useAuth';
+import { registerTenantSchema, type RegisterTenantForm } from '@/features/auth/schemas';
+import { useAuth } from '@/hooks/useAuth';
+import { getErrorMessage } from '@/lib/utils';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Store } from 'lucide-react';
@@ -24,8 +25,8 @@ export const RegisterTenantPage = () => {
       const { confirmPassword: _, ...payload } = data;
       await registerTenant(payload);
       navigate('/');
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al registrar. Verifica los datos.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al registrar. Verifica los datos.'));
     }
   };
 

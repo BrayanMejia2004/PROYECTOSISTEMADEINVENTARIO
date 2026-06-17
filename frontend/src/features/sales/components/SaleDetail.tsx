@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { X, Download, RotateCcw } from 'lucide-react';
-import { formatCurrency, formatDateTime } from '../../../lib/utils';
-import { useRefundSale } from '../hooks';
-import { getSalePdf } from '../api';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { useRefundSale } from '@/features/sales/hooks';
+import { getSalePdf } from '@/features/sales/api';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
+import type { Sale, SaleItem } from '@/types';
 
 interface SaleDetailProps {
-  sale: any;
+  sale: Sale;
   onClose: () => void;
   onAction: () => void;
 }
@@ -40,7 +42,7 @@ export const SaleDetail = ({ sale, onClose, onAction }: SaleDetailProps) => {
       const blob = await getSalePdf(sale._id);
       saveAs(blob, `${sale.saleNumber}.pdf`);
     } catch {
-      // silently fail
+      toast.error('Error al descargar el PDF. Intenta de nuevo.');
     }
   };
 
@@ -138,7 +140,7 @@ export const SaleDetail = ({ sale, onClose, onAction }: SaleDetailProps) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {sale.items?.map((item: any, i: number) => (
+                  {sale.items?.map((item: SaleItem, i: number) => (
                     <tr key={i}>
                       <td className="px-3 py-2 text-brand-text">{item.productName}</td>
                       <td className="px-3 py-2 text-center text-brand-muted">{item.quantity}</td>

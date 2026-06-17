@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useProducts, useDeleteProduct } from '../hooks';
-import { Product } from '../../../types';
+import { useProducts, useDeleteProduct } from '@/features/inventory/hooks';
+import { Product } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { usePermission } from '../../../hooks/usePermission';
-import { useDebouncedValue } from '../../../hooks/useDebounce';
-import { formatCurrency, formatNumber } from '../../../lib/utils';
+import { usePermission } from '@/hooks/usePermission';
+import { useDebouncedValue } from '@/hooks/useDebounce';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
-import { SuccessToast } from '../../../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 const PAGE_SIZE = 25;
 

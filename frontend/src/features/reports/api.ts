@@ -1,5 +1,5 @@
-import api from '../../api/axios';
-import { ENDPOINTS } from '../../api/endpoints';
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
 
 export const getSalesReport = async (startDate: string, endDate: string, branchId?: string) => {
   const { data } = await api.get(ENDPOINTS.REPORTS_SALES, { params: { startDate, endDate, branchId } });

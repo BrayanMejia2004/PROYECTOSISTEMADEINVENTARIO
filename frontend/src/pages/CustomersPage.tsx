@@ -1,12 +1,12 @@
-import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../features/customers/hooks';
+import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/features/customers/hooks';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { customerSchema, type CustomerForm } from '../features/customers/schemas';
-import { formatDate, formatCurrency, formatNumber } from '../lib/utils';
+import { customerSchema, type CustomerForm } from '@/features/customers/schemas';
+import { formatDate, formatCurrency, formatNumber } from '@/lib/utils';
 import { Plus, Users, X, Pencil, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { SuccessToast } from '../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const CustomersPage = () => {
   const [search, setSearch] = useState('');

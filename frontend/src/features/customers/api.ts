@@ -1,6 +1,6 @@
-import api from '../../api/axios';
-import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse } from '../../types';
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
+import { ApiResponse } from '@/types';
 import { Customer } from './types';
 
 export const getCustomers = async (params?: { search?: string; page?: number; limit?: number }): Promise<ApiResponse<Customer[]>> => {

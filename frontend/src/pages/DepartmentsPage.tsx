@@ -1,14 +1,14 @@
-import { useDepartments, useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from '../features/departments/hooks';
+import { useDepartments, useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from '@/features/departments/hooks';
 import { useState, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { departmentSchema, type DepartmentForm } from '../features/departments/schemas';
-import { formatNumber } from '../lib/utils';
+import { departmentSchema, type DepartmentForm } from '@/features/departments/schemas';
+import { formatNumber } from '@/lib/utils';
 import { Tag, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { SuccessToast } from '../components/ui/SuccessToast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const DepartmentsPage = () => {
   const { user } = useAuth();

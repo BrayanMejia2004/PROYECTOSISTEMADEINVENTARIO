@@ -1,6 +1,6 @@
-import api from '../../api/axios';
-import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse, Sale } from '../../types';
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
+import { ApiResponse, Sale } from '@/types';
 
 export const getSales = async (params?: {
   startDate?: string;

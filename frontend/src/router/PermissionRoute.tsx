@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Store } from 'lucide-react';
 
 const PERMISSION_ROLES: Record<string, string[]> = {

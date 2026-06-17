@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTenant, useUpdateTenant } from '../hooks';
-import { useAuth } from '../../../hooks/useAuth';
-import { tenantSettingsSchema, type TenantSettingsForm } from '../schemas';
-import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
-import { SuccessToast } from '../../../components/ui/SuccessToast';
+import { useTenant, useUpdateTenant } from '@/features/settings/hooks';
+import { useAuth } from '@/hooks/useAuth';
+import { tenantSettingsSchema, type TenantSettingsForm } from '@/features/settings/schemas';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const TenantTab = () => {
   const { refreshTenant } = useAuth();

@@ -9,6 +9,9 @@ import { ApiError } from '../../shared/utils/apiError/ApiError';
 import ExcelJS from 'exceljs';
 import { ProductImportFacade } from './productImportFacade';
 import type { ImportProductInput, ImportResult } from './productImportFacade';
+import type { ProductFilter } from '../../shared/types/queries';
+import type { MovementType } from '../../shared/models/stockMovement/stockMovement.model';
+
 
 interface GetProductsOptions {
   tenantId: string;
@@ -46,24 +49,22 @@ interface CreateProductInput {
   unit?: string;
 }
 
-export const getProducts = async (options: GetProductsOptions) => {
-  const { tenantId, branchId, page = 1, limit = 20, search, departmentId, supplierId } = options;
-
-  const query: any = { tenantId: new mongoose.Types.ObjectId(tenantId), isActive: true };
+const buildProductSearchQuery = async (options: GetProductsOptions): Promise<{ query: ProductFilter; total: number }> => {
+  const { tenantId, branchId, search, departmentId, supplierId } = options;
+  const query: ProductFilter = { tenantId: new mongoose.Types.ObjectId(tenantId), isActive: true };
 
   if (branchId) {
     const stockRecords = await Stock.find({ tenantId, branchId }).select('productId').lean();
     const productIds = stockRecords.map(s => s.productId);
     if (productIds.length === 0) {
-      return { data: [], meta: { total: 0, page, limit } };
+      return { query, total: 0 };
     }
     query._id = { $in: productIds };
   }
 
   if (search) {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const exactBarcode = /^\d{8,}$/.test(search);
-    if (exactBarcode) {
+    if (/^\d{8,}$/.test(search)) {
       query.barcode = search;
     } else {
       query.$or = [
@@ -77,7 +78,10 @@ export const getProducts = async (options: GetProductsOptions) => {
   if (supplierId) query.supplierId = new mongoose.Types.ObjectId(supplierId);
 
   const total = await Product.countDocuments(query);
+  return { query, total };
+};
 
+const buildProductAggregationPipeline = (query: ProductFilter, page: number, limit: number, branchId?: string): any[] => {
   const pipeline: any[] = [
     { $match: query },
     { $sort: { name: 1 } },
@@ -93,87 +97,50 @@ export const getProducts = async (options: GetProductsOptions) => {
   }
 
   pipeline.push(
-    {
-      $lookup: {
-        from: 'stocks',
-        let: { productId: '$_id' },
-        pipeline: stockLookupPipeline,
-        as: 'stockInfo',
-      },
-    },
-    {
-      $lookup: {
-        from: 'departments',
-        localField: 'departmentId',
-        foreignField: '_id',
-        as: 'department',
-      },
-    },
+    { $lookup: { from: 'stocks', let: { productId: '$_id' }, pipeline: stockLookupPipeline, as: 'stockInfo' } },
+    { $lookup: { from: 'departments', localField: 'departmentId', foreignField: '_id', as: 'department' } },
     {
       $addFields: {
         departmentName: { $arrayElemAt: ['$department.name', 0] },
-        stock: {
-          $cond: [
-            { $gt: [{ $size: '$stockInfo' }, 0] },
-            { $sum: '$stockInfo.quantity' },
-            0,
-          ],
-        },
+        stock: { $cond: [{ $gt: [{ $size: '$stockInfo' }, 0] }, { $sum: '$stockInfo.quantity' }, 0] },
       },
     },
-    {
-      $project: {
-        department: 0,
-        stockInfo: 0,
-      },
-    },
+    { $project: { department: 0, stockInfo: 0 } },
   );
 
-  const products = await Product.aggregate(pipeline).allowDiskUse(true);
+  return pipeline;
+};
 
-  const data = products.map(p => ({
+const formatProductResponse = (products: any[]) =>
+  products.map(p => ({
     id: p._id.toString(),
     _id: p._id.toString(),
-    tenantId: p.tenantId,
-    sku: p.sku,
-    barcode: p.barcode,
-    name: p.name,
-    description: p.description,
-    departmentId: p.departmentId,
-    departmentName: p.departmentName,
-    brandId: p.brandId,
-    supplierId: p.supplierId,
-    image: p.image,
-    costPrice: p.costPrice,
-    price: p.price,
-    wholesalePrice: p.wholesalePrice,
-    specialPrice: p.specialPrice,
-    applyTax: p.applyTax,
-    taxPercentage: p.taxPercentage,
-    allowsDiscount: p.allowsDiscount,
-    maxDiscount: p.maxDiscount,
-    minStock: p.minStock,
-    maxStock: p.maxStock,
-    sellOutOfStock: p.sellOutOfStock,
-    unit: p.unit,
-    isActive: p.isActive,
-    stock: p.stock,
-    createdAt: p.createdAt,
-    updatedAt: p.updatedAt,
+    tenantId: p.tenantId, sku: p.sku, barcode: p.barcode, name: p.name,
+    description: p.description, departmentId: p.departmentId, departmentName: p.departmentName,
+    brandId: p.brandId, supplierId: p.supplierId, image: p.image,
+    costPrice: p.costPrice, price: p.price, wholesalePrice: p.wholesalePrice,
+    specialPrice: p.specialPrice, applyTax: p.applyTax, taxPercentage: p.taxPercentage,
+    allowsDiscount: p.allowsDiscount, maxDiscount: p.maxDiscount,
+    minStock: p.minStock, maxStock: p.maxStock, sellOutOfStock: p.sellOutOfStock,
+    unit: p.unit, isActive: p.isActive, stock: p.stock,
+    createdAt: p.createdAt, updatedAt: p.updatedAt,
   }));
 
+export const getProducts = async (options: GetProductsOptions) => {
+  const { page = 1, limit = 20, branchId } = options;
+  const { query, total } = await buildProductSearchQuery(options);
+  if (total === 0) return { data: [], meta: { total: 0, page, limit } };
+
+  const pipeline = buildProductAggregationPipeline(query, page, limit, branchId);
+  const products = await Product.aggregate(pipeline).allowDiskUse(true);
+
   return {
-    data,
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
+    data: formatProductResponse(products),
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
   };
 };
 
-const enrichSingleProduct = async (product: any, tenantId: string, branchId?: string) => {
+const enrichSingleProduct = async (product: Record<string, any>, tenantId: string, branchId?: string) => {
   let departmentName: string | null = null;
   if (product.departmentId) {
     const dept = await Department.findById(product.departmentId).select('name').lean();
@@ -235,67 +202,53 @@ export const getProductById = async (productId: string, tenantId: string, branch
   return enrichSingleProduct(product.toObject(), tenantId, branchId);
 };
 
+const resolveBrandReference = async (tenantId: string, brandId: string): Promise<string> => {
+  if (mongoose.Types.ObjectId.isValid(brandId)) return brandId;
+  const brand = await Brand.findOne({ tenantId, name: brandId })
+    ?? await Brand.create({ tenantId, name: brandId });
+  return brand._id.toString();
+};
+
+const checkProductDuplicate = async (tenantId: string, fields: { name: string; sku: string; barcode?: string }) => {
+  const duplicate = await Product.findOne({
+    tenantId, isActive: true,
+    $or: [
+      { name: fields.name },
+      { sku: fields.sku },
+      ...(fields.barcode ? [{ barcode: fields.barcode }] : []),
+    ],
+  });
+  if (!duplicate) return;
+  if (duplicate.name === fields.name) throw ApiError.conflict('Ya existe un producto activo con este nombre');
+  if (duplicate.sku === fields.sku) throw ApiError.conflict('Ya existe un producto activo con este SKU');
+  if (fields.barcode && duplicate.barcode === fields.barcode) throw ApiError.conflict('Ya existe un producto activo con este código de barras');
+};
+
+const initializeProductStock = async (tenantId: string, branchId: string, productId: string, quantity: number, price: number, minStock: number) => {
+  const existing = await Stock.findOne({ tenantId, branchId, productId });
+  if (existing) return;
+  const stock = new Stock({ tenantId, branchId, productId, quantity, price, isLowStock: quantity <= minStock });
+  await stock.save();
+  await StockMovement.create({
+    tenantId, branchId, productId,
+    type: 'adjustment' as MovementType, quantity, previousQuantity: 0, newQuantity: quantity, note: 'Initial stock',
+  });
+};
+
 export const createProduct = async (input: CreateProductInput) => {
   const { branchId, stock, ...productFields } = input;
 
-  if (productFields.brandId && !mongoose.Types.ObjectId.isValid(productFields.brandId)) {
-    let brand = await Brand.findOne({ tenantId: input.tenantId, name: productFields.brandId });
-    if (!brand) {
-      brand = await Brand.create({ tenantId: input.tenantId, name: productFields.brandId });
-    }
-    productFields.brandId = brand._id.toString();
+  if (productFields.brandId) {
+    productFields.brandId = await resolveBrandReference(input.tenantId, productFields.brandId);
   }
 
-  const duplicate = await Product.findOne({
-    tenantId: input.tenantId,
-    isActive: true,
-    $or: [
-      { name: productFields.name },
-      { sku: productFields.sku },
-      ...(productFields.barcode ? [{ barcode: productFields.barcode }] : []),
-    ],
-  });
-
-  if (duplicate) {
-    if (duplicate.name === productFields.name) {
-      throw ApiError.conflict('Ya existe un producto activo con este nombre');
-    }
-    if (duplicate.sku === productFields.sku) {
-      throw ApiError.conflict('Ya existe un producto activo con este SKU');
-    }
-    if (productFields.barcode && duplicate.barcode === productFields.barcode) {
-      throw ApiError.conflict('Ya existe un producto activo con este código de barras');
-    }
-  }
+  await checkProductDuplicate(input.tenantId, productFields);
 
   const product = new Product(productFields);
   await product.save();
 
   if (stock && stock > 0 && branchId) {
-    const { tenantId } = input;
-    const existingStock = await Stock.findOne({ tenantId, branchId, productId: product._id.toString() });
-    if (!existingStock) {
-      const newStock = new Stock({
-        tenantId,
-        branchId,
-        productId: product._id,
-        quantity: stock,
-        price: product.price,
-        isLowStock: stock <= (product.minStock || 0),
-      });
-      await newStock.save();
-
-      await StockMovement.create({
-        tenantId,
-        branchId,
-        productId: product._id,
-        type: 'adjustment' as any,
-        quantity: stock,
-        previousQuantity: 0,
-        newQuantity: stock,
-        note: 'Initial stock',
-      });
-    }
+    await initializeProductStock(input.tenantId, branchId, product._id.toString(), stock, product.price, product.minStock || 0);
   }
 
   return product;
@@ -320,7 +273,7 @@ export const updateProduct = async (productId: string, tenantId: string, branchI
   }
 
   if (cleanUpdates.name || cleanUpdates.sku || cleanUpdates.barcode !== undefined) {
-    const orConditions: any[] = [];
+    const orConditions: object[] = [];
     if (cleanUpdates.name) orConditions.push({ name: cleanUpdates.name });
     if (cleanUpdates.sku) orConditions.push({ sku: cleanUpdates.sku });
     if (cleanUpdates.barcode !== undefined) orConditions.push({ barcode: cleanUpdates.barcode });
@@ -393,82 +346,44 @@ export const importProducts = async (
   return facade.import(tenantId, products, branchId, skipDuplicates);
 };
 
-const BATCH_SIZE = 500;
+const formatExportRow = (product: Record<string, any>, departmentNameMap: Map<string, string>) => ({
+  sku: product.sku, barcode: product.barcode || '',
+  name: product.name, description: product.description || '',
+  categoryName: product.departmentId ? (departmentNameMap.get(product.departmentId.toString()) || '') : '',
+  brandId: product.brandId || '',
+  costPrice: product.costPrice, price: product.price,
+  wholesalePrice: product.wholesalePrice ?? '', specialPrice: product.specialPrice ?? '',
+  applyTax: product.applyTax ? 'Sí' : 'No', taxPercentage: product.taxPercentage || 0,
+  allowsDiscount: product.allowsDiscount ? 'Sí' : 'No', maxDiscount: product.maxDiscount || 0,
+  minStock: product.minStock, maxStock: product.maxStock,
+  sellOutOfStock: product.sellOutOfStock ? 'Sí' : 'No', initialStock: 0, unit: product.unit,
+});
 
-const addProductRowsToSheet = (sheet: ExcelJS.Worksheet, products: any[], departmentNameMap: Map<string, string>) => {
-  for (const product of products) {
-    sheet.addRow({
-      sku: product.sku,
-      barcode: product.barcode || '',
-      name: product.name,
-      description: product.description || '',
-      categoryName: product.departmentId ? (departmentNameMap.get(product.departmentId.toString()) || '') : '',
-      brandId: product.brandId || '',
-      costPrice: product.costPrice,
-      price: product.price,
-      wholesalePrice: product.wholesalePrice ?? '',
-      specialPrice: product.specialPrice ?? '',
-      applyTax: product.applyTax ? 'Sí' : 'No',
-      taxPercentage: product.taxPercentage || 0,
-      allowsDiscount: product.allowsDiscount ? 'Sí' : 'No',
-      maxDiscount: product.maxDiscount || 0,
-      minStock: product.minStock,
-      maxStock: product.maxStock,
-      sellOutOfStock: product.sellOutOfStock ? 'Sí' : 'No',
-      initialStock: 0,
-      unit: product.unit,
-    });
-  }
-};
+const PRODUCT_EXPORT_COLUMNS = [
+  { header: 'SKU', key: 'sku', width: 15 }, { header: 'Código Barras', key: 'barcode', width: 18 },
+  { header: 'Nombre', key: 'name', width: 35 }, { header: 'Descripción', key: 'description', width: 30 },
+  { header: 'Categoría', key: 'categoryName', width: 20 }, { header: 'Marca', key: 'brandId', width: 15 },
+  { header: 'Precio Costo', key: 'costPrice', width: 14 }, { header: 'Precio Venta', key: 'price', width: 14 },
+  { header: 'Precio Mayorista', key: 'wholesalePrice', width: 16 }, { header: 'Precio Especial', key: 'specialPrice', width: 15 },
+  { header: 'Aplica IVA', key: 'applyTax', width: 12 }, { header: '% IVA', key: 'taxPercentage', width: 8 },
+  { header: 'Permite Descuento', key: 'allowsDiscount', width: 16 }, { header: '% Desc Máx', key: 'maxDiscount', width: 11 },
+  { header: 'Stock Mín', key: 'minStock', width: 10 }, { header: 'Stock Máx', key: 'maxStock', width: 10 },
+  { header: 'Stock Inicial', key: 'initialStock', width: 12 }, { header: 'Vender Sin Stock', key: 'sellOutOfStock', width: 16 },
+  { header: 'Unidad', key: 'unit', width: 10 },
+];
 
 export const exportProducts = async (tenantId: string) => {
   const departments = await Department.find({ tenantId });
   const departmentNameMap = new Map(departments.map(d => [d._id.toString(), d.name]));
-
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Productos');
-
-  sheet.columns = [
-    { header: 'SKU', key: 'sku', width: 15 },
-    { header: 'Código Barras', key: 'barcode', width: 18 },
-    { header: 'Nombre', key: 'name', width: 35 },
-    { header: 'Descripción', key: 'description', width: 30 },
-    { header: 'Categoría', key: 'categoryName', width: 20 },
-    { header: 'Marca', key: 'brandId', width: 15 },
-    { header: 'Precio Costo', key: 'costPrice', width: 14 },
-    { header: 'Precio Venta', key: 'price', width: 14 },
-    { header: 'Precio Mayorista', key: 'wholesalePrice', width: 16 },
-    { header: 'Precio Especial', key: 'specialPrice', width: 15 },
-    { header: 'Aplica IVA', key: 'applyTax', width: 12 },
-    { header: '% IVA', key: 'taxPercentage', width: 8 },
-    { header: 'Permite Descuento', key: 'allowsDiscount', width: 16 },
-    { header: '% Desc Máx', key: 'maxDiscount', width: 11 },
-    { header: 'Stock Mín', key: 'minStock', width: 10 },
-    { header: 'Stock Máx', key: 'maxStock', width: 10 },
-    { header: 'Stock Inicial', key: 'initialStock', width: 12 },
-    { header: 'Vender Sin Stock', key: 'sellOutOfStock', width: 16 },
-    { header: 'Unidad', key: 'unit', width: 10 },
-  ];
-
+  sheet.columns = PRODUCT_EXPORT_COLUMNS;
   const headerRow = sheet.getRow(1);
   headerRow.font = { bold: true, size: 11 };
   headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0E8' } };
-
-  const cursor = Product.find({ tenantId, isActive: true })
-    .sort({ name: 1 })
-    .cursor();
-
-  let batch: any[] = [];
+  const cursor = Product.find({ tenantId, isActive: true }).sort({ name: 1 }).cursor();
   for await (const product of cursor) {
-    batch.push(product);
-    if (batch.length >= BATCH_SIZE) {
-      addProductRowsToSheet(sheet, batch, departmentNameMap);
-      batch = [];
-    }
+    sheet.addRow(formatExportRow(product, departmentNameMap));
   }
-  if (batch.length > 0) {
-    addProductRowsToSheet(sheet, batch, departmentNameMap);
-  }
-
   return workbook;
 };

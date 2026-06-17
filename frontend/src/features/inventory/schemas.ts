@@ -40,18 +40,4 @@ export const productSchema = z.object({
   }
 });
 
-export const stockInitSchema = z.object({
-  productId: z.string().min(1, 'Producto requerido'),
-  price: z.number().min(0, 'Precio debe ser positivo'),
-  quantity: z.number().min(0).default(0),
-  branchId: z.string().optional(),
-});
-
-export const stockAdjustSchema = z.object({
-  quantity: z.number().min(0, 'Cantidad debe ser positiva'),
-  note: z.string().min(1, 'Nota requerida'),
-});
-
 export type ProductForm = z.infer<typeof productSchema>;
-export type StockInitForm = z.infer<typeof stockInitSchema>;
-export type StockAdjustForm = z.infer<typeof stockAdjustSchema>;

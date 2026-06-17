@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Package, AlertTriangle, DollarSign, Users, ShoppingCart, ChevronRight, Plus, X } from 'lucide-react';
-import { StatCard } from '../components/ui/StatCard';
-import { useProducts } from '../features/inventory/hooks';
-import { useSales } from '../features/sales/hooks';
-import { OutOfStockCard } from '../features/reports/components/OutOfStockCard';
-import { LowStockCard } from '../features/reports/components/LowStockCard';
-import { useAuth } from '../hooks/useAuth';
-import { useCajas, useCartSummary } from '../context/CartContext';
-import { formatCurrency, formatNumber } from '../lib/utils';
+import { StatCard } from '@/components/ui/StatCard';
+import { useProducts } from '@/features/inventory/hooks';
+import { useSales } from '@/features/sales/hooks';
+import { OutOfStockCard } from '@/features/reports/components/OutOfStockCard';
+import { LowStockCard } from '@/features/reports/components/LowStockCard';
+import { useAuth } from '@/hooks/useAuth';
+import { useCajas, useCartSummary } from '@/context/CartContext';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import type { Sale, Product } from '@/types';
 
 export const DashboardPage = () => {
   const { user } = useAuth();
@@ -74,10 +75,10 @@ export const DashboardPage = () => {
   const VENTAS_PER_PAGE = 3;
 
   const totalProducts = productsData?.meta?.total ?? 0;
-  const completedSales = salesData?.data?.filter((s: any) => s.status === 'completed') ?? [];
+  const completedSales = salesData?.data?.filter((s: Sale) => s.status === 'completed') ?? [];
   const totalSales = completedSales.length;
-  const totalRevenue = completedSales.reduce((sum: number, s: any) => sum + (s.total || 0), 0) ?? 0;
-  const lowStock = productsData?.data?.filter((p: any) => p.stock > 0 && p.stock <= p.minStock).length ?? 0;
+  const totalRevenue = completedSales.reduce((sum: number, s: Sale) => sum + (s.total || 0), 0) ?? 0;
+  const lowStock = productsData?.data?.filter((p: Product) => p.stock && p.stock > 0 && p.minStock && p.stock <= p.minStock).length ?? 0;
 
   return (
     <div>
@@ -141,7 +142,7 @@ export const DashboardPage = () => {
               <div className="space-y-3 min-h-[200px]">
                 {salesData.data
                   .slice((ventasPage - 1) * VENTAS_PER_PAGE, ventasPage * VENTAS_PER_PAGE)
-                  .map((sale: any) => (
+                  .map((sale: Sale) => (
                     <div key={sale._id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-brand-text">{sale.saleNumber}</p>

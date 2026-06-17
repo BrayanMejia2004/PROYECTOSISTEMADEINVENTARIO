@@ -1,6 +1,6 @@
-import api from '../../api/axios';
-import { ENDPOINTS } from '../../api/endpoints';
-import { ApiResponse, Tenant } from '../../types';
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
+import { ApiResponse, Tenant } from '@/types';
 
 export const getTenant = async (): Promise<ApiResponse<Tenant>> => {
   const { data } = await api.get<ApiResponse<Tenant>>(ENDPOINTS.TENANT);

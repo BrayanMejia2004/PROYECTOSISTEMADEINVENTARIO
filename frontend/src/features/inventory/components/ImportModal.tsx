@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { useImportProducts } from '../hooks';
+import { useImportProducts } from '@/features/inventory/hooks';
 import { Upload, FileSpreadsheet, ArrowLeft, CheckCircle2, XCircle, X } from 'lucide-react';
 
 const SYSTEM_FIELDS = [

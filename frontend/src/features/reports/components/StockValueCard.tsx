@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getInventoryReport } from '../api';
-import { formatCurrency, formatNumber } from '../../../lib/utils';
+import { getInventoryReport } from '@/features/reports/api';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import { Package } from 'lucide-react';
 
 export const StockValueCard = () => {

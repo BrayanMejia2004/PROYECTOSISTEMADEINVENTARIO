@@ -1,5 +1,5 @@
-import { useSalesSummary } from '../hooks';
-import { formatCurrency, formatNumber } from '../../../lib/utils';
+import { useSalesSummary } from '@/features/sales/hooks';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import { ShoppingCart, DollarSign, Receipt, XCircle, Package, AlertCircle } from 'lucide-react';
 
 interface CardProps {

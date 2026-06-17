@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { Sale } from '../../shared/models/sale/sale.model';
-import { CashierShift } from '../../shared/models';
+import CashierShift from '../../shared/models/cashierShift/cashierShift.model';
 import Product from '../../shared/models/product/product.model';
 import Stock from '../../shared/models/stock/stock.model';
 import User from '../../shared/models/user/user.model';
@@ -12,6 +12,7 @@ import { eventBus, Events } from '../../shared/utils/eventBus';
 import { paymentContext } from './paymentStrategies';
 import type { PaymentInput } from './paymentStrategies';
 import { saleStateMachine } from './saleStateMachine';
+import type { PaymentMethodAggregation, SaleFilter } from '../../shared/types/queries';
 
 interface SaleItemInput {
   productId: string;
@@ -243,7 +244,7 @@ export const getSales = async (
     status, paymentMethod, customerName, userId,
     search, minTotal, maxTotal,
   } = filters;
-  const query: any = { tenantId };
+  const query: Record<string, any> = { tenantId };
   if (branchId) query.branchId = branchId;
 
   if (startDate || endDate) {
@@ -298,30 +299,26 @@ interface SalesSummaryFilters {
   maxTotal?: number;
 }
 
-export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFilters) => {
-  const { branchId, startDate, endDate, status, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
+const buildSummaryMatch = (tenantId: string, filters?: SalesSummaryFilters) => {
+  const { branchId, startDate, endDate, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
 
   const today = startDate || new Date();
   if (!startDate) today.setHours(0, 0, 0, 0);
   const endOfToday = endDate || new Date();
   if (!endDate) endOfToday.setHours(23, 59, 59, 999);
 
-  const match: any = {
+  const match: Record<string, any> = {
     tenantId: new mongoose.Types.ObjectId(tenantId),
     createdAt: { $gte: today, $lte: endOfToday },
   };
 
-  if (branchId) {
-    match.branchId = new mongoose.Types.ObjectId(branchId);
-  }
-
+  if (branchId) match.branchId = new mongoose.Types.ObjectId(branchId);
   if (paymentMethod) match.paymentMethod = paymentMethod;
   if (customerName) {
     const escapedCustomerName = customerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     match.customerName = { $regex: escapedCustomerName, $options: 'i' };
   }
   if (userId) match.userId = new mongoose.Types.ObjectId(userId);
-
   if (search) {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     match.$or = [
@@ -329,17 +326,16 @@ export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFi
       { customerName: { $regex: escaped, $options: 'i' } },
     ];
   }
-
   if (minTotal !== undefined || maxTotal !== undefined) {
     match.total = {};
     if (minTotal !== undefined) match.total.$gte = minTotal;
     if (maxTotal !== undefined) match.total.$lte = maxTotal;
   }
 
-  const matchCompleted = { ...match, status: 'completed' };
-  const matchRefunded = { ...match, status: 'refunded' };
-  const matchCancelledOrRefunded = { ...match, status: { $in: ['cancelled', 'refunded'] } };
+  return match;
+};
 
+const runSalesAggregations = async (matchCompleted: Record<string, any>, matchRefunded: Record<string, any>, matchCancelledOrRefunded: Record<string, any>) => {
   const [[salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg], refundedSales, exchangeRefundIds] = await Promise.all([
     Promise.all([
       Sale.countDocuments(matchCompleted),
@@ -371,22 +367,42 @@ export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFi
       ...matchCompleted,
     }),
   ]);
+  return { salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg, refundedSales, exchangeRefundIds };
+};
 
-  // Compute refund adjustments:
-  // - Exchange-paired refunds: only reverse cost (revenue already handled via exchangeCredit)
-  // - Standalone refunds: reverse BOTH revenue and cost
-  const exchangeRefundIdSet = new Set(exchangeRefundIds.map((id: any) => id.toString()));
+const computeRefundAdjustments = (refundedSales: any[], exchangeRefundIds: any[]) => {
+  const exchangeRefundIdSet = new Set(exchangeRefundIds.map((id: unknown) => String(id)));
   let refundedRevenue = 0;
   let refundedCost = 0;
   for (const sale of refundedSales) {
     const isExchangePaired = exchangeRefundIdSet.has(sale._id.toString());
-    if (!isExchangePaired) {
-      refundedRevenue += sale.total;
-    }
+    if (!isExchangePaired) refundedRevenue += sale.total;
     for (const item of sale.items) {
       refundedCost += item.quantity * item.costPrice;
     }
   }
+  return { refundedRevenue, refundedCost };
+};
+
+const computePaymentBreakdown = (paymentAgg: PaymentMethodAggregation[]) => ({
+  cashTotal: paymentAgg.find((p) => p._id === 'cash')?.total || 0,
+  cardTotal: paymentAgg.find((p) => p._id === 'card')?.total || 0,
+  transferTotal: paymentAgg.find((p) => p._id === 'transfer')?.total || 0,
+  cashCount: paymentAgg.find((p) => p._id === 'cash')?.count || 0,
+  cardCount: paymentAgg.find((p) => p._id === 'card')?.count || 0,
+  transferCount: paymentAgg.find((p) => p._id === 'transfer')?.count || 0,
+});
+
+export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFilters) => {
+  const match = buildSummaryMatch(tenantId, filters);
+  const matchCompleted = { ...match, status: 'completed' };
+  const matchRefunded = { ...match, status: 'refunded' };
+  const matchCancelledOrRefunded = { ...match, status: { $in: ['cancelled', 'refunded'] } };
+
+  const { salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg, refundedSales, exchangeRefundIds } =
+    await runSalesAggregations(matchCompleted, matchRefunded, matchCancelledOrRefunded);
+
+  const { refundedRevenue, refundedCost } = computeRefundAdjustments(refundedSales, exchangeRefundIds);
 
   const completedRevenue = totalAgg[0]?.totalRevenue || 0;
   const totalSalesCount = totalAgg[0]?.totalSales || 0;
@@ -398,13 +414,6 @@ export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFi
   const totalCost = completedCost - refundedCost;
   const totalProfit = totalRevenue - totalCost;
 
-  const cashTotal = paymentAgg.find((p: any) => p._id === 'cash')?.total || 0;
-  const cardTotal = paymentAgg.find((p: any) => p._id === 'card')?.total || 0;
-  const transferTotal = paymentAgg.find((p: any) => p._id === 'transfer')?.total || 0;
-  const cashCount = paymentAgg.find((p: any) => p._id === 'cash')?.count || 0;
-  const cardCount = paymentAgg.find((p: any) => p._id === 'card')?.count || 0;
-  const transferCount = paymentAgg.find((p: any) => p._id === 'transfer')?.count || 0;
-
   return {
     salesToday,
     totalRevenue,
@@ -413,12 +422,7 @@ export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFi
     totalProductsSold,
     totalProfit,
     totalCost,
-    cashTotal,
-    cashCount,
-    cardTotal,
-    cardCount,
-    transferTotal,
-    transferCount,
+    ...computePaymentBreakdown(paymentAgg as PaymentMethodAggregation[]),
   };
 };
 
@@ -437,7 +441,7 @@ const enrichWithUserNames = async (sales: any[]) => {
 };
 
 export const getSaleById = async (saleId: string, tenantId: string, branchId?: string) => {
-  const query: any = { _id: saleId, tenantId };
+  const query: Record<string, any> = { _id: saleId, tenantId };
   if (branchId) query.branchId = branchId;
   const sale = await Sale.findOne(query);
   if (!sale) throw ApiError.notFound('Sale not found');
@@ -447,14 +451,15 @@ export const getSaleById = async (saleId: string, tenantId: string, branchId?: s
     const user = await User.findById(sale.userId).select('firstName lastName');
     saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId.toString();
   } catch {
+    console.error('Failed to load user name for sale:', sale.userId);
     saleObj.userName = sale.userId.toString();
   }
 
-  return saleObj as any;
+  return saleObj;
 };
 
 export const getSaleByNumber = async (saleNumber: string, tenantId: string, branchId?: string) => {
-  const query: any = { saleNumber, tenantId, status: 'refunded' };
+  const query: Record<string, any> = { saleNumber, tenantId, status: 'refunded' };
   if (branchId) query.branchId = branchId;
   const sale = await Sale.findOne(query);
   if (!sale) throw ApiError.notFound('Sale not found or not refunded');
@@ -464,6 +469,7 @@ export const getSaleByNumber = async (saleNumber: string, tenantId: string, bran
     const user = await User.findById(sale.userId).select('firstName lastName');
     saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId.toString();
   } catch {
+    console.error('Failed to load user name for sale [byNumber]:', sale.userId);
     saleObj.userName = sale.userId.toString();
   }
 
@@ -474,11 +480,11 @@ export const getSaleByNumber = async (saleNumber: string, tenantId: string, bran
   const usedCredit = usedAgg[0]?.total || 0;
   saleObj.availableExchangeCredit = sale.total - usedCredit;
 
-  return saleObj as any;
+  return saleObj;
 };
 
 export const getTransferSales = async (tenantId: string, branchId?: string, page: number = 1, limit: number = 20) => {
-  const query: any = { tenantId, paymentMethod: 'transfer' };
+  const query: Record<string, any> = { tenantId, paymentMethod: 'transfer' };
   if (branchId) query.branchId = branchId;
 
   const [total, sales] = await Promise.all([
@@ -499,11 +505,11 @@ export const refundSale = async (saleId: string, tenantId: string, branchId: str
   session.startTransaction();
 
   try {
-    const query: any = { _id: saleId, tenantId };
+    const query: Record<string, any> = { _id: saleId, tenantId };
     if (branchId) query.branchId = branchId;
     const sale = await Sale.findOne(query).session(session);
     if (!sale) throw ApiError.notFound('Sale not found');
-    if (!saleStateMachine.canRefund(sale.status as any)) {
+    if (!saleStateMachine.canRefund(sale.status as 'completed' | 'cancelled' | 'refunded' | 'pending' | 'partial')) {
       throw ApiError.badRequest(`No se puede devolver una venta en estado "${sale.status}"`);
     }
 

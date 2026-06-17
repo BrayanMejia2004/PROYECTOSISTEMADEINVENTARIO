@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form';
 import { Box } from 'lucide-react';
-import { NumberInput } from '../../../../components/ui/NumberInput';
+import { NumberInput } from '@/components/ui/NumberInput';
 import { inputClass, labelClass, req } from './constants';
 import type { SectionProps } from './types';
 

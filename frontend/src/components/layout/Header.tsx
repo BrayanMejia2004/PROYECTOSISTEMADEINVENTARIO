@@ -1,6 +1,6 @@
 import { Menu } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
-import { useBranch } from '../../hooks/useBranch';
+import { useAuth } from '@/hooks/useAuth';
+import { useBranch } from '@/hooks/useBranch';
 
 interface HeaderProps {
   onMenuToggle: () => void;
