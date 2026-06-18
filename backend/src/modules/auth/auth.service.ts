@@ -110,7 +110,8 @@ export const registerTenant = async (input: RegisterTenantInput) => {
 
 export const login = async (input: LoginInput) => {
   const tenant = await Tenant.findOne({ slug: input.tenantSlug });
-  if (!tenant || !tenant.isActive) throw ApiError.unauthorized('Invalid credentials');
+  if (!tenant) throw ApiError.unauthorized('Credenciales inválidas');
+  if (!tenant.isActive) throw ApiError.forbidden('Su suscripción ha expirado. Contacte al administrador para reactivar el servicio.');
 
   const user = await User.findOne({ tenantId: tenant._id.toString(), email: input.email }).select('+password');
   if (!user || !user.isActive) throw ApiError.unauthorized('Invalid credentials');
@@ -152,8 +153,11 @@ export const refreshTokens = async (refreshToken: string) => {
     }
 
     const tenant = await Tenant.findById(user.tenantId);
-    if (!tenant || !tenant.isActive) {
-      throw ApiError.unauthorized('Tenant no encontrado o inactivo');
+    if (!tenant) {
+      throw ApiError.unauthorized('Tenant no encontrado');
+    }
+    if (!tenant.isActive) {
+      throw ApiError.forbidden('Su suscripción ha expirado. Contacte al administrador para reactivar el servicio.');
     }
 
     const accessToken = signAccessToken({

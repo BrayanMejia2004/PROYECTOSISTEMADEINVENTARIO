@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Store } from 'lucide-react';
 
 export const ProtectedRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, blocked } = useAuth();
 
   if (loading) {
     return (
@@ -21,6 +21,10 @@ export const ProtectedRoute = () => {
         </div>
       </div>
     );
+  }
+
+  if (blocked) {
+    return <Navigate to="/bloqueado" replace />;
   }
 
   if (!isAuthenticated) {

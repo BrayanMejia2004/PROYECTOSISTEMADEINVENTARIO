@@ -44,6 +44,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (error.response?.status === 403 && error.response?.data?.message?.toLowerCase().includes('suscripción')) {
+      sessionStorage.setItem('tenant_blocked_message', error.response.data.message);
+      setAccessToken(null);
+      window.location.href = '/bloqueado';
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {

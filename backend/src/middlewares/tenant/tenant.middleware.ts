@@ -14,7 +14,7 @@ export const resolveTenant = async (req: AuthRequest, res: Response, next: NextF
       throw ApiError.notFound('Tenant not found');
     }
     if (!tenant.isActive) {
-      throw ApiError.forbidden('Tenant inactive');
+      throw ApiError.forbidden('Su suscripción ha expirado. Contacte al administrador para reactivar el servicio.');
     }
 
     req.tenant = {

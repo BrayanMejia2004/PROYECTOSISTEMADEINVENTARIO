@@ -4,6 +4,7 @@ import { PermissionRoute } from './PermissionRoute';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterTenantPage } from '@/pages/RegisterTenantPage';
+import { BlockedPage } from '@/pages/BlockedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { CashierShiftPage } from '@/pages/CashierShiftPage';
 import { InventoryPage } from '@/pages/InventoryPage';
@@ -24,6 +25,7 @@ export const AppRouter = () => {
       <Routes>
         <Route path="/register" element={<RegisterTenantPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/bloqueado" element={<BlockedPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>

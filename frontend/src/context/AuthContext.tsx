@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   tenant: Tenant | null;
   loading: boolean;
+  blocked: boolean;
   login: (email: string, password: string, tenantSlug: string) => Promise<void>;
   registerTenant: (data: any) => Promise<void>;
   logout: () => Promise<void>;
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     const tryRefresh = async () => {
@@ -30,8 +32,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(data.data.user);
           setTenant(data.data.tenant);
         }
-      } catch {
-        // No hay sesión
+      } catch (err: any) {
+        if (err.response?.status === 403 && err.response?.data?.message?.toLowerCase().includes('suscripción')) {
+          sessionStorage.setItem('tenant_blocked_message', err.response.data.message);
+          setBlocked(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -77,8 +82,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAccessToken(null);
     sessionStorage.removeItem('pos-carts');
     sessionStorage.removeItem('pos-cajas');
+    sessionStorage.removeItem('tenant_blocked_message');
     setUser(null);
     setTenant(null);
+    setBlocked(false);
   }, []);
 
   return (
@@ -87,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         tenant,
         loading,
+        blocked,
         login,
         registerTenant,
         logout,
