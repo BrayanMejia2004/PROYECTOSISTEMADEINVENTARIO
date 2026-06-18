@@ -1,6 +1,7 @@
 import { Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBranch } from '@/hooks/useBranch';
+import { NotificationBell } from './NotificationBell';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -38,6 +39,7 @@ export const Header = ({ onMenuToggle, onDesktopMenuToggle }: HeaderProps) => {
       </div>
 
       <div className="flex items-center gap-4 shrink-0">
+        <NotificationBell />
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-xs font-semibold text-brand">
             {user?.firstName?.[0]}{user?.lastName?.[0]}

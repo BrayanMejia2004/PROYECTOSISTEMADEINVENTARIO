@@ -12,6 +12,7 @@ import stockRoutes from '../modules/stock/stock.routes';
 import saleRoutes from '../modules/sale/sale.routes';
 import reportRoutes from '../modules/report/report.routes';
 import cashierShiftRoutes from '../modules/cashierShift/cashierShift.routes';
+import notificationRoutes from '../modules/notifications/notifications.routes';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/stock', stockRoutes);
 router.use('/sales', saleRoutes);
 router.use('/reports', reportRoutes);
 router.use('/cashier-shifts', cashierShiftRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;
