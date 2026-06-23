@@ -15,13 +15,41 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   CLIENT_URL: z.string().default('http://localhost:5173'),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
+
+}).superRefine((data, ctx) => {
+  const cloudinaryVars = [data.CLOUDINARY_CLOUD_NAME, data.CLOUDINARY_API_KEY, data.CLOUDINARY_API_SECRET];
+  const somePresent = cloudinaryVars.some(v => v !== undefined);
+  const allPresent = cloudinaryVars.every(v => v !== undefined);
+
+  if (somePresent && !allPresent) {
+    const missing: string[] = [];
+    if (!data.CLOUDINARY_CLOUD_NAME) missing.push('CLOUDINARY_CLOUD_NAME');
+    if (!data.CLOUDINARY_API_KEY) missing.push('CLOUDINARY_API_KEY');
+    if (!data.CLOUDINARY_API_SECRET) missing.push('CLOUDINARY_API_SECRET');
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Todas las variables de Cloudinary deben configurarse juntas. Faltan: ${missing.join(', ')}`,
+    });
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('❌ Invalid environment variables:', parsed.error.format());
-  process.exit(1);
+  const { fieldErrors, formErrors } = parsed.error.flatten();
+  const messages: string[] = [];
+
+  for (const [field, errors] of Object.entries(fieldErrors)) {
+    if (errors && errors.length > 0) {
+      messages.push(`  • ${field}: ${errors.join(', ')}`);
+    }
+  }
+  for (const error of formErrors) {
+    messages.push(`  • ${error}`);
+  }
+
+  throw new Error(`Variables de entorno inválidas:\n${messages.join('\n')}`);
 }
 
+export type Env = z.infer<typeof envSchema>;
 export const env = parsed.data;

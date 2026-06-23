@@ -1,10 +1,9 @@
 import winston from 'winston';
-
-const isProduction = process.env.NODE_ENV === 'production';
+import { env } from '../env/env';
 
 export const logger = winston.createLogger({
-  level: isProduction ? 'info' : 'debug',
-  format: isProduction
+  level: env.NODE_ENV === 'production' ? 'info' : 'debug',
+  format: env.NODE_ENV === 'production'
     ? winston.format.combine(
         winston.format.timestamp(),
         winston.format.json()

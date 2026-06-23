@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../../shared/utils/jwt/jwt';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 import User from '../../shared/models/user/user.model';
 
@@ -13,9 +14,6 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     const token = authHeader.split(' ')[1];
-    if (!token) {
-      throw ApiError.unauthorized('Token de acceso requerido');
-    }
 
     const payload = verifyAccessToken(token);
 
@@ -36,6 +34,14 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     next();
   } catch (error) {
+    if (error instanceof ApiError) {
+      logger.warn(`Error de autorización: ${error.message}`, {
+        ip: req.ip,
+        path: req.path,
+      });
+    } else {
+      logger.error(`Error inesperado de autorización: ${error instanceof Error ? error.message : String(error)}`);
+    }
     next(error);
   }
 };

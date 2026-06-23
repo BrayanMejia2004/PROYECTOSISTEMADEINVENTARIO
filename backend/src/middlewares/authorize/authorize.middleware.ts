@@ -1,28 +1,37 @@
-import { Request, Response, NextFunction } from 'express';
-import { PERMISSIONS } from '../../config/permissions/permissions';
+import { Response, NextFunction } from 'express';
+import { hasPermission, type Permission, type Role } from '../../config/permissions/permissions';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
-export const checkPermission = (permission: keyof typeof PERMISSIONS, ownBranchOnly: boolean = false) => {
+export const checkPermission = (permission: Permission, ownBranchOnly: boolean = false) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
-        throw ApiError.unauthorized('Not authenticated');
+        throw ApiError.unauthorized('No autenticado');
       }
 
-      const allowedRoles = PERMISSIONS[permission] as readonly string[];
-      if (!allowedRoles.includes(req.user.role)) {
-        throw ApiError.forbidden(`Missing permission: ${permission}`);
+      if (!hasPermission(req.user.role as Role, permission)) {
+        throw ApiError.forbidden(`Permiso requerido: ${permission}`);
       }
 
       if (ownBranchOnly && req.user.role !== 'owner') {
         if (!req.user.branchId) {
-          throw ApiError.forbidden('Branch ID required');
+          throw ApiError.forbidden('ID de sucursal requerido');
         }
       }
 
       next();
     } catch (error) {
+      if (error instanceof ApiError) {
+        logger.warn(`Error de autorización: ${error.message}`, {
+          permission,
+          userId: req.user?.userId,
+          role: req.user?.role,
+        });
+      } else {
+        logger.error(`Error inesperado de autorización: ${error instanceof Error ? error.message : String(error)}`);
+      }
       next(error);
     }
   };
