@@ -1,4 +1,5 @@
 import { AuditLog } from '../../models/auditLog/auditLog.model';
+import { logger } from '../../../config/logger/logger';
 
 interface AuditConfig {
   action: 'create' | 'update' | 'delete' | 'login' | 'logout';
@@ -30,8 +31,8 @@ export function withAudit<T extends (...args: any[]) => Promise<any>>(
         entityId: entityId || undefined,
         details: details || undefined,
       });
-    } catch {
-      // audit logging is non-critical; never fail the main operation
+    } catch (error) {
+      logger.warn(`Fallo al registrar auditoría: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     return result;
