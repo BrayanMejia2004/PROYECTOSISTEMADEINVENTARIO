@@ -1,6 +1,7 @@
 import { eventBus } from '../EventBus';
 import { Events, UserLoginEvent, UserLogoutEvent } from '../events';
 import { AuditLog } from '../../../models/auditLog/auditLog.model';
+import { logger } from '../../../../config/logger/logger';
 
 export const registerAuthListeners = () => {
   eventBus.on<UserLoginEvent>(Events.USER_LOGIN, async (event) => {
@@ -13,8 +14,8 @@ export const registerAuthListeners = () => {
         entityId: event.userId,
         details: { ip: event.ip },
       });
-    } catch {
-      // non-critical side effect
+    } catch (error) {
+      logger.warn(`Fallo en el listener de inicio de sesión: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 
@@ -27,8 +28,8 @@ export const registerAuthListeners = () => {
         entity: 'User',
         entityId: event.userId,
       });
-    } catch {
-      // non-critical side effect
+    } catch (error) {
+      logger.warn(`Fallo en el listener de cierre de sesión: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 };
