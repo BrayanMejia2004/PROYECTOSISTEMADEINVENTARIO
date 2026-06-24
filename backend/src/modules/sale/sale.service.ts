@@ -99,7 +99,6 @@ export const createSale = async (input: CreateSaleInput) => {
     total: preTotal,
   };
 
-  // payment-specific validation (exchange, etc.)
   await strategy.validate(paymentInput);
 
   const session = await mongoose.startSession();
