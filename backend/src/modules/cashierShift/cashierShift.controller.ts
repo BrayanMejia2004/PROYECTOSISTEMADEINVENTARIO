@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import * as cashierShiftService from './cashierShift.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getShifts = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -18,6 +19,7 @@ export const getShifts = async (req: AuthRequest, res: Response, next: NextFunct
     });
     sendPaginated(res, 'Turnos obtenidos', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -33,6 +35,7 @@ export const openShift = async (req: AuthRequest, res: Response, next: NextFunct
     });
     sendSuccess(res, 'Caja abierta', shift, 201);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -46,6 +49,7 @@ export const closeShift = async (req: AuthRequest, res: Response, next: NextFunc
     });
     sendSuccess(res, 'Caja cerrada', shift);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -58,6 +62,7 @@ export const getCurrentShift = async (req: AuthRequest, res: Response, next: Nex
     );
     sendSuccess(res, 'Turno actual', shift);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -67,6 +72,7 @@ export const getShift = async (req: AuthRequest, res: Response, next: NextFuncti
     const shift = await cashierShiftService.getShiftById(req.params.id, req.user!.tenantId);
     sendSuccess(res, 'Turno encontrado', shift);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -84,6 +90,7 @@ export const createMovement = async (req: AuthRequest, res: Response, next: Next
     });
     sendSuccess(res, 'Movimiento registrado', movement, 201);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -93,6 +100,7 @@ export const getMovements = async (req: AuthRequest, res: Response, next: NextFu
     const movements = await cashierShiftService.getMovements(req.params.shiftId, req.user!.tenantId);
     sendSuccess(res, 'Movimientos obtenidos', movements);
   } catch (error) {
+    logger.error(`Error en turnos de caja: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

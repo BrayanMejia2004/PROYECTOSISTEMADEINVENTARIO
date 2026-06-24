@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as supplierService from './supplier.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getSuppliers = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -12,6 +13,7 @@ export const getSuppliers = async (req: AuthRequest, res: Response, next: NextFu
     });
     sendPaginated(res, 'Suppliers retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en proveedores: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -21,6 +23,7 @@ export const getSupplier = async (req: AuthRequest, res: Response, next: NextFun
     const supplier = await supplierService.getSupplierById(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Supplier retrieved', supplier);
   } catch (error) {
+    logger.error(`Error en proveedores: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -34,6 +37,7 @@ export const createSupplier = async (req: AuthRequest, res: Response, next: Next
     });
     sendSuccess(res, 'Supplier created', supplier, 201);
   } catch (error) {
+    logger.error(`Error en proveedores: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -48,6 +52,7 @@ export const updateSupplier = async (req: AuthRequest, res: Response, next: Next
     );
     sendSuccess(res, 'Supplier updated', supplier);
   } catch (error) {
+    logger.error(`Error en proveedores: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -57,6 +62,7 @@ export const deleteSupplier = async (req: AuthRequest, res: Response, next: Next
     await supplierService.deleteSupplier(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Supplier deleted');
   } catch (error) {
+    logger.error(`Error en proveedores: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
