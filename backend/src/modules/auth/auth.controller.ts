@@ -1,14 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from './auth.service';
 import { sendSuccess } from '../../shared/utils/apiResponse/ApiResponse';
+import { env } from '../../config/env/env';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 const REFRESH_COOKIE = 'refreshToken';
 
 const getRefreshCookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
+  secure: env.NODE_ENV === 'production',
+  sameSite: (env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/api/v1/auth/refresh',
 });
@@ -34,8 +36,9 @@ export const registerTenant = async (req: Request, res: Response, next: NextFunc
     });
     setRefreshCookie(res, result.refreshToken);
     const { refreshToken: _, ...rest } = result;
-    sendSuccess(res, 'Tenant registered successfully', rest, 201);
+    sendSuccess(res, 'Negocio registrado exitosamente', rest, 201);
   } catch (error) {
+    logger.error(`Error en autenticación: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -46,8 +49,9 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const result = await authService.login({ email, password, tenantSlug });
     setRefreshCookie(res, result.refreshToken);
     const { refreshToken: _, ...rest } = result;
-    sendSuccess(res, 'Login successful', rest);
+    sendSuccess(res, 'Inicio de sesión exitoso', rest);
   } catch (error) {
+    logger.error(`Error en autenticación: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -56,13 +60,14 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
   try {
     const refreshToken = req.cookies?.[REFRESH_COOKIE];
     if (!refreshToken) {
-      return sendSuccess(res, 'No session', { accessToken: null, user: null, tenant: null });
+      return sendSuccess(res, 'Sin sesión', { accessToken: null, user: null, tenant: null });
     }
     const result = await authService.refreshTokens(refreshToken);
     setRefreshCookie(res, refreshToken);
-    sendSuccess(res, 'Token refreshed', result);
+    sendSuccess(res, 'Token renovado', result);
   } catch (error) {
     clearRefreshCookie(res);
+    logger.error(`Error en autenticación (refresh): ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -74,8 +79,9 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
       await authService.logout(refreshToken);
     }
     clearRefreshCookie(res);
-    sendSuccess(res, 'Logged out');
+    sendSuccess(res, 'Sesión cerrada');
   } catch (error) {
+    logger.error(`Error en autenticación: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -83,11 +89,12 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
 export const getProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     if (!req.user?.userId || !req.user?.tenantId) {
-      throw new Error('User ID or Tenant ID missing');
+      throw new Error('ID de usuario o ID de negocio no proporcionados');
     }
     const profile = await authService.getProfile(req.user.userId, req.user.tenantId);
-    sendSuccess(res, 'Profile retrieved', profile);
+    sendSuccess(res, 'Perfil obtenido', profile);
   } catch (error) {
+    logger.error(`Error en autenticación: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

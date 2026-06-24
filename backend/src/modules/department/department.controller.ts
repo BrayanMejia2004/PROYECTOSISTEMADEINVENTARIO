@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as departmentService from './department.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getDepartments = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -12,6 +13,7 @@ export const getDepartments = async (req: AuthRequest, res: Response, next: Next
     });
     sendPaginated(res, 'Departments retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -21,6 +23,7 @@ export const getDepartment = async (req: AuthRequest, res: Response, next: NextF
     const department = await departmentService.getDepartmentById(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Department retrieved', department);
   } catch (error) {
+    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -34,6 +37,7 @@ export const createDepartment = async (req: AuthRequest, res: Response, next: Ne
     });
     sendSuccess(res, 'Department created', department, 201);
   } catch (error) {
+    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -48,6 +52,7 @@ export const updateDepartment = async (req: AuthRequest, res: Response, next: Ne
     );
     sendSuccess(res, 'Department updated', department);
   } catch (error) {
+    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -57,6 +62,7 @@ export const deleteDepartment = async (req: AuthRequest, res: Response, next: Ne
     await departmentService.deleteDepartment(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Department deleted');
   } catch (error) {
+    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

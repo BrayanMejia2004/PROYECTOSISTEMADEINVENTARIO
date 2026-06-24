@@ -5,6 +5,7 @@ import Tenant from '../../shared/models/tenant/tenant.model';
 import User from '../../shared/models/user/user.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { eventBus, Events } from '../../shared/utils/eventBus';
+import { logger } from '../../config/logger/logger';
 
 interface RegisterTenantInput {
   tenantName: string;
@@ -72,7 +73,7 @@ const handleFailedLoginAttempt = async (user: any) => {
     throw ApiError.unauthorized('Cuenta bloqueada por 15 minutos tras múltiples intentos fallidos.');
   }
   await user.save();
-  throw ApiError.unauthorized('Invalid credentials');
+  throw ApiError.unauthorized('Credenciales inválidas');
 };
 
 const createTenantUserPair = async (input: RegisterTenantInput) => {
@@ -80,7 +81,7 @@ const createTenantUserPair = async (input: RegisterTenantInput) => {
   session.startTransaction();
   try {
     const existingTenant = await Tenant.findOne({ slug: input.tenantSlug }).session(session);
-    if (existingTenant) throw ApiError.conflict('Tenant slug already exists');
+    if (existingTenant) throw ApiError.conflict('El identificador del negocio ya existe');
 
     const tenant = new Tenant({ slug: input.tenantSlug, name: input.tenantName, email: input.email });
     await tenant.save({ session });
@@ -114,7 +115,7 @@ export const login = async (input: LoginInput) => {
   if (!tenant.isActive) throw ApiError.forbidden('Su suscripción ha expirado. Contacte al administrador para reactivar el servicio.');
 
   const user = await User.findOne({ tenantId: tenant._id.toString(), email: input.email }).select('+password');
-  if (!user || !user.isActive) throw ApiError.unauthorized('Invalid credentials');
+  if (!user || !user.isActive) throw ApiError.unauthorized('Credenciales inválidas');
   if (user.lockedUntil && user.lockedUntil > new Date()) {
     const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
     throw ApiError.unauthorized(`Cuenta bloqueada. Intenta de nuevo en ${minutesLeft} minuto(s).`);
@@ -196,15 +197,15 @@ export const logout = async (refreshToken: string) => {
         tenantId: user.tenantId.toString(),
       });
     }
-  } catch {
-    // Si el refresh token ya es inválido, igual limpiamos la cookie
+  } catch (error) {
+    logger.warn(`Fallo al cerrar sesión: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
 export const getProfile = async (userId: string, tenantId: string) => {
   const user = await User.findOne({ _id: userId, tenantId }).select('-password');
   if (!user) {
-    throw ApiError.notFound('User not found');
+    throw ApiError.notFound('Usuario no encontrado');
   }
   const tenant = await Tenant.findById(user.tenantId);
   return { user, tenant };

@@ -3,6 +3,7 @@ import Branch from '../../shared/models/branch/branch.model';
 import * as saleService from './sale.service';
 import { generateSalePdf } from '../../shared/utils/pdf/pdf.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const createSale = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -15,6 +16,7 @@ export const createSale = async (req: AuthRequest, res: Response, next: NextFunc
     });
     sendSuccess(res, 'Sale created', sale, 201);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -43,6 +45,7 @@ export const getSales = async (req: AuthRequest, res: Response, next: NextFuncti
     });
     sendPaginated(res, 'Sales retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -72,6 +75,7 @@ export const getSalesSummary = async (req: AuthRequest, res: Response, next: Nex
     });
     sendSuccess(res, 'Sales summary retrieved', summary);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -81,6 +85,7 @@ export const getSale = async (req: AuthRequest, res: Response, next: NextFunctio
     const sale = await saleService.getSaleById(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Sale retrieved', sale);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -94,6 +99,7 @@ export const getSaleByNumber = async (req: AuthRequest, res: Response, next: Nex
     );
     sendSuccess(res, 'Sale retrieved', sale);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -106,6 +112,7 @@ export const getTransferSales = async (req: AuthRequest, res: Response, next: Ne
     const result = await saleService.getTransferSales(req.user!.tenantId, branchId, page, limit);
     sendPaginated(res, 'Transfer sales retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -119,6 +126,7 @@ export const refundSale = async (req: AuthRequest, res: Response, next: NextFunc
     );
     sendSuccess(res, 'Sale refunded', sale);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -158,6 +166,7 @@ export const getSalePdf = async (req: AuthRequest, res: Response, next: NextFunc
     res.setHeader('Content-Disposition', `attachment; filename="${sale.saleNumber}.pdf"`);
     res.send(pdfBuffer);
   } catch (error) {
+    logger.error(`Error en ventas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

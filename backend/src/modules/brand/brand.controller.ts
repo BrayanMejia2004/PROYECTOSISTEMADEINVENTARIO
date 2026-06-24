@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as brandService from './brand.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getBrands = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -12,6 +13,7 @@ export const getBrands = async (req: AuthRequest, res: Response, next: NextFunct
     });
     sendPaginated(res, 'Brands retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en marcas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -21,6 +23,7 @@ export const getBrand = async (req: AuthRequest, res: Response, next: NextFuncti
     const brand = await brandService.getBrandById(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Brand retrieved', brand);
   } catch (error) {
+    logger.error(`Error en marcas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -34,6 +37,7 @@ export const createBrand = async (req: AuthRequest, res: Response, next: NextFun
     });
     sendSuccess(res, 'Brand created', brand, 201);
   } catch (error) {
+    logger.error(`Error en marcas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -45,6 +49,7 @@ export const updateBrand = async (req: AuthRequest, res: Response, next: NextFun
     );
     sendSuccess(res, 'Brand updated', brand);
   } catch (error) {
+    logger.error(`Error en marcas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -54,6 +59,7 @@ export const deleteBrand = async (req: AuthRequest, res: Response, next: NextFun
     await brandService.deleteBrand(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Brand deleted');
   } catch (error) {
+    logger.error(`Error en marcas: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import * as productService from './product.service';
 import cloudinary from '../../config/cloudinary/cloudinary';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getProducts = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -19,6 +20,7 @@ export const getProducts = async (req: AuthRequest, res: Response, next: NextFun
     });
     sendPaginated(res, 'Products retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -36,6 +38,7 @@ export const getProductByBarcode = async (req: AuthRequest, res: Response, next:
     }
     sendSuccess(res, 'Product retrieved', product);
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -45,6 +48,7 @@ export const getProduct = async (req: AuthRequest, res: Response, next: NextFunc
     const product = await productService.getProductById(req.params.id, req.user!.tenantId, req.user!.branchId);
     sendSuccess(res, 'Product retrieved', product);
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -60,6 +64,7 @@ export const createProduct = async (req: AuthRequest, res: Response, next: NextF
     });
     sendSuccess(res, 'Product created', product, 201);
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -74,6 +79,7 @@ export const updateProduct = async (req: AuthRequest, res: Response, next: NextF
     );
     sendSuccess(res, 'Product updated', product);
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -83,6 +89,7 @@ export const deleteProduct = async (req: AuthRequest, res: Response, next: NextF
     await productService.deleteProduct(req.params.id, req.user!.tenantId);
     sendSuccess(res, 'Product deleted');
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -93,6 +100,7 @@ export const importProducts = async (req: AuthRequest, res: Response, next: Next
     const result = await productService.importProducts(req.user!.tenantId, products, req.user!.branchId, skipDuplicates);
     sendSuccess(res, 'Import completed', result);
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -105,6 +113,7 @@ export const exportProducts = async (req: AuthRequest, res: Response, next: Next
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -130,6 +139,7 @@ export const uploadProductImage = async (req: AuthRequest, res: Response, next: 
 
     sendSuccess(res, 'Image uploaded', { url: result.secure_url });
   } catch (error) {
+    logger.error(`Error en productos: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

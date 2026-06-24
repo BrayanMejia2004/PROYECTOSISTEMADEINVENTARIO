@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as reportService from './report.service';
 import { sendSuccess } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getSalesReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -18,6 +19,7 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
     });
     sendSuccess(res, 'Sales report generated', report);
   } catch (error) {
+    logger.error(`Error en reportes: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -32,6 +34,7 @@ export const getInventoryReport = async (req: AuthRequest, res: Response, next: 
     });
     sendSuccess(res, 'Inventory report generated', report);
   } catch (error) {
+    logger.error(`Error en reportes: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -48,6 +51,7 @@ export const getProfitabilityReport = async (req: AuthRequest, res: Response, ne
     );
     sendSuccess(res, 'Profitability report generated', report);
   } catch (error) {
+    logger.error(`Error en reportes: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -65,6 +69,7 @@ export const getBranchComparison = async (req: AuthRequest, res: Response, next:
     );
     sendSuccess(res, 'Branch comparison generated', report);
   } catch (error) {
+    logger.error(`Error en reportes: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -74,6 +79,7 @@ export const getHistoricalSummary = async (req: AuthRequest, res: Response, next
     const summary = await reportService.getHistoricalSummary(req.user!.tenantId);
     sendSuccess(res, 'Historical summary', summary);
   } catch (error) {
+    logger.error(`Error en reportes: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

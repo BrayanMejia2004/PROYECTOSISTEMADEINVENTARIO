@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as stockService from './stock.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
+import { logger } from '../../config/logger/logger';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getStock = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -12,6 +13,7 @@ export const getStock = async (req: AuthRequest, res: Response, next: NextFuncti
     const result = await stockService.getStockByBranch(req.user!.tenantId, branchId, page, limit);
     sendPaginated(res, 'Stock retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en inventario: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -25,6 +27,7 @@ export const getLowStock = async (req: AuthRequest, res: Response, next: NextFun
     const result = await stockService.getLowStockAlerts(req.user!.tenantId, branchId, page, limit);
     sendPaginated(res, 'Low stock alerts retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en inventario: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -43,6 +46,7 @@ export const initializeStock = async (req: AuthRequest, res: Response, next: Nex
     );
     sendSuccess(res, 'Stock initialized', stock, 201);
   } catch (error) {
+    logger.error(`Error en inventario: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -58,6 +62,7 @@ export const updatePrice = async (req: AuthRequest, res: Response, next: NextFun
     );
     sendSuccess(res, 'Price updated', stock);
   } catch (error) {
+    logger.error(`Error en inventario: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -74,6 +79,7 @@ export const adjustStock = async (req: AuthRequest, res: Response, next: NextFun
     );
     sendSuccess(res, 'Stock adjusted');
   } catch (error) {
+    logger.error(`Error en inventario: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };
@@ -87,6 +93,7 @@ export const getOutOfStock = async (req: AuthRequest, res: Response, next: NextF
     const result = await stockService.getOutOfStock(req.user!.tenantId, branchId, page, limit);
     sendPaginated(res, 'Out of stock products retrieved', result.data, result.meta);
   } catch (error) {
+    logger.error(`Error en inventario: ${error instanceof Error ? error.message : String(error)}`);
     next(error);
   }
 };

@@ -9,85 +9,102 @@ import { moveStock } from '../stock/stock.service';
 import { generateSaleNumber } from '../../shared/utils/sequenceGenerator/sequenceGenerator';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { eventBus, Events } from '../../shared/utils/eventBus';
+import { logger } from '../../config/logger/logger';
 import { paymentContext } from './paymentStrategies';
 import type { PaymentInput } from './paymentStrategies';
 import { saleStateMachine } from './saleStateMachine';
-import type { PaymentMethodAggregation, SaleFilter } from '../../shared/types/queries';
+import type { CreateSaleInput, GetSalesFilters, SaleItemInput } from './sale.types';
+import type { PaymentMethodAggregation } from '../../shared/types/queries';
 
-interface SaleItemInput {
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-interface CreateSaleInput {
-  tenantId: string;
-  branchId: string;
-  userId: string;
-  customerName?: string;
-  customerPhone?: string;
-  items: SaleItemInput[];
-  tax?: number;
-  discount?: number;
-  paymentMethod: 'cash' | 'card' | 'transfer' | 'exchange';
-  transferReference?: string;
-  transferAmount?: number;
-  transferBank?: string;
-  cardBank?: string;
-  cardReference?: string;
-  exchangeFromSaleId?: string;
-  exchangeCredit?: number;
-}
-
-interface GetSalesFilters {
-  startDate?: Date;
-  endDate?: Date;
-  page?: number;
-  limit?: number;
-  status?: string;
-  paymentMethod?: string;
-  customerName?: string;
-  userId?: string;
-  search?: string;
-  minTotal?: number;
-  maxTotal?: number;
-}
-
-export const createSale = async (input: CreateSaleInput) => {
-  let customerId: string | undefined;
-
-  if (input.customerName) {
-    const existing = await customerService.findCustomerByNamePhone(
-      input.tenantId, input.customerName, input.customerPhone
-    );
-    if (existing) {
-      customerId = existing._id.toString();
-    } else {
-      const newCustomer = await customerService.createCustomer({
-        tenantId: input.tenantId,
-        name: input.customerName,
-        phone: input.customerPhone,
-      });
-      customerId = newCustomer._id.toString();
-    }
-  }
-
-  const openShift = await CashierShift.findOne({
+const findOrCreateCustomer = async (input: CreateSaleInput): Promise<string | undefined> => {
+  if (!input.customerName) return undefined;
+  const existing = await customerService.findCustomerByNamePhone(
+    input.tenantId, input.customerName, input.customerPhone
+  );
+  if (existing) return existing._id.toString();
+  const newCustomer = await customerService.createCustomer({
     tenantId: input.tenantId,
-    branchId: input.branchId,
-    status: 'open',
+    name: input.customerName,
+    phone: input.customerPhone,
   });
+  return newCustomer._id.toString();
+};
+
+const validateOpenShift = async (tenantId: string, branchId: string): Promise<void> => {
+  const openShift = await CashierShift.findOne({ tenantId, branchId, status: 'open' });
   if (!openShift) {
     throw ApiError.badRequest('No hay una caja abierta. Debe abrir la caja antes de realizar ventas.');
   }
+};
 
-  let preSubtotal = 0;
-  for (const item of input.items) {
-    preSubtotal += item.quantity * item.unitPrice;
+interface ProcessedItems {
+  saleItems: any[];
+  subtotal: number;
+  maxAllowedDiscountAmount: number;
+}
+
+const processSaleItems = async (
+  items: SaleItemInput[],
+  tenantId: string,
+  branchId: string,
+  saleNumber: string,
+  session: mongoose.ClientSession
+): Promise<ProcessedItems> => {
+  let subtotal = 0;
+  const saleItems: any[] = [];
+  let maxAllowedDiscountAmount = 0;
+
+  for (const item of items) {
+    const product = await Product.findOne({ _id: item.productId, tenantId }).session(session);
+    if (!product) throw ApiError.notFound(`Product not found: ${item.productId}`);
+
+    const validPrices: number[] = [product.price];
+    if (product.wholesalePrice != null) validPrices.push(product.wholesalePrice);
+    if (product.specialPrice != null) validPrices.push(product.specialPrice);
+
+    const priceMatch = validPrices.some(p => Math.abs(item.unitPrice - p) < 0.01);
+    if (!priceMatch) {
+      throw ApiError.badRequest(
+        `Precio inválido para "${product.name}". Esperado: ${validPrices.map(p => `$${p.toLocaleString('es-CO')}`).join(' / ')}`
+      );
+    }
+
+    const stock = await Stock.findOne({ tenantId, branchId, productId: item.productId }).session(session);
+    if (!stock || stock.quantity < item.quantity) {
+      throw ApiError.badRequest(`Insufficient stock for product: ${product.name}`);
+    }
+
+    const itemTotal = item.quantity * item.unitPrice;
+    subtotal += itemTotal;
+
+    if (product.allowsDiscount && product.maxDiscount && product.maxDiscount > 0) {
+      const itemWithTax = itemTotal + (product.applyTax && product.taxPercentage
+        ? itemTotal * (product.taxPercentage / 100) : 0);
+      maxAllowedDiscountAmount += itemWithTax * (product.maxDiscount / 100);
+    }
+
+    saleItems.push({
+      productId: item.productId,
+      productName: product.name,
+      sku: product.sku,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      costPrice: product.costPrice,
+      total: itemTotal,
+    });
+
+    await moveStock({ tenantId, branchId, productId: item.productId, type: 'sale', quantity: item.quantity, referenceId: saleNumber, session });
   }
-  const preTax = input.tax || 0;
-  const preDiscount = input.discount || 0;
-  const preTotal = preSubtotal + preTax - preDiscount;
+
+  return { saleItems, subtotal, maxAllowedDiscountAmount };
+};
+
+export const createSale = async (input: CreateSaleInput) => {
+  const customerId = await findOrCreateCustomer(input);
+  await validateOpenShift(input.tenantId, input.branchId);
+
+  const preSubtotal = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const preTotal = preSubtotal + (input.tax || 0) - (input.discount || 0);
 
   const strategy = paymentContext.get(input.paymentMethod);
   const paymentInput: PaymentInput = {
@@ -98,7 +115,6 @@ export const createSale = async (input: CreateSaleInput) => {
     exchangeCredit: input.exchangeCredit,
     total: preTotal,
   };
-
   await strategy.validate(paymentInput);
 
   const session = await mongoose.startSession();
@@ -106,71 +122,9 @@ export const createSale = async (input: CreateSaleInput) => {
 
   try {
     const saleNumber = await generateSaleNumber(input.tenantId);
-
-    let subtotal = 0;
-    const saleItems: any[] = [];
-    let maxAllowedDiscountAmount = 0;
-
-    for (const item of input.items) {
-      const product = await Product.findOne({
-        _id: item.productId,
-        tenantId: input.tenantId,
-      }).session(session);
-
-      if (!product) {
-        throw ApiError.notFound(`Product not found: ${item.productId}`);
-      }
-
-      const validPrices: number[] = [product.price];
-      if (product.wholesalePrice != null) validPrices.push(product.wholesalePrice);
-      if (product.specialPrice != null) validPrices.push(product.specialPrice);
-
-      const priceMatch = validPrices.some(p => Math.abs(item.unitPrice - p) < 0.01);
-      if (!priceMatch) {
-        throw ApiError.badRequest(
-          `Precio inválido para "${product.name}". Esperado: ${validPrices.map(p => `$${p.toLocaleString('es-CO')}`).join(' / ')}`
-        );
-      }
-
-      const stock = await Stock.findOne({
-        tenantId: input.tenantId,
-        branchId: input.branchId,
-        productId: item.productId,
-      }).session(session);
-
-      if (!stock || stock.quantity < item.quantity) {
-        throw ApiError.badRequest(`Insufficient stock for product: ${product.name}`);
-      }
-
-      const itemTotal = item.quantity * item.unitPrice;
-      subtotal += itemTotal;
-
-      if (product.allowsDiscount && product.maxDiscount && product.maxDiscount > 0) {
-        const itemWithTax = itemTotal + (product.applyTax && product.taxPercentage
-          ? itemTotal * (product.taxPercentage / 100) : 0);
-        maxAllowedDiscountAmount += itemWithTax * (product.maxDiscount / 100);
-      }
-
-      saleItems.push({
-        productId: item.productId,
-        productName: product.name,
-        sku: product.sku,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        costPrice: product.costPrice,
-        total: itemTotal,
-      });
-
-      await moveStock({
-        tenantId: input.tenantId,
-        branchId: input.branchId,
-        productId: item.productId,
-        type: 'sale',
-        quantity: item.quantity,
-        referenceId: saleNumber,
-        session,
-      });
-    }
+    const { saleItems, subtotal, maxAllowedDiscountAmount } = await processSaleItems(
+      input.items, input.tenantId, input.branchId, saleNumber, session
+    );
 
     const tax = input.tax || 0;
     const discount = input.discount || 0;
@@ -194,10 +148,7 @@ export const createSale = async (input: CreateSaleInput) => {
       customerId,
       customerName: input.customerName,
       items: saleItems,
-      subtotal,
-      tax,
-      discount,
-      total,
+      subtotal, tax, discount, total,
       paymentMethod: strategy.determineFinalMethod(paymentInput, total),
       status: 'completed',
       transferReference: input.transferReference,
@@ -233,6 +184,44 @@ export const createSale = async (input: CreateSaleInput) => {
   }
 };
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildCommonFilters = (
+  params: {
+    branchId?: string;
+    status?: string;
+    paymentMethod?: string;
+    customerName?: string;
+    userId?: string;
+    search?: string;
+    minTotal?: number;
+    maxTotal?: number;
+  },
+  toId: (id: string) => any = (id) => id
+): Record<string, any> => {
+  const query: Record<string, any> = {};
+  if (params.branchId) query.branchId = toId(params.branchId);
+  if (params.status) query.status = params.status;
+  if (params.paymentMethod) query.paymentMethod = params.paymentMethod;
+  if (params.userId) query.userId = toId(params.userId);
+  if (params.customerName) {
+    query.customerName = { $regex: escapeRegex(params.customerName), $options: 'i' };
+  }
+  if (params.search) {
+    const escaped = escapeRegex(params.search);
+    query.$or = [
+      { saleNumber: { $regex: escaped, $options: 'i' } },
+      { customerName: { $regex: escaped, $options: 'i' } },
+    ];
+  }
+  if (params.minTotal !== undefined || params.maxTotal !== undefined) {
+    query.total = {};
+    if (params.minTotal !== undefined) query.total.$gte = params.minTotal;
+    if (params.maxTotal !== undefined) query.total.$lte = params.maxTotal;
+  }
+  return query;
+};
+
 export const getSales = async (
   tenantId: string,
   branchId: string | undefined,
@@ -244,7 +233,6 @@ export const getSales = async (
     search, minTotal, maxTotal,
   } = filters;
   const query: Record<string, any> = { tenantId };
-  if (branchId) query.branchId = branchId;
 
   if (startDate || endDate) {
     query.createdAt = {};
@@ -252,27 +240,7 @@ export const getSales = async (
     if (endDate) query.createdAt.$lte = endDate;
   }
 
-  if (status) query.status = status;
-  if (paymentMethod) query.paymentMethod = paymentMethod;
-  if (customerName) {
-    const escapedCustomerName = customerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    query.customerName = { $regex: escapedCustomerName, $options: 'i' };
-  }
-  if (userId) query.userId = userId;
-
-  if (search) {
-    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    query.$or = [
-      { saleNumber: { $regex: escaped, $options: 'i' } },
-      { customerName: { $regex: escaped, $options: 'i' } },
-    ];
-  }
-
-  if (minTotal !== undefined || maxTotal !== undefined) {
-    query.total = {};
-    if (minTotal !== undefined) query.total.$gte = minTotal;
-    if (maxTotal !== undefined) query.total.$lte = maxTotal;
-  }
+  Object.assign(query, buildCommonFilters({ branchId, status, paymentMethod, customerName, userId, search, minTotal, maxTotal }));
 
   const total = await Sale.countDocuments(query);
   const sales = await Sale.find(query)
@@ -285,18 +253,7 @@ export const getSales = async (
   return { data: enrichedSales, meta: { total, page, limit } };
 };
 
-interface SalesSummaryFilters {
-  branchId?: string;
-  startDate?: Date;
-  endDate?: Date;
-  status?: string;
-  paymentMethod?: string;
-  customerName?: string;
-  userId?: string;
-  search?: string;
-  minTotal?: number;
-  maxTotal?: number;
-}
+import type { SalesSummaryFilters } from './sale.types';
 
 const buildSummaryMatch = (tenantId: string, filters?: SalesSummaryFilters) => {
   const { branchId, startDate, endDate, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
@@ -306,30 +263,14 @@ const buildSummaryMatch = (tenantId: string, filters?: SalesSummaryFilters) => {
   const endOfToday = endDate || new Date();
   if (!endDate) endOfToday.setHours(23, 59, 59, 999);
 
+  const toId = (id: string) => new mongoose.Types.ObjectId(id);
+
   const match: Record<string, any> = {
-    tenantId: new mongoose.Types.ObjectId(tenantId),
+    tenantId: toId(tenantId),
     createdAt: { $gte: today, $lte: endOfToday },
   };
 
-  if (branchId) match.branchId = new mongoose.Types.ObjectId(branchId);
-  if (paymentMethod) match.paymentMethod = paymentMethod;
-  if (customerName) {
-    const escapedCustomerName = customerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    match.customerName = { $regex: escapedCustomerName, $options: 'i' };
-  }
-  if (userId) match.userId = new mongoose.Types.ObjectId(userId);
-  if (search) {
-    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    match.$or = [
-      { saleNumber: { $regex: escaped, $options: 'i' } },
-      { customerName: { $regex: escaped, $options: 'i' } },
-    ];
-  }
-  if (minTotal !== undefined || maxTotal !== undefined) {
-    match.total = {};
-    if (minTotal !== undefined) match.total.$gte = minTotal;
-    if (maxTotal !== undefined) match.total.$lte = maxTotal;
-  }
+  Object.assign(match, buildCommonFilters({ branchId, paymentMethod, customerName, userId, search, minTotal, maxTotal }, toId));
 
   return match;
 };
@@ -439,6 +380,16 @@ const enrichWithUserNames = async (sales: any[]) => {
   });
 };
 
+async function enrichSaleWithUserName(saleObj: Record<string, any>): Promise<void> {
+  try {
+    const user = await User.findById(saleObj.userId).select('firstName lastName');
+    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : saleObj.userId.toString();
+  } catch (error) {
+    logger.error(`Failed to load user name for sale ${saleObj._id}: ${error instanceof Error ? error.message : String(error)}`);
+    saleObj.userName = saleObj.userId.toString();
+  }
+}
+
 export const getSaleById = async (saleId: string, tenantId: string, branchId?: string) => {
   const query: Record<string, any> = { _id: saleId, tenantId };
   if (branchId) query.branchId = branchId;
@@ -446,13 +397,7 @@ export const getSaleById = async (saleId: string, tenantId: string, branchId?: s
   if (!sale) throw ApiError.notFound('Sale not found');
 
   const saleObj = sale.toObject() as Record<string, any>;
-  try {
-    const user = await User.findById(sale.userId).select('firstName lastName');
-    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId.toString();
-  } catch {
-    console.error('Failed to load user name for sale:', sale.userId);
-    saleObj.userName = sale.userId.toString();
-  }
+  await enrichSaleWithUserName(saleObj);
 
   return saleObj;
 };
@@ -464,13 +409,7 @@ export const getSaleByNumber = async (saleNumber: string, tenantId: string, bran
   if (!sale) throw ApiError.notFound('Sale not found or not refunded');
 
   const saleObj = sale.toObject() as Record<string, any>;
-  try {
-    const user = await User.findById(sale.userId).select('firstName lastName');
-    saleObj.userName = user ? `${user.firstName} ${user.lastName}` : sale.userId.toString();
-  } catch {
-    console.error('Failed to load user name for sale [byNumber]:', sale.userId);
-    saleObj.userName = sale.userId.toString();
-  }
+  await enrichSaleWithUserName(saleObj);
 
   const usedAgg = await Sale.aggregate([
     { $match: { exchangeFromSaleId: sale._id, tenantId: new mongoose.Types.ObjectId(tenantId) } },
