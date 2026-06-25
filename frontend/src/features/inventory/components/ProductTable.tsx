@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
+import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2, Search, X } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 
@@ -24,7 +24,7 @@ const UNIT_LABELS: Record<string, string> = {
 export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: string; readOnly?: boolean; userRole?: string }) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const debouncedSearch = useDebouncedValue(search, 800);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string }>({ open: false });
   const [showSuccess, setShowSuccess] = useState(false);
   const { data, isLoading } = useProducts({ page, limit: PAGE_SIZE, branchId, search: debouncedSearch || undefined });
@@ -122,18 +122,6 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
     );
   }
 
-  if (products.length === 0) {
-    return (
-      <div className="p-12 flex flex-col items-center justify-center text-center">
-        <div className="w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center mb-3">
-          <Package className="w-6 h-6 text-brand" />
-        </div>
-        <p className="text-sm font-medium text-brand-text mb-1">Sin productos</p>
-        <p className="text-xs text-brand-muted">No hay productos con stock en esta sucursal</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       {isAdmin && (
@@ -145,13 +133,37 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
               placeholder="Buscar por nombre o SKU..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+              className="w-full pl-9 pr-9 py-2 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setPage(1); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {products.length === 0 ? (
+        <div className="p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center mb-3">
+            <Package className="w-6 h-6 text-brand" />
+          </div>
+          <p className="text-sm font-medium text-brand-text mb-1">
+            {search ? 'Sin resultados' : 'Sin productos'}
+          </p>
+          <p className="text-xs text-brand-muted">
+            {search
+              ? `No se encontraron productos para "${search}"`
+              : 'No hay productos con stock en esta sucursal'}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="bg-brand-bg/50">
@@ -204,6 +216,7 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
           </tbody>
         </table>
       </div>
+      )}
 
       {meta && meta.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-100">
