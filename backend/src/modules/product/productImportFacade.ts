@@ -139,6 +139,7 @@ class StockInitializer {
       productId: p.productId,
       quantity: p.original.initialStock || 0,
       price: p.original.price,
+      minStock: p.original.minStock || 0,
       isLowStock: (p.original.initialStock || 0) <= (p.original.minStock || 0),
     }));
 
@@ -185,6 +186,11 @@ export class ProductImportFacade {
     branchId?: string,
     skipDuplicates = false
   ): Promise<ImportResult> {
+    const MAX_IMPORT = 5000;
+    if (products.length > MAX_IMPORT) {
+      throw ApiError.badRequest(`Máximo ${MAX_IMPORT.toLocaleString()} productos por importación`);
+    }
+
     const errors: Array<{ row: number; message: string }> = [];
     let createdCount = 0;
 
