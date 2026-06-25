@@ -66,6 +66,7 @@ export const LoginPage = () => {
               </label>
               <input
                 {...register('tenantSlug')}
+                autoComplete="off"
                 placeholder="mi-empresa"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
@@ -81,6 +82,7 @@ export const LoginPage = () => {
               <input
                 {...register('email')}
                 type="email"
+                autoComplete="email"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.email && (
@@ -95,6 +97,7 @@ export const LoginPage = () => {
               <input
                 {...register('password')}
                 type="password"
+                autoComplete="current-password"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
               />
               {errors.password && (
