@@ -29,5 +29,6 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ tenantId: 1, sku: 1 }, { unique: true });
 productSchema.index({ tenantId: 1, barcode: 1 });
 productSchema.index({ tenantId: 1, name: 'text', sku: 'text', barcode: 'text' });
+productSchema.index({ tenantId: 1, isActive: 1, historicalSales: 1 });
 
 export default mongoose.model('Product', productSchema);

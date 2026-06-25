@@ -224,6 +224,13 @@ const checkProductDuplicate = async (tenantId: string, fields: { name: string; s
   if (fields.barcode && duplicate.barcode === fields.barcode) throw ApiError.conflict('Ya existe un producto activo con este código de barras');
 };
 
+const syncMinStockToStocks = async (tenantId: string, productId: string, minStock: number): Promise<void> => {
+  await Stock.updateMany(
+    { tenantId, productId },
+    { $set: { minStock } }
+  );
+};
+
 const initializeProductStock = async (tenantId: string, branchId: string, productId: string, quantity: number, price: number, minStock: number) => {
   const existing = await Stock.findOne({ tenantId, branchId, productId });
   if (existing) return;
@@ -300,6 +307,10 @@ export const updateProduct = async (productId: string, tenantId: string, branchI
 
   Object.assign(product, cleanUpdates);
   await product.save();
+
+  if (cleanUpdates.minStock !== undefined) {
+    await syncMinStockToStocks(tenantId, productId, cleanUpdates.minStock);
+  }
 
   if (stockValue !== undefined && branchId) {
     const minStock = cleanUpdates.minStock !== undefined ? cleanUpdates.minStock : product.minStock;

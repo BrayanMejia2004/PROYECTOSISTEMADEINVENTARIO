@@ -12,6 +12,7 @@ import { errorHandler } from './middlewares/error/error.middleware';
 import { notFound } from './middlewares/notFound/notFound.middleware';
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use((_req, res, next) => {
   res.setHeader('X-Request-ID', uuidv4());
@@ -47,9 +48,28 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '5mb' }));
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    status: 'error',
+    message: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/v1/auth/login', loginLimiter);
+
 const limiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.RATE_LIMIT_MAX,
+  message: {
+    status: 'error',
+    message: 'Demasiadas solicitudes. Espera unos minutos e intenta de nuevo.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api', limiter);
 

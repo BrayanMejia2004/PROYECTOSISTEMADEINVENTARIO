@@ -3,6 +3,7 @@ import { Sale } from '../../shared/models/sale/sale.model';
 import CashierShift from '../../shared/models/cashierShift/cashierShift.model';
 import Product from '../../shared/models/product/product.model';
 import Stock from '../../shared/models/stock/stock.model';
+import StockMovement from '../../shared/models/stockMovement/stockMovement.model';
 import User from '../../shared/models/user/user.model';
 import * as customerService from '../customer/customer.service';
 import { moveStock } from '../stock/stock.service';
@@ -52,6 +53,11 @@ const processSaleItems = async (
 ): Promise<ProcessedItems> => {
   let subtotal = 0;
   const saleItems: any[] = [];
+  const movements: Array<{
+    tenantId: string; branchId: string; productId: string;
+    type: string; quantity: number; previousQuantity: number;
+    newQuantity: number; referenceId: string;
+  }> = [];
   let maxAllowedDiscountAmount = 0;
 
   for (const item of items) {
@@ -93,7 +99,21 @@ const processSaleItems = async (
       total: itemTotal,
     });
 
-    await moveStock({ tenantId, branchId, productId: item.productId, type: 'sale', quantity: item.quantity, referenceId: saleNumber, session });
+    const stockBefore = stock.quantity;
+    const stockAfter = stockBefore - item.quantity;
+
+    movements.push({
+      tenantId, branchId, productId: item.productId,
+      type: 'sale', quantity: item.quantity,
+      previousQuantity: stockBefore, newQuantity: stockAfter,
+      referenceId: saleNumber,
+    });
+
+    await moveStock({ tenantId, branchId, productId: item.productId, type: 'sale', quantity: item.quantity, referenceId: saleNumber, session, skipMovement: true });
+  }
+
+  if (movements.length > 0) {
+    await StockMovement.insertMany(movements, { session });
   }
 
   return { saleItems, subtotal, maxAllowedDiscountAmount };

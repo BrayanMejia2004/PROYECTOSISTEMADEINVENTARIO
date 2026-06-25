@@ -16,60 +16,88 @@ interface MoveStockInput {
   note?: string;
   referenceId?: string;
   session?: mongoose.ClientSession;
+  skipMovement?: boolean;
 }
 
+interface StockMovementData {
+  tenantId: string;
+  branchId: string;
+  productId: string;
+  type: MovementType;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  note?: string;
+  referenceId?: string;
+}
+
+interface StockMovedEventData {
+  tenantId: string;
+  branchId: string;
+  productId: string;
+  type: MovementType;
+  quantity: number;
+  newQuantity: number;
+}
+
+type StockOp = { incMultiplier: -1 | 1; checkStock: boolean };
+
+const STOCK_OPERATIONS: Record<MovementType, StockOp> = {
+  sale: { incMultiplier: -1, checkStock: true },
+  return: { incMultiplier: 1, checkStock: false },
+  adjustment: { incMultiplier: -1, checkStock: true },
+  transfer: { incMultiplier: -1, checkStock: true },
+};
+
+const computeIsLowStock = (newQuantity: number, minStock: number): boolean =>
+  newQuantity <= minStock;
+
+const createStockMovement = async (data: StockMovementData, session?: mongoose.ClientSession): Promise<void> => {
+  const movement = new StockMovement(data);
+  await movement.save({ session });
+};
+
+const emitStockMovedEvent = async (data: StockMovedEventData): Promise<void> => {
+  eventBus.emit(Events.STOCK_MOVED, data);
+};
+
 export const moveStock = async (input: MoveStockInput): Promise<void> => {
-  const { tenantId, branchId, productId, type, quantity, note, referenceId, session } = input;
+  const { tenantId, branchId, productId, type, quantity, note, referenceId, session, skipMovement } = input;
 
-  const stock = await Stock.findOne({ tenantId, branchId, productId }).session(session || null);
+  const op = STOCK_OPERATIONS[type];
+  if (!op) throw ApiError.badRequest(`Tipo de movimiento inválido: ${type}`);
+
+  const filter: Record<string, any> = { tenantId, branchId, productId };
+  if (op.checkStock && quantity > 0) {
+    filter.quantity = { $gte: quantity };
+  }
+
+  const stock = await Stock.findOneAndUpdate(
+    filter,
+    { $inc: { quantity: op.incMultiplier * quantity } },
+    { new: true, session: session || null }
+  );
+
   if (!stock) {
-    throw ApiError.notFound('Stock record not found for this product in the branch');
+    if (type === 'return') throw ApiError.notFound('Registro de stock no encontrado');
+    throw ApiError.badRequest('Stock insuficiente');
   }
 
-  const previousQuantity = stock.quantity;
-  let newQuantity: number;
-
-  if (type === 'sale') {
-    newQuantity = previousQuantity - quantity;
-    if (newQuantity < 0) {
-      throw ApiError.badRequest('Insufficient stock');
-    }
-  } else if (type === 'return') {
-    newQuantity = previousQuantity + quantity;
-  } else {
-    newQuantity = previousQuantity - quantity;
-    if (newQuantity < 0) {
-      throw ApiError.badRequest('Insufficient stock');
-    }
-  }
-
-  stock.quantity = newQuantity;
-
-  const prod = await Product.findById(productId).select('minStock').lean();
-  stock.isLowStock = prod ? stock.quantity <= (prod.minStock || 0) : false;
-
+  const previousQuantity = stock.quantity - (op.incMultiplier * quantity);
+  stock.isLowStock = computeIsLowStock(stock.quantity, stock.minStock);
   await stock.save({ session });
 
-  const movement = new StockMovement({
-    tenantId,
-    branchId,
-    productId,
-    type,
-    quantity,
-    previousQuantity,
-    newQuantity,
-    note,
-    referenceId,
-  });
-  await movement.save({ session });
+  if (!skipMovement) {
+    await createStockMovement({
+      tenantId, branchId, productId, type, quantity,
+      previousQuantity, newQuantity: stock.quantity,
+      note, referenceId,
+    }, session);
+  }
 
-  eventBus.emit(Events.STOCK_MOVED, {
-    tenantId,
-    branchId,
-    productId,
-    type,
-    quantity,
-    newQuantity,
+  await emitStockMovedEvent({
+    tenantId, branchId, productId, type, quantity,
+    newQuantity: stock.quantity,
   });
 };
 
@@ -144,7 +172,7 @@ export const getLowStockAlerts = async (tenantId: string, branchId?: string, pag
 export const getOutOfStock = async (tenantId: string, branchId?: string, page: number = 1, limit: number = 100) => {
   const query: StockFilter = { tenantId, quantity: 0 };
   if (branchId) query.branchId = branchId;
-  return queryPopulatedStock(query, 'name sku barcode minStock', { 'productId.name': 1 }, page, limit, mapOutOfStockItem);
+  return queryPopulatedStock(query, 'name sku barcode minStock', { quantity: 1 }, page, limit, mapOutOfStockItem);
 };
 
 export const initializeStock = async (
@@ -170,6 +198,7 @@ export const initializeStock = async (
     productId,
     quantity,
     price,
+    minStock: product.minStock || 0,
     isLowStock: quantity <= (product.minStock || 0),
   });
   await stock.save();
@@ -197,13 +226,14 @@ export const updateStockPrice = async (
   productId: string,
   price: number
 ) => {
-  const stock = await Stock.findOne({ tenantId, branchId, productId });
+  const stock = await Stock.findOneAndUpdate(
+    { tenantId, branchId, productId },
+    { $set: { price } },
+    { new: true }
+  );
   if (!stock) {
-    throw ApiError.notFound('Stock record not found');
+    throw ApiError.notFound('Registro de stock no encontrado');
   }
-
-  stock.price = price;
-  await stock.save();
   return stock;
 };
 
@@ -214,24 +244,5 @@ export const adjustStock = async (
   quantity: number,
   note: string
 ) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    await moveStock({
-      tenantId,
-      branchId,
-      productId,
-      type: 'adjustment',
-      quantity,
-      note,
-      session,
-    });
-    await session.commitTransaction();
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
-  }
+  await moveStock({ tenantId, branchId, productId, type: 'adjustment', quantity, note });
 };
