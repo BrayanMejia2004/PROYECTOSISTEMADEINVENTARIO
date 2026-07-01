@@ -1,18 +1,10 @@
 .agents/
-.ai/
 .opencode/
 skills-lock.json
 
 # Environment files with secrets
 backend/.env
-frontend/.env
 frontend/.env.local
-backend/.env.local
 
-render.yaml
-
-frontend/playwright-report/
-frontend/test-results/
-frontend/e2e/
-capturaPantalla/*
 docs/*
+CLAUDE.md
