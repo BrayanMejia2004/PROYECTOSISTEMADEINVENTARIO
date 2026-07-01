@@ -1,17 +1,25 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import 'jest';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
+import Tenant from '../src/shared/models/tenant/tenant.model';
+import User from '../src/shared/models/user/user.model';
 
-let mongoServer: MongoMemoryServer;
+let replSet: MongoMemoryReplSet;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const mongoUri = mongoServer.getUri();
-  await mongoose.connect(mongoUri);
+  replSet = await MongoMemoryReplSet.create({
+    replSet: { count: 1, storageEngine: 'wiredTiger' },
+  });
+  const uri = replSet.getUri();
+  await mongoose.connect(uri);
+
+  await Tenant.createCollection();
+  await User.createCollection();
 });
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  await replSet.stop();
 });
 
 afterEach(async () => {
