@@ -40,7 +40,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin) || vercelRegex.test(origin)) {
       callback(null, true);
     } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
+      callback(new Error('Origin not allowed by CORS'));
     }
   },
   credentials: true,
@@ -65,6 +65,7 @@ app.use('/api/v1/auth/login', loginLimiter);
 const limiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.RATE_LIMIT_MAX,
+  skip: (req) => req.path === '/api/v1/auth/login',
   message: {
     status: 'error',
     message: 'Demasiadas solicitudes. Espera unos minutos e intenta de nuevo.',

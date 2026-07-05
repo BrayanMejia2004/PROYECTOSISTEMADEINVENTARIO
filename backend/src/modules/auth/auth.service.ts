@@ -206,8 +206,14 @@ export const refreshTokens = async (refreshToken: string) => {
       tokenVersion: user.tokenVersion,
     });
 
+    const newRefreshToken = signRefreshToken({
+      userId: user._id.toString(),
+      tokenVersion: user.tokenVersion,
+    });
+
     return {
       accessToken,
+      refreshToken: newRefreshToken,
       user: {
         _id: user._id.toString(),
         email: user.email,

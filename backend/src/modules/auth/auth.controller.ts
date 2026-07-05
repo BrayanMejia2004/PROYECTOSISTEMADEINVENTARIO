@@ -54,8 +54,9 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
   const result = await authService.refreshTokens(refreshToken);
-  setRefreshCookie(res, refreshToken);
-  sendSuccess(res, 'Token renovado', result);
+  setRefreshCookie(res, result.refreshToken);
+  const { refreshToken: _, ...rest } = result;
+  sendSuccess(res, 'Token renovado', rest);
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
