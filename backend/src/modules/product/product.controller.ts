@@ -1,6 +1,5 @@
 import { Response } from 'express';
 import * as productService from './product.service';
-import cloudinary from '../../config/cloudinary/cloudinary';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
 import { parsePagination, resolveBranchId } from '../../shared/utils/requestHelpers/requestHelpers';
@@ -62,40 +61,4 @@ export const updateProduct = asyncHandler(async (req: AuthRequest, res: Response
 export const deleteProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
   await productService.deleteProduct(req.params.id, req.user!.tenantId);
   sendSuccess(res, 'Producto eliminado');
-});
-
-export const importProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { products, skipDuplicates } = req.body;
-  const result = await productService.importProducts(req.user!.tenantId, products, req.user!.branchId, skipDuplicates);
-  sendSuccess(res, 'Importación completada', result);
-});
-
-export const exportProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const workbook = await productService.exportProducts(req.user!.tenantId);
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="inventario-${Date.now()}.xlsx"`);
-  await workbook.xlsx.write(res);
-  res.end();
-});
-
-export const uploadProductImage = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.file) {
-    sendSuccess(res, 'No se proporcionó imagen', null);
-    return;
-  }
-
-  const file = req.file;
-
-  const result = await new Promise<any>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: `tenant-${req.user!.tenantId}`, resource_type: 'image' },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-    stream.end(file.buffer);
-  });
-
-  sendSuccess(res, 'Imagen subida', { url: result.secure_url });
 });
