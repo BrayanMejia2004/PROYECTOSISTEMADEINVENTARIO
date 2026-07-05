@@ -6,6 +6,8 @@ import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { AuditLog } from '../../shared/models/auditLog/auditLog.model';
 import { logger } from '../../config/logger/logger';
 
+const BCRYPT_SALT_ROUNDS = 12;
+
 interface CreateUserInput {
   tenantId: string;
   branchId?: string;
@@ -40,25 +42,37 @@ export const getUsers = async (tenantId: string, role?: string, branchId?: strin
 
 export const getUserById = async (userId: string, tenantId: string) => {
   const user = await User.findOne({ _id: userId, tenantId }).select('-password');
-  if (!user) throw ApiError.notFound('User not found');
+  if (!user) throw ApiError.notFound(
+    `Usuario no encontrado: userId=${userId}, tenantId=${tenantId}`,
+    'Usuario no encontrado'
+  );
   return user;
 };
 
 export const createUser = async (input: CreateUserInput, auditUserId?: string) => {
   const tenant = await Tenant.findById(input.tenantId);
-  if (!tenant) throw ApiError.notFound('Tenant not found');
+  if (!tenant) throw ApiError.notFound(
+    `Tenant no encontrado: tenantId=${input.tenantId}`,
+    'Negocio no encontrado'
+  );
 
   const existingUser = await User.findOne({ tenantId: input.tenantId, email: input.email });
   if (existingUser) {
-    throw ApiError.conflict('Email already exists in this tenant');
+    throw ApiError.conflict(
+      `Email duplicado en tenant ${input.tenantId}: ${input.email}`,
+      'El correo electrónico ya existe en este negocio'
+    );
   }
 
   if (input.branchId) {
     const branch = await Branch.findOne({ _id: input.branchId, tenantId: input.tenantId });
-    if (!branch) throw ApiError.notFound('Branch not found');
+    if (!branch) throw ApiError.notFound(
+      `Sucursal no encontrada: branchId=${input.branchId}, tenantId=${input.tenantId}`,
+      'Sucursal no encontrada'
+    );
   }
 
-  const hashedPassword = await bcrypt.hash(input.password, 12);
+  const hashedPassword = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
   const user = new User({
     tenantId: input.tenantId,
     branchId: input.branchId,
@@ -88,25 +102,37 @@ const ROLE_HIERARCHY: Record<string, number> = { cashier: 0, admin: 1, owner: 2 
 
 export const updateUser = async (userId: string, tenantId: string, input: UpdateUserInput, requestingUserRole?: string, auditUserId?: string) => {
   const user = await User.findOne({ _id: userId, tenantId });
-  if (!user) throw ApiError.notFound('User not found');
+  if (!user) throw ApiError.notFound(
+    `Usuario no encontrado para actualizar: userId=${userId}, tenantId=${tenantId}`,
+    'Usuario no encontrado'
+  );
 
   if (requestingUserRole && ROLE_HIERARCHY[requestingUserRole] <= ROLE_HIERARCHY[user.role]) {
-    throw ApiError.forbidden('No puedes modificar un usuario con un rol igual o superior al tuyo');
+    throw ApiError.forbidden(
+      `Intento de modificar usuario con rol superior: solicitante=${requestingUserRole}, objetivo=${user.role}`,
+      'No puedes modificar un usuario con un rol igual o superior al tuyo'
+    );
   }
 
   if (input.email && input.email !== user.email) {
     const existingUser = await User.findOne({ tenantId, email: input.email });
-    if (existingUser) throw ApiError.conflict('Email already exists in this tenant');
+    if (existingUser) throw ApiError.conflict(
+      `Email duplicado en tenant ${tenantId}: ${input.email}`,
+      'El correo electrónico ya existe en este negocio'
+    );
   }
 
   if (input.branchId) {
     const branch = await Branch.findOne({ _id: input.branchId, tenantId });
-    if (!branch) throw ApiError.notFound('Branch not found');
+    if (!branch) throw ApiError.notFound(
+      `Sucursal no encontrada para actualizar usuario: branchId=${input.branchId}`,
+      'Sucursal no encontrada'
+    );
   }
 
   const changes: string[] = [];
   if (input.password) {
-    input.password = await bcrypt.hash(input.password, 12);
+    input.password = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
     changes.push('password');
   }
   if (input.role !== undefined && input.role !== user.role) changes.push(`role: ${user.role} → ${input.role}`);
@@ -136,10 +162,16 @@ export const updateUser = async (userId: string, tenantId: string, input: Update
 
 export const deleteUser = async (userId: string, tenantId: string, requestingUserRole?: string, auditUserId?: string) => {
   const user = await User.findOne({ _id: userId, tenantId });
-  if (!user) throw ApiError.notFound('User not found');
+  if (!user) throw ApiError.notFound(
+    `Usuario no encontrado para eliminar: userId=${userId}, tenantId=${tenantId}`,
+    'Usuario no encontrado'
+  );
 
   if (requestingUserRole && ROLE_HIERARCHY[requestingUserRole] <= ROLE_HIERARCHY[user.role]) {
-    throw ApiError.forbidden('No puedes eliminar un usuario con un rol igual o superior al tuyo');
+    throw ApiError.forbidden(
+      `Intento de eliminar usuario con rol superior: solicitante=${requestingUserRole}, objetivo=${user.role}`,
+      'No puedes eliminar un usuario con un rol igual o superior al tuyo'
+    );
   }
 
   await User.findOneAndDelete({ _id: userId, tenantId });

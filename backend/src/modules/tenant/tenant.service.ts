@@ -15,13 +15,19 @@ interface UpdateTenantSettingsInput {
 
 export const getTenantSettings = async (tenantId: string) => {
   const tenant = await Tenant.findById(tenantId);
-  if (!tenant) throw ApiError.notFound('Tenant not found');
+  if (!tenant) throw ApiError.notFound(
+    `Configuración de negocio no encontrada: tenantId=${tenantId}`,
+    'Negocio no encontrado'
+  );
   return tenant;
 };
 
 export const updateTenantSettings = async (tenantId: string, input: UpdateTenantSettingsInput) => {
   const tenant = await Tenant.findById(tenantId);
-  if (!tenant) throw ApiError.notFound('Tenant not found');
+  if (!tenant) throw ApiError.notFound(
+    `Configuración de negocio no encontrada para actualizar: tenantId=${tenantId}`,
+    'Negocio no encontrado'
+  );
 
   Object.assign(tenant, input);
   await tenant.save();
@@ -30,7 +36,10 @@ export const updateTenantSettings = async (tenantId: string, input: UpdateTenant
 
 export const uploadLogo = async (tenantId: string, file: Express.Multer.File) => {
   const tenant = await Tenant.findById(tenantId);
-  if (!tenant) throw ApiError.notFound('Tenant not found');
+  if (!tenant) throw ApiError.notFound(
+    `Negocio no encontrado para subir logo: tenantId=${tenantId}`,
+    'Negocio no encontrado'
+  );
 
   const result = await new Promise<any>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(

@@ -47,7 +47,10 @@ export const getSupplierById = async (supplierId: string, tenantId: string, bran
   const query: BranchScopedFilter = { _id: supplierId, tenantId };
   buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOne(query);
-  if (!supplier) throw ApiError.notFound('Supplier not found');
+  if (!supplier) throw ApiError.notFound(
+    `Proveedor no encontrado: supplierId=${supplierId}, tenantId=${tenantId}`,
+    'Proveedor no encontrado'
+  );
   return supplier;
 };
 
@@ -61,7 +64,10 @@ export const updateSupplier = async (supplierId: string, tenantId: string, branc
   const query: BranchScopedFilter = { _id: supplierId, tenantId };
   buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOne(query);
-  if (!supplier) throw ApiError.notFound('Supplier not found');
+  if (!supplier) throw ApiError.notFound(
+    `Proveedor no encontrado para actualizar: supplierId=${supplierId}, tenantId=${tenantId}`,
+    'Proveedor no encontrado'
+  );
 
   Object.assign(supplier, input);
   await supplier.save();
@@ -72,6 +78,9 @@ export const deleteSupplier = async (supplierId: string, tenantId: string, branc
   const query: BranchScopedFilter = { _id: supplierId, tenantId };
   buildBranchQuery(query, branchId);
   const supplier = await Supplier.findOneAndDelete(query);
-  if (!supplier) throw ApiError.notFound('Supplier not found');
+  if (!supplier) throw ApiError.notFound(
+    `Proveedor no encontrado para eliminar: supplierId=${supplierId}, tenantId=${tenantId}`,
+    'Proveedor no encontrado'
+  );
   return supplier;
 };

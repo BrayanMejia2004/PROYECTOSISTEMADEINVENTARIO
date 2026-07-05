@@ -34,6 +34,7 @@ export interface ImportResult {
   errors: Array<{ row: number; message: string }>;
 }
 
+const MAX_IMPORT = 5000;
 const BATCH_SIZE = 500;
 
 const UNIT_MAP: Record<string, string> = {
@@ -186,9 +187,11 @@ export class ProductImportFacade {
     branchId?: string,
     skipDuplicates = false
   ): Promise<ImportResult> {
-    const MAX_IMPORT = 5000;
     if (products.length > MAX_IMPORT) {
-      throw ApiError.badRequest(`Máximo ${MAX_IMPORT.toLocaleString()} productos por importación`);
+      throw ApiError.badRequest(
+        `Importación excede el límite: ${products.length} productos (máx. ${MAX_IMPORT})`,
+        `Máximo ${MAX_IMPORT.toLocaleString()} productos por importación`
+      );
     }
 
     const errors: Array<{ row: number; message: string }> = [];

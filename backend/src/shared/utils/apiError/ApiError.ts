@@ -1,32 +1,34 @@
 export class ApiError extends Error {
   statusCode: number;
+  userMessage?: string;
 
-  constructor(statusCode: number, message: string) {
-    super(message);
+  constructor(statusCode: number, technicalMessage: string, userMessage?: string) {
+    super(technicalMessage);
     this.statusCode = statusCode;
+    this.userMessage = userMessage;
   }
 
-  static badRequest(message: string) {
-    return new ApiError(400, message);
+  static badRequest(technicalMessage: string, userMessage?: string) {
+    return new ApiError(400, technicalMessage, userMessage);
   }
 
-  static unauthorized(message: string) {
-    return new ApiError(401, message);
+  static unauthorized(technicalMessage: string, userMessage?: string) {
+    return new ApiError(401, technicalMessage, userMessage);
   }
 
-  static forbidden(message: string) {
-    return new ApiError(403, message);
+  static forbidden(technicalMessage: string, userMessage?: string) {
+    return new ApiError(403, technicalMessage, userMessage);
   }
 
-  static notFound(message: string) {
-    return new ApiError(404, message);
+  static notFound(technicalMessage: string, userMessage?: string) {
+    return new ApiError(404, technicalMessage, userMessage);
   }
 
-  static conflict(message: string) {
-    return new ApiError(409, message);
+  static conflict(technicalMessage: string, userMessage?: string) {
+    return new ApiError(409, technicalMessage, userMessage);
   }
 
-  static internal(message: string) {
-    return new ApiError(500, message);
+  static internal(technicalMessage: string, userMessage?: string) {
+    return new ApiError(500, technicalMessage, userMessage);
   }
 }

@@ -1,68 +1,43 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response } from 'express';
 import * as departmentService from './department.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
-import { logger } from '../../config/logger/logger';
+import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
 import { AuthRequest } from '../../shared/types/express/express';
 
-export const getDepartments = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { page, limit } = req.query;
-    const result = await departmentService.getDepartments(req.user!.tenantId, req.user!.branchId, {
-      page: page ? parseInt(page as string) : undefined,
-      limit: limit ? parseInt(limit as string) : undefined,
-    });
-    sendPaginated(res, 'Departments retrieved', result.data, result.meta);
-  } catch (error) {
-    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
-    next(error);
-  }
-};
+export const getDepartments = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { page, limit } = req.query;
+  const result = await departmentService.getDepartments(req.user!.tenantId, req.user!.branchId, {
+    page: page ? parseInt(page as string) : undefined,
+    limit: limit ? parseInt(limit as string) : undefined,
+  });
+  sendPaginated(res, 'Departments retrieved', result.data, result.meta);
+});
 
-export const getDepartment = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const department = await departmentService.getDepartmentById(req.params.id, req.user!.tenantId, req.user!.branchId);
-    sendSuccess(res, 'Department retrieved', department);
-  } catch (error) {
-    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
-    next(error);
-  }
-};
+export const getDepartment = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const department = await departmentService.getDepartmentById(req.params.id, req.user!.tenantId, req.user!.branchId);
+  sendSuccess(res, 'Department retrieved', department);
+});
 
-export const createDepartment = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const department = await departmentService.createDepartment({
-      ...req.body,
-      tenantId: req.user!.tenantId,
-      branchId: req.user!.branchId,
-    });
-    sendSuccess(res, 'Department created', department, 201);
-  } catch (error) {
-    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
-    next(error);
-  }
-};
+export const createDepartment = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const department = await departmentService.createDepartment({
+    ...req.body,
+    tenantId: req.user!.tenantId,
+    branchId: req.user!.branchId,
+  });
+  sendSuccess(res, 'Department created', department, 201);
+});
 
-export const updateDepartment = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const department = await departmentService.updateDepartment(
-      req.params.id,
-      req.user!.tenantId,
-      req.user!.branchId,
-      req.body
-    );
-    sendSuccess(res, 'Department updated', department);
-  } catch (error) {
-    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
-    next(error);
-  }
-};
+export const updateDepartment = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const department = await departmentService.updateDepartment(
+    req.params.id,
+    req.user!.tenantId,
+    req.user!.branchId,
+    req.body
+  );
+  sendSuccess(res, 'Department updated', department);
+});
 
-export const deleteDepartment = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    await departmentService.deleteDepartment(req.params.id, req.user!.tenantId, req.user!.branchId);
-    sendSuccess(res, 'Department deleted');
-  } catch (error) {
-    logger.error(`Error en departamentos: ${error instanceof Error ? error.message : String(error)}`);
-    next(error);
-  }
-};
+export const deleteDepartment = asyncHandler(async (req: AuthRequest, res: Response) => {
+  await departmentService.deleteDepartment(req.params.id, req.user!.tenantId, req.user!.branchId);
+  sendSuccess(res, 'Department deleted');
+});

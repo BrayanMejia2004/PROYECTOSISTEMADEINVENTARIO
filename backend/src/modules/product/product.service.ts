@@ -197,7 +197,10 @@ export const getProductByBarcode = async (barcode: string, tenantId: string, bra
 export const getProductById = async (productId: string, tenantId: string, branchId?: string) => {
   const product = await Product.findOne({ _id: productId, tenantId });
   if (!product) {
-    throw ApiError.notFound('Product not found');
+    throw ApiError.notFound(
+      `Producto no encontrado: productId=${productId}, tenantId=${tenantId}`,
+      'Producto no encontrado'
+    );
   }
   return enrichSingleProduct(product.toObject(), tenantId, branchId);
 };
@@ -219,9 +222,18 @@ const checkProductDuplicate = async (tenantId: string, fields: { name: string; s
     ],
   });
   if (!duplicate) return;
-  if (duplicate.name === fields.name) throw ApiError.conflict('Ya existe un producto activo con este nombre');
-  if (duplicate.sku === fields.sku) throw ApiError.conflict('Ya existe un producto activo con este SKU');
-  if (fields.barcode && duplicate.barcode === fields.barcode) throw ApiError.conflict('Ya existe un producto activo con este código de barras');
+  if (duplicate.name === fields.name) throw ApiError.conflict(
+    `Producto duplicado por nombre: ${fields.name}, tenantId=${tenantId}`,
+    'Ya existe un producto activo con este nombre'
+  );
+  if (duplicate.sku === fields.sku) throw ApiError.conflict(
+    `Producto duplicado por SKU: ${fields.sku}, tenantId=${tenantId}`,
+    'Ya existe un producto activo con este SKU'
+  );
+  if (fields.barcode && duplicate.barcode === fields.barcode) throw ApiError.conflict(
+    `Producto duplicado por código de barras: ${fields.barcode}, tenantId=${tenantId}`,
+    'Ya existe un producto activo con este código de barras'
+  );
 };
 
 const syncMinStockToStocks = async (tenantId: string, productId: string, minStock: number): Promise<void> => {
@@ -266,7 +278,10 @@ const OBJECT_ID_FIELDS = ['supplierId', 'departmentId', 'brandId'];
 export const updateProduct = async (productId: string, tenantId: string, branchId: string | undefined, updates: Partial<CreateProductInput> & { stock?: number }) => {
   const product = await Product.findOne({ _id: productId, tenantId });
   if (!product) {
-    throw ApiError.notFound('Product not found');
+    throw ApiError.notFound(
+      `Producto no encontrado para actualizar: productId=${productId}, tenantId=${tenantId}`,
+      'Producto no encontrado'
+    );
   }
 
   const cleanUpdates: Record<string, any> = { ...updates };
@@ -294,13 +309,22 @@ export const updateProduct = async (productId: string, tenantId: string, branchI
 
     if (duplicate) {
       if (cleanUpdates.name && duplicate.name === cleanUpdates.name) {
-        throw ApiError.conflict('Ya existe otro producto activo con este nombre');
+        throw ApiError.conflict(
+          `Producto duplicado al actualizar nombre: ${cleanUpdates.name}, productId=${productId}`,
+          'Ya existe otro producto activo con este nombre'
+        );
       }
       if (cleanUpdates.sku && duplicate.sku === cleanUpdates.sku) {
-        throw ApiError.conflict('Ya existe otro producto activo con este SKU');
+        throw ApiError.conflict(
+          `Producto duplicado al actualizar SKU: ${cleanUpdates.sku}, productId=${productId}`,
+          'Ya existe otro producto activo con este SKU'
+        );
       }
       if (cleanUpdates.barcode !== undefined && duplicate.barcode === cleanUpdates.barcode) {
-        throw ApiError.conflict('Ya existe otro producto activo con este código de barras');
+        throw ApiError.conflict(
+          `Producto duplicado al actualizar código de barras: ${cleanUpdates.barcode}, productId=${productId}`,
+          'Ya existe otro producto activo con este código de barras'
+        );
       }
     }
   }
@@ -339,7 +363,10 @@ export const updateProduct = async (productId: string, tenantId: string, branchI
 export const deleteProduct = async (productId: string, tenantId: string) => {
   const product = await Product.findOne({ _id: productId, tenantId });
   if (!product) {
-    throw ApiError.notFound('Product not found');
+    throw ApiError.notFound(
+      `Producto no encontrado para eliminar: productId=${productId}, tenantId=${tenantId}`,
+      'Producto no encontrado'
+    );
   }
 
   product.isActive = false;

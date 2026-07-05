@@ -38,7 +38,10 @@ export const getBrandById = async (brandId: string, tenantId: string, branchId?:
     ];
   }
   const brand = await Brand.findOne(query);
-  if (!brand) throw ApiError.notFound('Brand not found');
+  if (!brand) throw ApiError.notFound(
+    `Marca no encontrada: brandId=${brandId}, tenantId=${tenantId}`,
+    'Marca no encontrada'
+  );
   return brand;
 };
 
@@ -61,7 +64,10 @@ export const updateBrand = async (brandId: string, tenantId: string, branchId: s
     ];
   }
   const brand = await Brand.findOne(query);
-  if (!brand) throw ApiError.notFound('Brand not found');
+  if (!brand) throw ApiError.notFound(
+    `Marca no encontrada para actualizar: brandId=${brandId}, tenantId=${tenantId}`,
+    'Marca no encontrada'
+  );
   Object.assign(brand, input);
   await brand.save();
   return brand;
@@ -76,6 +82,9 @@ export const deleteBrand = async (brandId: string, tenantId: string, branchId?: 
     ];
   }
   const brand = await Brand.findOneAndDelete(query);
-  if (!brand) throw ApiError.notFound('Brand not found');
+  if (!brand) throw ApiError.notFound(
+    `Marca no encontrada para eliminar: brandId=${brandId}, tenantId=${tenantId}`,
+    'Marca no encontrada'
+  );
   return brand;
 };

@@ -48,7 +48,10 @@ export const getCustomers = async (
 export const getCustomerById = async (customerId: string, tenantId: string) => {
   const query: CustomerFilter = { _id: customerId, tenantId };
   const customer = await Customer.findOne(query);
-  if (!customer) throw ApiError.notFound('Customer not found');
+  if (!customer) throw ApiError.notFound(
+    `Cliente no encontrado: customerId=${customerId}, tenantId=${tenantId}`,
+    'Cliente no encontrado'
+  );
   return customer;
 };
 
@@ -68,7 +71,10 @@ export const createCustomer = async (input: CreateCustomerInput) => {
 export const updateCustomer = async (customerId: string, tenantId: string, input: UpdateCustomerInput) => {
   const query: CustomerFilter = { _id: customerId, tenantId };
   const customer = await Customer.findOne(query);
-  if (!customer) throw ApiError.notFound('Customer not found');
+  if (!customer) throw ApiError.notFound(
+    `Cliente no encontrado para actualizar: customerId=${customerId}, tenantId=${tenantId}`,
+    'Cliente no encontrado'
+  );
 
   Object.assign(customer, input);
   await customer.save();
@@ -78,13 +84,19 @@ export const updateCustomer = async (customerId: string, tenantId: string, input
 export const deleteCustomer = async (customerId: string, tenantId: string) => {
   const query: CustomerFilter = { _id: customerId, tenantId };
   const customer = await Customer.findOneAndDelete(query);
-  if (!customer) throw ApiError.notFound('Customer not found');
+  if (!customer) throw ApiError.notFound(
+    `Cliente no encontrado para eliminar: customerId=${customerId}, tenantId=${tenantId}`,
+    'Cliente no encontrado'
+  );
   return customer;
 };
 
 export const recordPurchase = async (customerId: string, tenantId: string, total: number) => {
   const customer = await Customer.findOne({ _id: customerId, tenantId });
-  if (!customer) throw ApiError.notFound('Customer not found');
+  if (!customer) throw ApiError.notFound(
+    `Cliente no encontrado para registrar compra: customerId=${customerId}, tenantId=${tenantId}`,
+    'Cliente no encontrado'
+  );
 
   const c = customer as any;
   c.totalPurchases += 1;

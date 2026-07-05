@@ -23,7 +23,10 @@ export const getBranches = async (tenantId: string) => {
 
 export const getBranchById = async (branchId: string, tenantId: string) => {
   const branch = await Branch.findOne({ _id: branchId, tenantId });
-  if (!branch) throw ApiError.notFound('Branch not found');
+  if (!branch) throw ApiError.notFound(
+    `Sucursal no encontrada: branchId=${branchId}, tenantId=${tenantId}`,
+    'Sucursal no encontrada'
+  );
   return branch;
 };
 
@@ -42,7 +45,10 @@ export const createBranch = async (input: CreateBranchInput) => {
 
 export const updateBranch = async (branchId: string, tenantId: string, input: UpdateBranchInput) => {
   const branch = await Branch.findOne({ _id: branchId, tenantId });
-  if (!branch) throw ApiError.notFound('Branch not found');
+  if (!branch) throw ApiError.notFound(
+    `Sucursal no encontrada para actualizar: branchId=${branchId}, tenantId=${tenantId}`,
+    'Sucursal no encontrada'
+  );
 
   Object.assign(branch, input);
   await branch.save();
@@ -51,6 +57,9 @@ export const updateBranch = async (branchId: string, tenantId: string, input: Up
 
 export const deleteBranch = async (branchId: string, tenantId: string) => {
   const branch = await Branch.findOneAndDelete({ _id: branchId, tenantId });
-  if (!branch) throw ApiError.notFound('Branch not found');
+  if (!branch) throw ApiError.notFound(
+    `Sucursal no encontrada para eliminar: branchId=${branchId}, tenantId=${tenantId}`,
+    'Sucursal no encontrada'
+  );
   return branch;
 };

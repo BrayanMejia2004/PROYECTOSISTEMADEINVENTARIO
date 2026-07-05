@@ -65,7 +65,10 @@ export const moveStock = async (input: MoveStockInput): Promise<void> => {
   const { tenantId, branchId, productId, type, quantity, note, referenceId, session, skipMovement } = input;
 
   const op = STOCK_OPERATIONS[type];
-  if (!op) throw ApiError.badRequest(`Tipo de movimiento inválido: ${type}`);
+  if (!op) throw ApiError.badRequest(
+    `Tipo de movimiento inválido: ${type}`,
+    'Tipo de movimiento de stock no válido'
+  );
 
   const filter: Record<string, any> = { tenantId, branchId, productId };
   if (op.checkStock && quantity > 0) {
@@ -79,8 +82,14 @@ export const moveStock = async (input: MoveStockInput): Promise<void> => {
   );
 
   if (!stock) {
-    if (type === 'return') throw ApiError.notFound('Registro de stock no encontrado');
-    throw ApiError.badRequest('Stock insuficiente');
+    if (type === 'return') throw ApiError.notFound(
+      `Stock no encontrado para devolución: tenantId=${tenantId}, branchId=${branchId}, productId=${productId}`,
+      'Registro de stock no encontrado'
+    );
+    throw ApiError.badRequest(
+      `Stock insuficiente para mover: tenantId=${tenantId}, productId=${productId}, cantidad=${quantity}, tipo=${type}`,
+      'Stock insuficiente'
+    );
   }
 
   const previousQuantity = stock.quantity - (op.incMultiplier * quantity);
@@ -184,12 +193,18 @@ export const initializeStock = async (
 ) => {
   const existing = await Stock.findOne({ tenantId, branchId, productId });
   if (existing) {
-    throw ApiError.conflict('Stock already initialized for this product in this branch');
+    throw ApiError.conflict(
+      `Stock ya inicializado: producto=${productId}, sucursal=${branchId}`,
+      'El stock ya fue inicializado para este producto en esta sucursal'
+    );
   }
 
   const product = await Product.findById(productId);
   if (!product || product.tenantId.toString() !== tenantId) {
-    throw ApiError.notFound('Product not found');
+    throw ApiError.notFound(
+      `Producto no encontrado para inicializar stock: productId=${productId}, tenantId=${tenantId}`,
+      'Producto no encontrado'
+    );
   }
 
   const stock = new Stock({
@@ -232,7 +247,10 @@ export const updateStockPrice = async (
     { new: true }
   );
   if (!stock) {
-    throw ApiError.notFound('Registro de stock no encontrado');
+    throw ApiError.notFound(
+      `Stock no encontrado: tenantId=${tenantId}, branchId=${branchId}, productId=${productId}`,
+      'Registro de stock no encontrado'
+    );
   }
   return stock;
 };

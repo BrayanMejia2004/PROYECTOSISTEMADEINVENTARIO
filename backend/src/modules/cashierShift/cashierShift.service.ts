@@ -135,7 +135,10 @@ export const openShift = async (input: OpenShiftInput) => {
   });
 
   if (existing) {
-    throw ApiError.conflict('Ya hay una caja abierta en esta sucursal');
+    throw ApiError.conflict(
+      `Caja ya abierta: tenantId=${input.tenantId}, branchId=${input.branchId}, shiftId=${existing._id}`,
+      'Ya hay una caja abierta en esta sucursal'
+    );
   }
 
   const shift = new CashierShift({
@@ -162,7 +165,10 @@ export const closeShift = async (input: CloseShiftInput) => {
   const shift = await CashierShift.findOne({
     _id: input.shiftId, tenantId: input.tenantId, branchId: input.branchId,
   });
-  if (!shift) throw ApiError.notFound('Caja no encontrada');
+  if (!shift) throw ApiError.notFound(
+    `Caja no encontrada para cerrar: shiftId=${input.shiftId}, tenantId=${input.tenantId}`,
+    'Caja no encontrada'
+  );
 
   shiftStateMachine.transition(shift.status as 'open' | 'closed', 'closed');
 
@@ -192,7 +198,10 @@ export const getCurrentShift = async (tenantId: string, branchId: string) => {
 
 export const getShiftById = async (shiftId: string, tenantId: string) => {
   const shift = await CashierShift.findOne({ _id: shiftId, tenantId });
-  if (!shift) throw ApiError.notFound('Caja no encontrada');
+  if (!shift) throw ApiError.notFound(
+    `Turno no encontrado: shiftId=${shiftId}, tenantId=${tenantId}`,
+    'Turno de caja no encontrado'
+  );
   return shift;
 };
 
@@ -204,11 +213,17 @@ export const createMovement = async (input: CreateMovementInput) => {
   });
 
   if (!shift) {
-    throw ApiError.notFound('Turno de caja no encontrado');
+    throw ApiError.notFound(
+      `Turno no encontrado para movimiento: shiftId=${input.shiftId}, tenantId=${input.tenantId}`,
+      'Turno de caja no encontrado'
+    );
   }
 
   if (!shiftStateMachine.canRegisterMovement(shift.status as 'open' | 'closed')) {
-    throw ApiError.badRequest('No se pueden registrar movimientos en un turno cerrado');
+    throw ApiError.badRequest(
+      `Intento de registrar movimiento en turno cerrado: shiftId=${input.shiftId}, status=${shift.status}`,
+      'No se pueden registrar movimientos en un turno cerrado'
+    );
   }
 
   const movement = new CashMovement({

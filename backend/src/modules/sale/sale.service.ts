@@ -34,7 +34,10 @@ const findOrCreateCustomer = async (input: CreateSaleInput): Promise<string | un
 const validateOpenShift = async (tenantId: string, branchId: string): Promise<void> => {
   const openShift = await CashierShift.findOne({ tenantId, branchId, status: 'open' });
   if (!openShift) {
-    throw ApiError.badRequest('No hay una caja abierta. Debe abrir la caja antes de realizar ventas.');
+    throw ApiError.badRequest(
+      `No hay caja abierta para tenantId=${tenantId}, branchId=${branchId}`,
+      'No hay una caja abierta. Debe abrir la caja antes de realizar ventas.'
+    );
   }
 };
 
@@ -62,7 +65,10 @@ const processSaleItems = async (
 
   for (const item of items) {
     const product = await Product.findOne({ _id: item.productId, tenantId }).session(session);
-    if (!product) throw ApiError.notFound(`Product not found: ${item.productId}`);
+    if (!product) throw ApiError.notFound(
+      `Producto no encontrado en venta: productId=${item.productId}, tenantId=${tenantId}`,
+      'Producto no encontrado'
+    );
 
     const validPrices: number[] = [product.price];
     if (product.wholesalePrice != null) validPrices.push(product.wholesalePrice);
@@ -71,13 +77,23 @@ const processSaleItems = async (
     const priceMatch = validPrices.some(p => Math.abs(item.unitPrice - p) < 0.01);
     if (!priceMatch) {
       throw ApiError.badRequest(
-        `Precio inválido para "${product.name}". Esperado: ${validPrices.map(p => `$${p.toLocaleString('es-CO')}`).join(' / ')}`
+        `Precio inválido para producto "${product.name}" (${item.productId}). Precios esperados: ${validPrices.map(p => `$${p.toLocaleString('es-CO')}`).join(' / ')}`,
+        `Precio inválido para "${product.name}". Precios válidos: ${validPrices.map(p => `$${p.toLocaleString('es-CO')}`).join(' / ')}`
       );
     }
 
     const stock = await Stock.findOne({ tenantId, branchId, productId: item.productId }).session(session);
-    if (!stock || stock.quantity < item.quantity) {
-      throw ApiError.badRequest(`Insufficient stock for product: ${product.name}`);
+    if (!stock) {
+      throw ApiError.notFound(
+        `Stock no encontrado para producto "${product.name}" (${item.productId}) en sucursal ${branchId}`,
+        'Producto sin registro de stock en esta sucursal'
+      );
+    }
+    if (stock.quantity < item.quantity) {
+      throw ApiError.badRequest(
+        `Stock insuficiente para producto "${product.name}" (${item.productId}): disponible=${stock.quantity}, solicitado=${item.quantity}`,
+        `Stock insuficiente para "${product.name}". Disponible: ${stock.quantity}`
+      );
     }
 
     const itemTotal = item.quantity * item.unitPrice;
@@ -151,11 +167,15 @@ export const createSale = async (input: CreateSaleInput) => {
     const total = subtotal + tax - discount;
 
     if (Math.abs(total - preTotal) > 0.01) {
-      throw ApiError.badRequest('Error al calcular el total de la venta. Intenta de nuevo.');
+      throw ApiError.badRequest(
+        `Discrepancia en total de venta: preTotal=${preTotal}, calculado=${total}, diff=${Math.abs(total - preTotal)}`,
+        'Error al calcular el total de la venta. Intenta de nuevo.'
+      );
     }
 
     if (discount > Math.round(maxAllowedDiscountAmount)) {
       throw ApiError.badRequest(
+        `Descuento excede máximo permitido: descuento=${discount}, máximo=${Math.round(maxAllowedDiscountAmount)}, venta=${saleNumber}`,
         `El descuento ($${discount.toLocaleString('es-CO')}) excede el máximo permitido ($${Math.round(maxAllowedDiscountAmount).toLocaleString('es-CO')})`
       );
     }
@@ -414,7 +434,10 @@ export const getSaleById = async (saleId: string, tenantId: string, branchId?: s
   const query: Record<string, any> = { _id: saleId, tenantId };
   if (branchId) query.branchId = branchId;
   const sale = await Sale.findOne(query);
-  if (!sale) throw ApiError.notFound('Sale not found');
+  if (!sale) throw ApiError.notFound(
+    `Venta no encontrada: saleId=${saleId}, tenantId=${tenantId}`,
+    'Venta no encontrada'
+  );
 
   const saleObj = sale.toObject() as Record<string, any>;
   await enrichSaleWithUserName(saleObj);
@@ -426,7 +449,10 @@ export const getSaleByNumber = async (saleNumber: string, tenantId: string, bran
   const query: Record<string, any> = { saleNumber, tenantId, status: 'refunded' };
   if (branchId) query.branchId = branchId;
   const sale = await Sale.findOne(query);
-  if (!sale) throw ApiError.notFound('Sale not found or not refunded');
+  if (!sale) throw ApiError.notFound(
+    `Venta devuelta no encontrada: saleNumber=${saleNumber}, tenantId=${tenantId}`,
+    'Venta no encontrada o no está devuelta'
+  );
 
   const saleObj = sale.toObject() as Record<string, any>;
   await enrichSaleWithUserName(saleObj);
@@ -466,9 +492,15 @@ export const refundSale = async (saleId: string, tenantId: string, branchId: str
     const query: Record<string, any> = { _id: saleId, tenantId };
     if (branchId) query.branchId = branchId;
     const sale = await Sale.findOne(query).session(session);
-    if (!sale) throw ApiError.notFound('Sale not found');
+    if (!sale) throw ApiError.notFound(
+      `Venta no encontrada para devolución: saleId=${saleId}, tenantId=${tenantId}`,
+      'Venta no encontrada'
+    );
     if (!saleStateMachine.canRefund(sale.status as 'completed' | 'cancelled' | 'refunded' | 'pending' | 'partial')) {
-      throw ApiError.badRequest(`No se puede devolver una venta en estado "${sale.status}"`);
+      throw ApiError.badRequest(
+        `Intento de devolver venta en estado inválido: saleId=${saleId}, status=${sale.status}`,
+        `No se puede devolver una venta en estado "${sale.status}"`
+      );
     }
 
     for (const item of sale.items) {

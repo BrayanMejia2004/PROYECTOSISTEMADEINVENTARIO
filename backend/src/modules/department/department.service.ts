@@ -40,7 +40,10 @@ export const getDepartmentById = async (departmentId: string, tenantId: string, 
     ];
   }
   const department = await Department.findOne(query);
-  if (!department) throw ApiError.notFound('Department not found');
+  if (!department) throw ApiError.notFound(
+    `Departamento no encontrado: departmentId=${departmentId}, tenantId=${tenantId}`,
+    'Departamento no encontrado'
+  );
   return department;
 };
 
@@ -54,7 +57,10 @@ export const createDepartment = async (input: CreateDepartmentInput) => {
       ];
     }
     const parent = await Department.findOne(parentQuery);
-    if (!parent) throw ApiError.notFound('Parent department not found');
+    if (!parent) throw ApiError.notFound(
+      `Departamento padre no encontrado: parentId=${input.parentId}, tenantId=${input.tenantId}`,
+      'Departamento padre no encontrado'
+    );
   }
 
   const department = new Department({
@@ -77,11 +83,17 @@ export const updateDepartment = async (departmentId: string, tenantId: string, b
     ];
   }
   const department = await Department.findOne(query);
-  if (!department) throw ApiError.notFound('Department not found');
+  if (!department) throw ApiError.notFound(
+    `Departamento no encontrado para actualizar: departmentId=${departmentId}, tenantId=${tenantId}`,
+    'Departamento no encontrado'
+  );
 
   if (input.parentId) {
     if (input.parentId === departmentId) {
-      throw ApiError.badRequest('Department cannot be its own parent');
+      throw ApiError.badRequest(
+        `Intento de asignarse a sí mismo como padre: departmentId=${departmentId}`,
+        'Un departamento no puede ser su propio padre'
+      );
     }
     const parentQuery: BranchScopedFilter = { _id: input.parentId, tenantId };
     if (branchId) {
@@ -91,7 +103,10 @@ export const updateDepartment = async (departmentId: string, tenantId: string, b
       ];
     }
     const parent = await Department.findOne(parentQuery);
-    if (!parent) throw ApiError.notFound('Parent department not found');
+    if (!parent) throw ApiError.notFound(
+      `Departamento padre no encontrado al actualizar: parentId=${input.parentId}, tenantId=${tenantId}`,
+      'Departamento padre no encontrado'
+    );
   }
 
   Object.assign(department, input);
@@ -108,6 +123,9 @@ export const deleteDepartment = async (departmentId: string, tenantId: string, b
     ];
   }
   const department = await Department.findOneAndDelete(query);
-  if (!department) throw ApiError.notFound('Department not found');
+  if (!department) throw ApiError.notFound(
+    `Departamento no encontrado para eliminar: departmentId=${departmentId}, tenantId=${tenantId}`,
+    'Departamento no encontrado'
+  );
   return department;
 };

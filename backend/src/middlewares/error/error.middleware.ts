@@ -6,13 +6,18 @@ import { logger } from '../../config/logger/logger';
 
 export const errorHandler = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ApiError) {
+    logger.error(`[ApiError] ${err.message}`, {
+      statusCode: err.statusCode,
+      stack: env.NODE_ENV !== 'production' ? err.stack : undefined,
+    });
     return res.status(err.statusCode).json({
       success: false,
-      message: err.message,
+      message: err.userMessage || err.message,
     });
   }
 
   if (err instanceof multer.MulterError) {
+    logger.error(`[MulterError] ${err.code}: ${err.message}`);
     const messages: Record<string, string> = {
       LIMIT_FILE_SIZE: 'El archivo excede el límite de 10 MB',
       LIMIT_FILE_COUNT: 'Demasiados archivos',
