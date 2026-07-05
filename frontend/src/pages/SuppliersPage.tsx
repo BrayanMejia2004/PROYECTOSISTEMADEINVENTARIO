@@ -1,12 +1,13 @@
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/features/suppliers/hooks';
-import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { supplierSchema, type SupplierForm } from '@/features/suppliers/schemas';
-import { formatDate, formatNumber } from '@/lib/utils';
-import { Plus, Users, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { formatDate } from '@/lib/utils';
+import { Plus, Users, X, Pencil, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
+import { Pagination } from '@/components/ui/Pagination';
+import { SupplierFormComponent } from '@/features/suppliers/components/SupplierForm';
+import type { Supplier } from '@/types';
+import type { SupplierForm } from '@/features/suppliers/schemas';
 
 export const SuppliersPage = () => {
   const [page, setPage] = useState(1);
@@ -15,46 +16,13 @@ export const SuppliersPage = () => {
   const { mutate: updateSupplier, isPending: isUpdating } = useUpdateSupplier();
   const { mutate: deleteSupplier, isPending: isDeleting } = useDeleteSupplier();
   const [showForm, setShowForm] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<any>(null);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
-  const [confirmSave, setConfirmSave] = useState<{ open: boolean; isEdit: boolean }>({ open: false, isEdit: false });
   const [showSuccess, setShowSuccess] = useState('');
-  const pendingData = useRef<SupplierForm | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<SupplierForm>({
-    resolver: zodResolver(supplierSchema),
-  });
-
-  useEffect(() => {
+  const handleSubmitForm = useCallback((formData: SupplierForm) => {
     if (editingSupplier) {
-      reset({
-        name: editingSupplier.name,
-        contactName: editingSupplier.contactName || '',
-        email: editingSupplier.email || '',
-        phone: editingSupplier.phone || '',
-        address: editingSupplier.address || '',
-        taxId: editingSupplier.taxId || '',
-      });
-    } else {
-      reset({ name: '', contactName: '', email: '', phone: '', address: '', taxId: '' });
-    }
-  }, [editingSupplier, reset]);
-
-  const onSubmit = (formData: SupplierForm) => {
-    pendingData.current = formData;
-    setConfirmSave({ open: true, isEdit: !!editingSupplier });
-  };
-
-  const handleConfirmSave = () => {
-    const data = pendingData.current;
-    if (!data) return;
-    if (editingSupplier) {
-      updateSupplier({ id: editingSupplier._id, input: data }, {
+      updateSupplier({ id: editingSupplier._id, input: formData }, {
         onSuccess: () => {
           setShowSuccess('Proveedor actualizado exitosamente');
           setShowForm(false);
@@ -62,31 +30,28 @@ export const SuppliersPage = () => {
         },
       });
     } else {
-      createSupplier(data, {
+      createSupplier(formData, {
         onSuccess: () => {
           setShowSuccess('Proveedor creado exitosamente');
           setShowForm(false);
-          reset();
         },
       });
     }
-    setConfirmSave({ open: false, isEdit: false });
-    pendingData.current = null;
-  };
+  }, [editingSupplier, updateSupplier, createSupplier]);
 
-  const handleEdit = (supplier: any) => {
+  const handleEdit = useCallback((supplier: Supplier) => {
     setEditingSupplier(supplier);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleDelete = (supplier: any) => {
+  const handleDelete = useCallback((supplier: Supplier) => {
     setConfirmDelete({ open: true, id: supplier._id, name: supplier.name });
-  };
+  }, []);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setShowForm(false);
     setEditingSupplier(null);
-  };
+  }, []);
 
   if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
 
@@ -110,46 +75,21 @@ export const SuppliersPage = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6 space-y-4">
-          <h3 className="font-sans font-semibold text-brand-text mb-4">
-            {editingSupplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
-              <input {...register('name')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Contacto</label>
-              <input {...register('contactName')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Email</label>
-              <input {...register('email')} type="email" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-            </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-                <input {...register('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
-                <input {...register('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">RFC</label>
-                <input {...register('taxId')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                {errors.taxId && <p className="text-red-500 text-xs mt-1">{errors.taxId.message}</p>}
-              </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
-              {isCreating || isUpdating ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </form>
+        <SupplierFormComponent
+          key={editingSupplier?._id ?? 'new'}
+          defaultValues={editingSupplier ? {
+            name: editingSupplier.name,
+            contactName: editingSupplier.contactName || '',
+            email: editingSupplier.email || '',
+            phone: editingSupplier.phone || '',
+            address: editingSupplier.address || '',
+            taxId: editingSupplier.taxId || '',
+          } : undefined}
+          isPending={isCreating || isUpdating}
+          editingId={editingSupplier?._id}
+          onSubmit={handleSubmitForm}
+          onCancel={handleCancel}
+        />
       )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -174,7 +114,7 @@ export const SuppliersPage = () => {
                   <td colSpan={5} className="px-6 py-8 text-center text-sm text-brand-muted">No hay proveedores registrados</td>
                 </tr>
               ) : (
-                data?.data?.map((supplier: any) => (
+                data?.data?.map((supplier: Supplier) => (
                   <tr key={supplier._id} className="hover:bg-brand-bg/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-brand-text">{supplier.name}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{supplier.contactName}</td>
@@ -206,29 +146,7 @@ export const SuppliersPage = () => {
           </table>
         </div>
       </div>
-      {data?.meta && data.meta.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
-          <p className="text-xs text-brand-muted">
-            {formatNumber(data.meta.total)} proveedor(es) — Página {formatNumber(data.meta.page)} de {formatNumber(data.meta.totalPages)}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={data.meta.page <= 1}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setPage(p => Math.min(data.meta!.totalPages!, p + 1))}
-              disabled={data.meta.page >= data.meta.totalPages}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      {data?.meta && <Pagination meta={data.meta} setPage={setPage} label="proveedor(es)" />}
       <ConfirmDialog
         open={confirmDelete.open}
         onClose={() => setConfirmDelete({ open: false })}
@@ -240,16 +158,6 @@ export const SuppliersPage = () => {
         message={`¿Estás seguro de eliminar al proveedor "${confirmDelete.name}"?`}
         confirmText="Eliminar"
         variant="danger"
-      />
-
-      <ConfirmDialog
-        open={confirmSave.open}
-        onClose={() => setConfirmSave({ open: false, isEdit: false })}
-        onConfirm={handleConfirmSave}
-        title={confirmSave.isEdit ? 'Guardar cambios' : 'Crear proveedor'}
-        message={confirmSave.isEdit ? '¿Estás seguro de guardar los cambios en este proveedor?' : '¿Estás seguro de crear este nuevo proveedor?'}
-        confirmText={confirmSave.isEdit ? 'Guardar cambios' : 'Crear proveedor'}
-        variant="success"
       />
 
       <SuccessToast

@@ -6,6 +6,7 @@ export interface User {
   role: 'owner' | 'admin' | 'cashier';
   branchId?: string;
   isActive: boolean;
+  createdAt: string;
 }
 
 export interface Tenant {
@@ -76,6 +77,22 @@ export interface Stock {
   updatedAt: string;
 }
 
+export interface Customer {
+  _id: string;
+  tenantId: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  taxId?: string;
+  totalPurchases: number;
+  totalSpent: number;
+  lastPurchaseDate?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SaleItem {
   productId: string;
   productName: string;
@@ -138,6 +155,7 @@ export interface Supplier {
   address?: string;
   taxId?: string;
   isActive: boolean;
+  createdAt: string;
 }
 
 export interface CashierShift {
@@ -160,6 +178,20 @@ export interface CashierShift {
   createdAt: string;
   userName?: string;
   branchName?: string;
+}
+
+export interface CloseShiftData {
+  openingBalance: number;
+  closingBalance: number;
+  totalSales: number;
+  totalCash: number;
+  totalCard: number;
+  totalTransfer: number;
+  totalProfit: number;
+  totalEntries: number;
+  totalExits: number;
+  openedAt: string;
+  closedAt: string;
 }
 
 export interface CashMovement {

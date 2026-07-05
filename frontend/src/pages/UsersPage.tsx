@@ -1,14 +1,34 @@
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/features/users/hooks';
 import { useBranches } from '@/features/settings/hooks';
-import { formatDate, formatNumber } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { usePermission } from '@/hooks/usePermission';
-import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { userSchema, type UserForm } from '@/features/users/schemas';
-import { UserCircle, Plus, X, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { UserCircle, Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
+import { Pagination } from '@/components/ui/Pagination';
+import { UserFormComponent } from '@/features/users/components/UserForm';
+import type { User, Branch } from '@/types';
+import type { UserForm } from '@/features/users/schemas';
+
+const RoleBadge = ({ role }: { role: string }) => {
+  const styles: Record<string, string> = {
+    owner: 'bg-purple-50 text-purple-700 border-purple-200',
+    admin: 'bg-blue-50 text-blue-700 border-blue-200',
+    cashier: 'bg-gray-50 text-gray-700 border-gray-200',
+  };
+  return (
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[role] || styles.cashier}`}>
+      {role}
+    </span>
+  );
+};
+
+const resolveBranchName = (user: User, branches: Branch[] | undefined) => {
+  if (!user.branchId) return '—';
+  const branch = branches?.find((b) => b._id === user.branchId);
+  return branch?.name || user.branchId;
+};
 
 export const UsersPage = () => {
   const [page, setPage] = useState(1);
@@ -19,46 +39,12 @@ export const UsersPage = () => {
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
   const { hasPermission } = usePermission();
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
-  const [confirmSave, setConfirmSave] = useState<{ open: boolean; isEdit: boolean }>({ open: false, isEdit: false });
   const [showSuccess, setShowSuccess] = useState('');
-  const pendingData = useRef<UserForm | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<UserForm>({
-    resolver: zodResolver(userSchema),
-  });
-
-  useEffect(() => {
-    if (editingUser) {
-      reset({
-        firstName: editingUser.firstName,
-        lastName: editingUser.lastName,
-        email: editingUser.email,
-        password: '',
-        confirmPassword: '',
-        role: editingUser.role,
-        branchId: editingUser.branchId || '',
-      });
-    } else {
-      reset({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: 'cashier', branchId: '' });
-    }
-  }, [editingUser, reset]);
-
-  const onSubmit = (formData: UserForm) => {
-    pendingData.current = formData;
-    setConfirmSave({ open: true, isEdit: !!editingUser });
-  };
-
-  const handleConfirmSave = () => {
-    const data = pendingData.current;
-    if (!data) return;
-    const { confirmPassword: _, ...payload } = data;
+  const handleSubmitForm = useCallback((formData: UserForm) => {
+    const { confirmPassword: _, ...payload } = formData;
     if (editingUser) {
       const input: any = { ...payload };
       if (!input.password) delete input.password;
@@ -74,27 +60,24 @@ export const UsersPage = () => {
         onSuccess: () => {
           setShowSuccess('Usuario creado exitosamente');
           setShowForm(false);
-          reset();
         },
       });
     }
-    setConfirmSave({ open: false, isEdit: false });
-    pendingData.current = null;
-  };
+  }, [editingUser, updateUser, createUser]);
 
-  const handleEdit = (user: any) => {
+  const handleEdit = useCallback((user: User) => {
     setEditingUser(user);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleDelete = (user: any) => {
+  const handleDelete = useCallback((user: User) => {
     setConfirmDelete({ open: true, id: user._id, name: `${user.firstName} ${user.lastName}` });
-  };
+  }, []);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setShowForm(false);
     setEditingUser(null);
-  };
+  }, []);
 
   if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
 
@@ -120,65 +103,23 @@ export const UsersPage = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6 space-y-4">
-          <h3 className="font-sans font-semibold text-brand-text mb-4">
-            {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
-              <input {...register('firstName')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Apellido</label>
-              <input {...register('lastName')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Email</label>
-              <input {...register('email')} type="email" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">
-                {editingUser ? 'Contraseña (dejar vacío para mantener)' : 'Contraseña'}
-              </label>
-              <input {...register('password')} type="password" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Confirmar Contraseña</label>
-              <input {...register('confirmPassword')} type="password" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Rol</label>
-              <select {...register('role')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all">
-                <option value="cashier">Cashier</option>
-                <option value="admin">Admin</option>
-                <option value="owner">Owner</option>
-              </select>
-              {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Sucursal</label>
-              <select {...register('branchId')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all">
-                <option value="">Sin sucursal</option>
-                {branches?.data?.map((b: any) => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
-              {isCreating || isUpdating ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </form>
+        <UserFormComponent
+          key={editingUser?._id ?? 'new'}
+          defaultValues={editingUser ? {
+            firstName: editingUser.firstName,
+            lastName: editingUser.lastName,
+            email: editingUser.email,
+            password: '',
+            confirmPassword: '',
+            role: editingUser.role,
+            branchId: editingUser.branchId || '',
+          } : undefined}
+          isPending={isCreating || isUpdating}
+          editingId={editingUser?._id}
+          onSubmit={handleSubmitForm}
+          onCancel={handleCancel}
+          branchOptions={branches?.data}
+        />
       )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -205,16 +146,12 @@ export const UsersPage = () => {
                   <td colSpan={7} className="px-6 py-8 text-center text-sm text-brand-muted">No hay usuarios registrados</td>
                 </tr>
               ) : (
-                data?.data?.map((user: any) => (
+                data?.data?.map((user: User) => (
                   <tr key={user._id} className="hover:bg-brand-bg/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-brand-text">{user.firstName} {user.lastName}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <RoleBadge role={user.role} />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-brand-muted">
-                      {user.branchId ? branches?.data?.find((b: any) => b._id === user.branchId)?.name || user.branchId : '—'}
-                    </td>
+                    <td className="px-6 py-4"><RoleBadge role={user.role} /></td>
+                    <td className="px-6 py-4 text-sm text-brand-muted">{resolveBranchName(user, branches?.data)}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                         user.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
@@ -249,29 +186,7 @@ export const UsersPage = () => {
           </table>
         </div>
       </div>
-      {data?.meta && data.meta.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
-          <p className="text-xs text-brand-muted">
-            {formatNumber(data.meta.total)} usuario(s) — Página {formatNumber(data.meta.page)} de {formatNumber(data.meta.totalPages)}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={data.meta.page <= 1}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setPage(p => Math.min(data.meta!.totalPages!, p + 1))}
-              disabled={data.meta.page >= data.meta.totalPages}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      {data?.meta && <Pagination meta={data.meta} setPage={setPage} label="usuario(s)" />}
       <ConfirmDialog
         open={confirmDelete.open}
         onClose={() => setConfirmDelete({ open: false })}
@@ -285,34 +200,11 @@ export const UsersPage = () => {
         variant="danger"
       />
 
-      <ConfirmDialog
-        open={confirmSave.open}
-        onClose={() => setConfirmSave({ open: false, isEdit: false })}
-        onConfirm={handleConfirmSave}
-        title={confirmSave.isEdit ? 'Guardar cambios' : 'Crear usuario'}
-        message={confirmSave.isEdit ? '¿Estás seguro de guardar los cambios en este usuario?' : '¿Estás seguro de crear este nuevo usuario?'}
-        confirmText={confirmSave.isEdit ? 'Guardar cambios' : 'Crear usuario'}
-        variant="success"
-      />
-
       <SuccessToast
         open={!!showSuccess}
         onClose={() => setShowSuccess('')}
         message={showSuccess}
       />
     </div>
-  );
-};
-
-const RoleBadge = ({ role }: { role: string }) => {
-  const styles: Record<string, string> = {
-    owner: 'bg-purple-50 text-purple-700 border-purple-200',
-    admin: 'bg-blue-50 text-blue-700 border-blue-200',
-    cashier: 'bg-gray-50 text-gray-700 border-gray-200',
-  };
-  return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[role] || styles.cashier}`}>
-      {role}
-    </span>
   );
 };

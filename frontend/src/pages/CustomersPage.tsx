@@ -1,12 +1,13 @@
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/features/customers/hooks';
-import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { customerSchema, type CustomerForm } from '@/features/customers/schemas';
+import { useState, useCallback } from 'react';
 import { formatDate, formatCurrency, formatNumber } from '@/lib/utils';
-import { Plus, Users, X, Pencil, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Users, X, Pencil, Trash2, Search } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
+import { Pagination } from '@/components/ui/Pagination';
+import { CustomerFormComponent } from '@/features/customers/components/CustomerForm';
+import type { Customer } from '@/types';
+import type { CustomerForm } from '@/features/customers/schemas';
 
 export const CustomersPage = () => {
   const [search, setSearch] = useState('');
@@ -16,45 +17,13 @@ export const CustomersPage = () => {
   const { mutate: updateCustomer, isPending: isUpdating } = useUpdateCustomer();
   const { mutate: deleteCustomer } = useDeleteCustomer();
   const [showForm, setShowForm] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
-  const [confirmSave, setConfirmSave] = useState<{ open: boolean; isEdit: boolean }>({ open: false, isEdit: false });
   const [showSuccess, setShowSuccess] = useState('');
-  const pendingData = useRef<CustomerForm | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CustomerForm>({
-    resolver: zodResolver(customerSchema),
-  });
-
-  useEffect(() => {
+  const handleSubmitForm = useCallback((formData: CustomerForm) => {
     if (editingCustomer) {
-      reset({
-        name: editingCustomer.name,
-        phone: editingCustomer.phone || '',
-        email: editingCustomer.email || '',
-        address: editingCustomer.address || '',
-        taxId: editingCustomer.taxId || '',
-      });
-    } else {
-      reset({ name: '', phone: '', email: '', address: '', taxId: '' });
-    }
-  }, [editingCustomer, reset]);
-
-  const onSubmit = (formData: CustomerForm) => {
-    pendingData.current = formData;
-    setConfirmSave({ open: true, isEdit: !!editingCustomer });
-  };
-
-  const handleConfirmSave = () => {
-    const data = pendingData.current;
-    if (!data) return;
-    if (editingCustomer) {
-      updateCustomer({ id: editingCustomer._id, input: data }, {
+      updateCustomer({ id: editingCustomer._id, input: formData }, {
         onSuccess: () => {
           setShowSuccess('Cliente actualizado exitosamente');
           setShowForm(false);
@@ -62,31 +31,28 @@ export const CustomersPage = () => {
         },
       });
     } else {
-      createCustomer(data, {
+      createCustomer(formData, {
         onSuccess: () => {
           setShowSuccess('Cliente creado exitosamente');
           setShowForm(false);
-          reset();
         },
       });
     }
-    setConfirmSave({ open: false, isEdit: false });
-    pendingData.current = null;
-  };
+  }, [editingCustomer, updateCustomer, createCustomer]);
 
-  const handleEdit = (customer: any) => {
+  const handleEdit = useCallback((customer: Customer) => {
     setEditingCustomer(customer);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleDelete = (customer: any) => {
+  const handleDelete = useCallback((customer: Customer) => {
     setConfirmDelete({ open: true, id: customer._id, name: customer.name });
-  };
+  }, []);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setShowForm(false);
     setEditingCustomer(null);
-  };
+  }, []);
 
   if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
 
@@ -107,42 +73,20 @@ export const CustomersPage = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6 space-y-4">
-          <h3 className="font-sans font-semibold text-brand-text mb-4">
-            {editingCustomer ? 'Editar Cliente' : 'Nuevo Cliente'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>
-              <input {...register('name')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
-            </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">Teléfono</label>
-                <input {...register('phone')} type="tel" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">Email</label>
-                <input {...register('email')} type="email" className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">Dirección</label>
-                <input {...register('address')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-brand-text mb-1.5">RFC</label>
-                <input {...register('taxId')} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                {errors.taxId && <p className="text-red-500 text-xs mt-1">{errors.taxId.message}</p>}
-              </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <button type="submit" disabled={isCreating || isUpdating} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium disabled:opacity-50">
-              {isCreating || isUpdating ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </form>
+        <CustomerFormComponent
+          key={editingCustomer?._id ?? 'new'}
+          defaultValues={editingCustomer ? {
+            name: editingCustomer.name,
+            phone: editingCustomer.phone || '',
+            email: editingCustomer.email || '',
+            address: editingCustomer.address || '',
+            taxId: editingCustomer.taxId || '',
+          } : undefined}
+          isPending={isCreating || isUpdating}
+          editingId={editingCustomer?._id}
+          onSubmit={handleSubmitForm}
+          onCancel={handleCancel}
+        />
       )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -178,7 +122,7 @@ export const CustomersPage = () => {
                   <td colSpan={7} className="px-6 py-8 text-center text-sm text-brand-muted">No hay clientes registrados</td>
                 </tr>
               ) : (
-                data?.data?.map((customer: any) => (
+                data?.data?.map((customer: Customer) => (
                   <tr key={customer._id} className="hover:bg-brand-bg/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-brand-text">{customer.name}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{customer.phone || '—'}</td>
@@ -203,29 +147,7 @@ export const CustomersPage = () => {
           </table>
         </div>
       </div>
-      {data?.meta && data.meta.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
-          <p className="text-xs text-brand-muted">
-            {formatNumber(data.meta.total)} cliente(s) — Página {formatNumber(data.meta.page)} de {formatNumber(data.meta.totalPages)}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={data.meta.page <= 1}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setPage(p => Math.min(data.meta!.totalPages!, p + 1))}
-              disabled={data.meta.page >= data.meta.totalPages}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      {data?.meta && <Pagination meta={data.meta} setPage={setPage} label="cliente(s)" />}
       <ConfirmDialog
         open={confirmDelete.open}
         onClose={() => setConfirmDelete({ open: false })}
@@ -237,16 +159,6 @@ export const CustomersPage = () => {
         message={`¿Estás seguro de eliminar al cliente "${confirmDelete.name}"?`}
         confirmText="Eliminar"
         variant="danger"
-      />
-
-      <ConfirmDialog
-        open={confirmSave.open}
-        onClose={() => setConfirmSave({ open: false, isEdit: false })}
-        onConfirm={handleConfirmSave}
-        title={confirmSave.isEdit ? 'Guardar cambios' : 'Crear cliente'}
-        message={confirmSave.isEdit ? '¿Estás seguro de guardar los cambios en este cliente?' : '¿Estás seguro de crear este nuevo cliente?'}
-        confirmText={confirmSave.isEdit ? 'Guardar cambios' : 'Crear cliente'}
-        variant="success"
       />
 
       <SuccessToast
