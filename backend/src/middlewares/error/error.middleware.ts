@@ -6,7 +6,8 @@ import { logger } from '../../config/logger/logger';
 
 export const errorHandler = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ApiError) {
-    logger.error(`[ApiError] ${err.message}`, {
+    const level = err.statusCode >= 500 ? 'error' : 'warn';
+    logger[level](`[ApiError] ${err.message}`, {
       statusCode: err.statusCode,
       stack: env.NODE_ENV !== 'production' ? err.stack : undefined,
     });

@@ -83,6 +83,10 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/', (_req, res) => {
+  res.status(200).json({ success: true, message: 'API funcionando' });
+});
+
 app.use('/api/v1', routes);
 
 app.use(notFound);
