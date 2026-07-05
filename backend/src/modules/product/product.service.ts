@@ -7,8 +7,8 @@ import Brand from '../../shared/models/brand/brand.model';
 import * as stockService from '../stock/stock.service';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import ExcelJS from 'exceljs';
-import { ProductImportFacade } from './productImportFacade';
-import type { ImportProductInput, ImportResult } from './productImportFacade';
+import { ProductImportFacade } from './product-import.facade';
+import type { ImportProductInput, ImportResult } from './product-import.facade';
 import type { ProductFilter } from '../../shared/types/queries';
 import type { MovementType } from '../../shared/models/stockMovement/stockMovement.model';
 

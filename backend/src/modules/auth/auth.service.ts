@@ -6,10 +6,10 @@ import User from '../../shared/models/user/user.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { eventBus, Events } from '../../shared/utils/eventBus';
 import { logger } from '../../config/logger/logger';
+import { BCRYPT_SALT_ROUNDS } from '../../shared/constants';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const ACCOUNT_LOCK_MINUTES = 15;
-const BCRYPT_SALT_ROUNDS = 12;
 
 interface RegisterTenantInput {
   tenantName: string;

@@ -22,36 +22,36 @@ export const getLowStock = asyncHandler(async (req: AuthRequest, res: Response) 
 export const initializeStock = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { productId, price, quantity } = req.body;
   const branchId = resolveBranchId(req.user!.role, req.user!.branchId, req.body.branchId as string)!;
-  const stock = await stockService.initializeStock(
-    req.user!.tenantId,
+  const stock = await stockService.initializeStock({
+    tenantId: req.user!.tenantId,
     branchId,
     productId,
     price,
-    quantity
-  );
+    quantity,
+  });
   sendSuccess(res, 'Stock inicializado', stock, 201);
 });
 
 export const updatePrice = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { price } = req.body;
-  const stock = await stockService.updateStockPrice(
-    req.user!.tenantId,
-    req.user!.branchId!,
-    req.params.productId,
-    price
-  );
+  const stock = await stockService.updateStockPrice({
+    tenantId: req.user!.tenantId,
+    branchId: req.user!.branchId!,
+    productId: req.params.productId,
+    price,
+  });
   sendSuccess(res, 'Precio actualizado', stock);
 });
 
 export const adjustStock = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { quantity, note } = req.body;
-  await stockService.adjustStock(
-    req.user!.tenantId,
-    req.user!.branchId!,
-    req.params.productId,
+  await stockService.adjustStock({
+    tenantId: req.user!.tenantId,
+    branchId: req.user!.branchId!,
+    productId: req.params.productId,
     quantity,
-    note
-  );
+    note,
+  });
   sendSuccess(res, 'Stock ajustado');
 });
 

@@ -7,6 +7,29 @@ import { MovementType } from '../../shared/models/stockMovement/stockMovement.mo
 import { eventBus, Events } from '../../shared/utils/eventBus';
 import type { PopulatedProductInfo, PopulatedBranchInfo, StockFilter } from '../../shared/types/queries';
 
+interface InitializeStockInput {
+  tenantId: string;
+  branchId: string;
+  productId: string;
+  price: number;
+  quantity?: number;
+}
+
+interface UpdateStockPriceInput {
+  tenantId: string;
+  branchId: string;
+  productId: string;
+  price: number;
+}
+
+interface AdjustStockInput {
+  tenantId: string;
+  branchId: string;
+  productId: string;
+  quantity: number;
+  note: string;
+}
+
 interface MoveStockInput {
   tenantId: string;
   branchId: string;
@@ -184,13 +207,8 @@ export const getOutOfStock = async (tenantId: string, branchId?: string, page: n
   return queryPopulatedStock(query, 'name sku barcode minStock', { quantity: 1 }, page, limit, mapOutOfStockItem);
 };
 
-export const initializeStock = async (
-  tenantId: string,
-  branchId: string,
-  productId: string,
-  price: number,
-  quantity: number = 0
-) => {
+export const initializeStock = async (input: InitializeStockInput) => {
+  const { tenantId, branchId, productId, price, quantity = 0 } = input;
   const existing = await Stock.findOne({ tenantId, branchId, productId });
   if (existing) {
     throw ApiError.conflict(
@@ -235,12 +253,8 @@ export const initializeStock = async (
   return stock;
 };
 
-export const updateStockPrice = async (
-  tenantId: string,
-  branchId: string,
-  productId: string,
-  price: number
-) => {
+export const updateStockPrice = async (input: UpdateStockPriceInput) => {
+  const { tenantId, branchId, productId, price } = input;
   const stock = await Stock.findOneAndUpdate(
     { tenantId, branchId, productId },
     { $set: { price } },
@@ -255,12 +269,7 @@ export const updateStockPrice = async (
   return stock;
 };
 
-export const adjustStock = async (
-  tenantId: string,
-  branchId: string,
-  productId: string,
-  quantity: number,
-  note: string
-) => {
+export const adjustStock = async (input: AdjustStockInput) => {
+  const { tenantId, branchId, productId, quantity, note } = input;
   await moveStock({ tenantId, branchId, productId, type: 'adjustment', quantity, note });
 };

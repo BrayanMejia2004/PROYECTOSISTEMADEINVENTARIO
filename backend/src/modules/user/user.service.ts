@@ -5,8 +5,7 @@ import Tenant from '../../shared/models/tenant/tenant.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { AuditLog } from '../../shared/models/auditLog/auditLog.model';
 import { logger } from '../../config/logger/logger';
-
-const BCRYPT_SALT_ROUNDS = 12;
+import { BCRYPT_SALT_ROUNDS } from '../../shared/constants';
 
 interface CreateUserInput {
   tenantId: string;
