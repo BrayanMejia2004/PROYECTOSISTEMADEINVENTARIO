@@ -6,19 +6,19 @@ import { AuthRequest } from '../../shared/types/express/express';
 
 export const getTenant = asyncHandler(async (req: AuthRequest, res: Response) => {
   const tenant = await tenantService.getTenantSettings(req.user!.tenantId);
-  sendSuccess(res, 'Tenant settings retrieved', tenant);
+  sendSuccess(res, 'Configuración obtenida', tenant);
 });
 
 export const updateTenant = asyncHandler(async (req: AuthRequest, res: Response) => {
   const tenant = await tenantService.updateTenantSettings(req.user!.tenantId, req.body);
-  sendSuccess(res, 'Tenant settings updated', tenant);
+  sendSuccess(res, 'Configuración actualizada', tenant);
 });
 
 export const uploadLogo = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.file) {
-    sendSuccess(res, 'No image provided', null);
+    sendSuccess(res, 'No se proporcionó imagen', null);
     return;
   }
   const tenant = await tenantService.uploadLogo(req.user!.tenantId, req.file);
-  sendSuccess(res, 'Logo uploaded', tenant);
+  sendSuccess(res, 'Logo subido', tenant);
 });

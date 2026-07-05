@@ -6,12 +6,12 @@ import { AuthRequest } from '../../shared/types/express/express';
 
 export const getBranches = asyncHandler(async (req: AuthRequest, res: Response) => {
   const branches = await branchService.getBranches(req.user!.tenantId);
-  sendSuccess(res, 'Branches retrieved', branches);
+  sendSuccess(res, 'Sucursales obtenidas', branches);
 });
 
 export const getBranch = asyncHandler(async (req: AuthRequest, res: Response) => {
   const branch = await branchService.getBranchById(req.params.id, req.user!.tenantId);
-  sendSuccess(res, 'Branch retrieved', branch);
+  sendSuccess(res, 'Sucursal encontrada', branch);
 });
 
 export const createBranch = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -19,7 +19,7 @@ export const createBranch = asyncHandler(async (req: AuthRequest, res: Response)
     ...req.body,
     tenantId: req.user!.tenantId,
   });
-  sendSuccess(res, 'Branch created', branch, 201);
+  sendSuccess(res, 'Sucursal creada', branch, 201);
 });
 
 export const updateBranch = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -28,10 +28,10 @@ export const updateBranch = asyncHandler(async (req: AuthRequest, res: Response)
     req.user!.tenantId,
     req.body
   );
-  sendSuccess(res, 'Branch updated', branch);
+  sendSuccess(res, 'Sucursal actualizada', branch);
 });
 
 export const deleteBranch = asyncHandler(async (req: AuthRequest, res: Response) => {
   await branchService.deleteBranch(req.params.id, req.user!.tenantId);
-  sendSuccess(res, 'Branch deleted');
+  sendSuccess(res, 'Sucursal eliminada');
 });

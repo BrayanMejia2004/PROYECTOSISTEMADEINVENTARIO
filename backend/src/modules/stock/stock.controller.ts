@@ -2,30 +2,26 @@ import { Response } from 'express';
 import * as stockService from './stock.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
+import { parsePaginationOrDefault, resolveBranchId } from '../../shared/utils/requestHelpers/requestHelpers';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getStock = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const queryBranchId = req.query.branchId as string | undefined;
-  const branchId = req.user!.role === 'owner' ? (queryBranchId || req.user!.branchId!) : req.user!.branchId!;
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = resolveBranchId(req.user!.role, req.user!.branchId, req.query.branchId as string)!;
+  const { page, limit } = parsePaginationOrDefault(req.query.page as string, req.query.limit as string, 50);
   const result = await stockService.getStockByBranch(req.user!.tenantId, branchId, page, limit);
-  sendPaginated(res, 'Stock retrieved', result.data, result.meta);
+  sendPaginated(res, 'Inventario obtenido', result.data, result.meta);
 });
 
 export const getLowStock = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const queryBranchId = req.query.branchId as string | undefined;
-  const branchId = req.user!.role === 'owner' ? (queryBranchId || req.user!.branchId) : req.user!.branchId;
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = resolveBranchId(req.user!.role, req.user!.branchId, req.query.branchId as string);
+  const { page, limit } = parsePaginationOrDefault(req.query.page as string, req.query.limit as string, 50);
   const result = await stockService.getLowStockAlerts(req.user!.tenantId, branchId, page, limit);
-  sendPaginated(res, 'Low stock alerts retrieved', result.data, result.meta);
+  sendPaginated(res, 'Alertas de stock bajo obtenidas', result.data, result.meta);
 });
 
 export const initializeStock = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { productId, price, quantity } = req.body;
-  const bodyBranchId = req.body.branchId as string | undefined;
-  const branchId = req.user!.role === 'owner' ? (bodyBranchId || req.user!.branchId!) : req.user!.branchId!;
+  const branchId = resolveBranchId(req.user!.role, req.user!.branchId, req.body.branchId as string)!;
   const stock = await stockService.initializeStock(
     req.user!.tenantId,
     branchId,
@@ -33,7 +29,7 @@ export const initializeStock = asyncHandler(async (req: AuthRequest, res: Respon
     price,
     quantity
   );
-  sendSuccess(res, 'Stock initialized', stock, 201);
+  sendSuccess(res, 'Stock inicializado', stock, 201);
 });
 
 export const updatePrice = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -44,7 +40,7 @@ export const updatePrice = asyncHandler(async (req: AuthRequest, res: Response) 
     req.params.productId,
     price
   );
-  sendSuccess(res, 'Price updated', stock);
+  sendSuccess(res, 'Precio actualizado', stock);
 });
 
 export const adjustStock = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -56,14 +52,12 @@ export const adjustStock = asyncHandler(async (req: AuthRequest, res: Response) 
     quantity,
     note
   );
-  sendSuccess(res, 'Stock adjusted');
+  sendSuccess(res, 'Stock ajustado');
 });
 
 export const getOutOfStock = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const queryBranchId = req.query.branchId as string | undefined;
-  const branchId = req.user!.role === 'owner' ? (queryBranchId || req.user!.branchId) : req.user!.branchId;
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 100;
+  const branchId = resolveBranchId(req.user!.role, req.user!.branchId, req.query.branchId as string);
+  const { page, limit } = parsePaginationOrDefault(req.query.page as string, req.query.limit as string, 100);
   const result = await stockService.getOutOfStock(req.user!.tenantId, branchId, page, limit);
-  sendPaginated(res, 'Out of stock products retrieved', result.data, result.meta);
+  sendPaginated(res, 'Productos agotados obtenidos', result.data, result.meta);
 });

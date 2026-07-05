@@ -3,21 +3,21 @@ import * as productService from './product.service';
 import cloudinary from '../../config/cloudinary/cloudinary';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
+import { parsePagination, resolveBranchId } from '../../shared/utils/requestHelpers/requestHelpers';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { page, limit, search, departmentId, supplierId, branchId: queryBranchId } = req.query;
-  const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
+  const branchId = resolveBranchId(req.user!.role, req.user!.branchId, queryBranchId as string);
   const result = await productService.getProducts({
     tenantId: req.user!.tenantId,
     branchId,
-    page: page ? parseInt(page as string) : undefined,
-    limit: limit ? parseInt(limit as string) : undefined,
+    ...parsePagination(page as string, limit as string),
     search: search as string,
     departmentId: departmentId as string,
     supplierId: supplierId as string,
   });
-  sendPaginated(res, 'Products retrieved', result.data, result.meta);
+  sendPaginated(res, 'Productos obtenidos', result.data, result.meta);
 });
 
 export const getProductByBarcode = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -27,15 +27,15 @@ export const getProductByBarcode = asyncHandler(async (req: AuthRequest, res: Re
     req.user!.branchId,
   );
   if (!product) {
-    sendSuccess(res, 'Product not found', null);
+    sendSuccess(res, 'Producto no encontrado', null);
     return;
   }
-  sendSuccess(res, 'Product retrieved', product);
+  sendSuccess(res, 'Producto encontrado', product);
 });
 
 export const getProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
   const product = await productService.getProductById(req.params.id, req.user!.tenantId, req.user!.branchId);
-  sendSuccess(res, 'Product retrieved', product);
+  sendSuccess(res, 'Producto encontrado', product);
 });
 
 export const createProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -46,7 +46,7 @@ export const createProduct = asyncHandler(async (req: AuthRequest, res: Response
     branchId: req.user!.branchId,
     stock: stock !== undefined ? Number(stock) : undefined,
   });
-  sendSuccess(res, 'Product created', product, 201);
+  sendSuccess(res, 'Producto creado', product, 201);
 });
 
 export const updateProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -56,18 +56,18 @@ export const updateProduct = asyncHandler(async (req: AuthRequest, res: Response
     req.user!.branchId,
     req.body
   );
-  sendSuccess(res, 'Product updated', product);
+  sendSuccess(res, 'Producto actualizado', product);
 });
 
 export const deleteProduct = asyncHandler(async (req: AuthRequest, res: Response) => {
   await productService.deleteProduct(req.params.id, req.user!.tenantId);
-  sendSuccess(res, 'Product deleted');
+  sendSuccess(res, 'Producto eliminado');
 });
 
 export const importProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { products, skipDuplicates } = req.body;
   const result = await productService.importProducts(req.user!.tenantId, products, req.user!.branchId, skipDuplicates);
-  sendSuccess(res, 'Import completed', result);
+  sendSuccess(res, 'Importación completada', result);
 });
 
 export const exportProducts = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -80,7 +80,7 @@ export const exportProducts = asyncHandler(async (req: AuthRequest, res: Respons
 
 export const uploadProductImage = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.file) {
-    sendSuccess(res, 'No image provided', null);
+    sendSuccess(res, 'No se proporcionó imagen', null);
     return;
   }
 
@@ -97,5 +97,5 @@ export const uploadProductImage = asyncHandler(async (req: AuthRequest, res: Res
     stream.end(file.buffer);
   });
 
-  sendSuccess(res, 'Image uploaded', { url: result.secure_url });
+  sendSuccess(res, 'Imagen subida', { url: result.secure_url });
 });

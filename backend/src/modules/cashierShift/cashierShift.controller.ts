@@ -2,19 +2,19 @@ import { Response } from 'express';
 import * as cashierShiftService from './cashierShift.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
+import { parsePagination, resolveBranchId } from '../../shared/utils/requestHelpers/requestHelpers';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getShifts = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { branchId: queryBranchId, userId, status, startDate, endDate, page, limit } = req.query;
-  const branchId = req.user!.role === 'owner' ? (queryBranchId as string | undefined) : req.user!.branchId;
+  const branchId = resolveBranchId(req.user!.role, req.user!.branchId, queryBranchId as string);
   const result = await cashierShiftService.getShifts(req.user!.tenantId, {
     branchId,
     userId: userId as string | undefined,
     status: status as string | undefined,
     startDate: startDate as string | undefined,
     endDate: endDate as string | undefined,
-    page: page ? parseInt(page as string) : undefined,
-    limit: limit ? parseInt(limit as string) : undefined,
+    ...parsePagination(page as string, limit as string),
   });
   sendPaginated(res, 'Turnos obtenidos', result.data, result.meta);
 });
