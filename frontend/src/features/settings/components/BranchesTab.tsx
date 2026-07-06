@@ -4,11 +4,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useBranches, useCreateBranch, useUpdateBranch, useDeleteBranch } from '@/features/settings/hooks';
 import { branchSchema, type BranchForm } from '@/features/settings/schemas';
 import { Building2, Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const BranchesTab = () => {
-  const { data: branches } = useBranches();
+  const { data: branches, isLoading, isError, error, refetch } = useBranches();
   const { mutate: createBranch, isPending: isCreatingBranch } = useCreateBranch();
   const { mutate: updateBranch, isPending: isUpdatingBranch } = useUpdateBranch();
   const { mutate: deleteBranch } = useDeleteBranch();
@@ -108,6 +113,11 @@ export const BranchesTab = () => {
         </form>
       )}
 
+      {isLoading ? (
+        <TableSkeleton rows={4} columns={5} />
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
+      ) : (
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -123,7 +133,9 @@ export const BranchesTab = () => {
             <tbody className="divide-y divide-gray-50">
               {branches?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-sm text-brand-muted">No hay sucursales registradas</td>
+                  <td colSpan={5}>
+                    <EmptyState icon={Building2} title="Sin sucursales" description="Crea tu primera sucursal para comenzar" />
+                  </td>
                 </tr>
               ) : (
                 branches?.data?.map((branch: any) => (
@@ -132,14 +144,18 @@ export const BranchesTab = () => {
                     <td className="px-6 py-4 text-sm text-brand-muted">{branch.address || '—'}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{branch.phone || '—'}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${branch.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                      <Badge variant={branch.isActive ? 'success' : 'danger'}>
                         {branch.isActive ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleEdit(branch)} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text" title="Editar"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(branch._id, branch.name)} className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-600" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                        <Tooltip content="Editar">
+                          <button onClick={() => handleEdit(branch)} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"><Pencil className="w-4 h-4" /></button>
+                        </Tooltip>
+                        <Tooltip content="Eliminar">
+                          <button onClick={() => handleDelete(branch._id, branch.name)} className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
@@ -149,6 +165,7 @@ export const BranchesTab = () => {
           </table>
         </div>
       </div>
+      )}
 
       <ConfirmDialog
         open={confirmDelete.open}

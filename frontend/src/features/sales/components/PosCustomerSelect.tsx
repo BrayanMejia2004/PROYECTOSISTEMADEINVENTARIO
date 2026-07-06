@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { customerSchema, type CustomerForm } from '@/features/customers/schemas';
 import { useCustomers, useCreateCustomer } from '@/features/customers/hooks';
 import { Search, Plus, X, User, Check } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface PosCustomerSelectProps {
   selectedCustomer: { name: string; phone?: string } | null;
@@ -75,13 +76,14 @@ export const PosCustomerSelect = ({ selectedCustomer, onSelectCustomer }: PosCus
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => { onSelectCustomer(null); setSearch(''); }}
-            className="p-1.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-            title="Quitar cliente"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+          <Tooltip content="Quitar cliente">
+            <button
+              onClick={() => { onSelectCustomer(null); setSearch(''); }}
+              className="p-1.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
         </div>
       </div>
     );

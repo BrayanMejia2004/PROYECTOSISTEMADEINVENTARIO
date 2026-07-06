@@ -5,13 +5,17 @@ import { Plus, Users, X, Pencil, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import { Pagination } from '@/components/ui/Pagination';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { SupplierFormComponent } from '@/features/suppliers/components/SupplierForm';
 import type { Supplier } from '@/types';
 import type { SupplierForm } from '@/features/suppliers/schemas';
 
 export const SuppliersPage = () => {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSuppliers({ page, limit: 10 });
+  const { data, isLoading, isError, error, refetch } = useSuppliers({ page, limit: 10 });
   const { mutate: createSupplier, isPending: isCreating } = useCreateSupplier();
   const { mutate: updateSupplier, isPending: isUpdating } = useUpdateSupplier();
   const { mutate: deleteSupplier, isPending: isDeleting } = useDeleteSupplier();
@@ -53,7 +57,8 @@ export const SuppliersPage = () => {
     setEditingSupplier(null);
   }, []);
 
-  if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
+  if (isLoading) return <TableSkeleton rows={5} columns={4} />;
+  if (isError) return <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />;
 
   return (
     <div>
@@ -111,7 +116,9 @@ export const SuppliersPage = () => {
             <tbody className="divide-y divide-gray-50">
               {data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-sm text-brand-muted">No hay proveedores registrados</td>
+                  <td colSpan={5}>
+                    <EmptyState icon={Users} title="Sin proveedores" description="Crea tu primer proveedor para comenzar" />
+                  </td>
                 </tr>
               ) : (
                 data?.data?.map((supplier: Supplier) => (
@@ -122,21 +129,23 @@ export const SuppliersPage = () => {
                     <td className="px-6 py-4 text-sm text-brand-muted">{formatDate(supplier.createdAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(supplier)}
-                          className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
-                          title="Editar"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(supplier)}
-                          disabled={isDeleting}
-                          className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500 disabled:opacity-50"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <Tooltip content="Editar">
+                          <button
+                            onClick={() => handleEdit(supplier)}
+                            className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Eliminar">
+                          <button
+                            onClick={() => handleDelete(supplier)}
+                            disabled={isDeleting}
+                            className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500 disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>

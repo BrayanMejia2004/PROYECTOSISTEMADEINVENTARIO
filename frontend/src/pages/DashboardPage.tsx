@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Package, AlertTriangle, DollarSign, Users, ShoppingCart, ChevronRight, Plus, X } from 'lucide-react';
+import { Package, AlertTriangle, DollarSign, Users, ShoppingCart, ChevronRight, Plus, X, Receipt } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useProducts } from '@/features/inventory/hooks';
 import { useSales } from '@/features/sales/hooks';
 import { OutOfStockCard } from '@/features/reports/components/OutOfStockCard';
@@ -52,13 +55,14 @@ export const DashboardPage = () => {
                     </div>
                   </div>
                 </Link>
-                <button
-                  onClick={() => removeCaja(caja.id)}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-brand-muted hover:text-red-500 hover:border-red-200 opacity-0 group-hover/card:opacity-100 transition-all"
-                  title="Eliminar caja"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <Tooltip content="Eliminar caja">
+                  <button
+                    onClick={() => removeCaja(caja.id)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-brand-muted hover:text-red-500 hover:border-red-200 opacity-0 group-hover/card:opacity-100 transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </Tooltip>
               </div>
             );
           })}
@@ -69,8 +73,8 @@ export const DashboardPage = () => {
     );
   }
 
-  const { data: productsData, isLoading: productsLoading } = useProducts();
-  const { data: salesData, isLoading: salesLoading } = useSales({ limit: 0 });
+  const { data: productsData, isLoading: productsLoading, isError: productsError, error: productsErr, refetch: refetchProducts } = useProducts();
+  const { data: salesData, isLoading: salesLoading, isError: salesError, error: salesErr, refetch: refetchSales } = useSales({ limit: 0 });
   const [ventasPage, setVentasPage] = useState(1);
   const VENTAS_PER_PAGE = 3;
 
@@ -135,8 +139,20 @@ export const DashboardPage = () => {
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
           <h3 className="font-sans font-semibold text-brand-text mb-4">Últimas Ventas</h3>
-          {salesLoading ? (
-            <p className="text-sm text-brand-muted">Cargando...</p>
+          {salesError ? (
+            <ErrorState message={(salesErr as Error)?.message} onRetry={() => refetchSales()} />
+          ) : salesLoading ? (
+            <div className="space-y-3 min-h-[200px]">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between py-2">
+                  <div className="space-y-1">
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
           ) : salesData?.data?.length ? (
             <>
               <div className="space-y-3 min-h-[200px]">
@@ -182,7 +198,7 @@ export const DashboardPage = () => {
               )}
             </>
           ) : (
-            <p className="text-sm text-brand-muted">No hay ventas registradas aún</p>
+            <EmptyState icon={Receipt} title="Sin ventas" description="Aún no se han registrado ventas" />
           )}
         </div>
       </div>

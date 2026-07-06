@@ -4,24 +4,22 @@ import { formatDate } from '@/lib/utils';
 import { usePermission } from '@/hooks/usePermission';
 import { useState, useCallback } from 'react';
 import { UserCircle, Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import { Pagination } from '@/components/ui/Pagination';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { UserFormComponent } from '@/features/users/components/UserForm';
 import type { User, Branch } from '@/types';
 import type { UserForm } from '@/features/users/schemas';
 
-const RoleBadge = ({ role }: { role: string }) => {
-  const styles: Record<string, string> = {
-    owner: 'bg-purple-50 text-purple-700 border-purple-200',
-    admin: 'bg-blue-50 text-blue-700 border-blue-200',
-    cashier: 'bg-gray-50 text-gray-700 border-gray-200',
-  };
-  return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[role] || styles.cashier}`}>
-      {role}
-    </span>
-  );
+const roleVariant: Record<string, 'purple' | 'info' | 'neutral'> = {
+  owner: 'purple',
+  admin: 'info',
+  cashier: 'neutral',
 };
 
 const resolveBranchName = (user: User, branches: Branch[] | undefined) => {
@@ -32,7 +30,7 @@ const resolveBranchName = (user: User, branches: Branch[] | undefined) => {
 
 export const UsersPage = () => {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useUsers({ page, limit: 10 });
+  const { data, isLoading, isError, error, refetch } = useUsers({ page, limit: 10 });
   const { data: branches } = useBranches();
   const { mutate: createUser, isPending: isCreating } = useCreateUser();
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
@@ -79,7 +77,8 @@ export const UsersPage = () => {
     setEditingUser(null);
   }, []);
 
-  if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
+  if (isLoading) return <TableSkeleton rows={5} columns={7} />;
+  if (isError) return <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />;
 
   return (
     <div>
@@ -143,40 +142,42 @@ export const UsersPage = () => {
             <tbody className="divide-y divide-gray-50">
               {data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-brand-muted">No hay usuarios registrados</td>
+                  <td colSpan={7}>
+                    <EmptyState icon={UserCircle} title="Sin usuarios" description="Crea el primer usuario del sistema" />
+                  </td>
                 </tr>
               ) : (
                 data?.data?.map((user: User) => (
                   <tr key={user._id} className="hover:bg-brand-bg/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-brand-text">{user.firstName} {user.lastName}</td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{user.email}</td>
-                    <td className="px-6 py-4"><RoleBadge role={user.role} /></td>
+                    <td className="px-6 py-4"><Badge variant={roleVariant[user.role]}>{user.role}</Badge></td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{resolveBranchName(user, branches?.data)}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        user.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-                      }`}>
+                      <Badge variant={user.isActive ? 'success' : 'danger'}>
                         {user.isActive ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-brand-muted">{formatDate(user.createdAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
-                          title="Editar"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user)}
-                          disabled={isDeleting}
-                          className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500 disabled:opacity-50"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <Tooltip content="Editar">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Eliminar">
+                          <button
+                            onClick={() => handleDelete(user)}
+                            disabled={isDeleting}
+                            className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500 disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>

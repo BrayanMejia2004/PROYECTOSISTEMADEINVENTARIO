@@ -8,6 +8,12 @@ import { useBranches } from '@/features/settings/hooks';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils';
 import { Store, Receipt, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { Select } from '@/components/ui/Select';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const STATUS_LABELS: Record<string, string> = {
   completed: 'Completada',
@@ -24,19 +30,12 @@ const PAYMENT_LABELS: Record<string, string> = {
   exchange: 'Intercambio',
 };
 
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    completed: 'bg-green-50 text-green-700 border-green-200',
-    cancelled: 'bg-red-50 text-red-700 border-red-200',
-    refunded: 'bg-orange-50 text-orange-700 border-orange-200',
-    pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    partial: 'bg-blue-50 text-blue-700 border-blue-200',
-  };
-  return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[status] || styles.pending}`}>
-      {STATUS_LABELS[status] || status}
-    </span>
-  );
+const statusVariant: Record<string, 'success' | 'danger' | 'warning' | 'info'> = {
+  completed: 'success',
+  cancelled: 'danger',
+  refunded: 'warning',
+  pending: 'warning',
+  partial: 'info',
 };
 
 export const SalesPage = () => {
@@ -55,7 +54,7 @@ export const SalesPage = () => {
   if (isOwner && selectedBranchId) queryParams.branchId = selectedBranchId;
   Object.keys(queryParams).forEach(k => { if (queryParams[k] === undefined || queryParams[k] === '') delete queryParams[k]; });
 
-  const { data, isLoading } = useSales(queryParams);
+  const { data, isLoading, isError, error, refetch } = useSales(queryParams);
 
   const meta = data?.meta;
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 0;
@@ -65,7 +64,8 @@ export const SalesPage = () => {
     setPage(1);
   }, []);
 
-  if (isLoading && !data) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
+  if (isLoading && !data) return <TableSkeleton rows={5} columns={8} />;
+  if (isError) return <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />;
 
   return (
     <div>
@@ -80,16 +80,13 @@ export const SalesPage = () => {
             <div className="flex items-center gap-3">
               <Store className="w-4 h-4 text-brand-muted" />
               <label className="text-sm font-medium text-brand-text">Sucursal:</label>
-              <select
+              <Select
                 value={selectedBranchId || ''}
                 onChange={(e) => { setSelectedBranchId(e.target.value || undefined); setPage(1); }}
-                className="flex-1 max-w-xs px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-              >
-                <option value="">Todas las sucursales</option>
-                {branches?.data?.map((b: any) => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
-                ))}
-              </select>
+                placeholder="Todas las sucursales"
+                options={branches?.data?.map((b: any) => ({ value: b._id, label: b.name })) || []}
+                wrapperClassName="flex-1 max-w-xs"
+              />
             </div>
           </div>
         )}
@@ -122,7 +119,9 @@ export const SalesPage = () => {
               <tbody className="divide-y divide-gray-50">
                 {data?.data?.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-sm text-brand-muted">No se encontraron ventas</td>
+                    <td colSpan={8}>
+                      <EmptyState icon={Receipt} title="Sin ventas" description={filters && Object.keys(filters).length > 0 ? 'No hay ventas con los filtros seleccionados' : 'Aún no se han registrado ventas'} />
+                    </td>
                   </tr>
                 ) : (
                   data?.data?.map((sale: any) => (
@@ -133,15 +132,16 @@ export const SalesPage = () => {
                       <td className="px-6 py-4 text-sm text-brand-muted">{sale.items?.length ?? 0}</td>
                       <td className="px-6 py-4 text-sm text-brand-muted">{PAYMENT_LABELS[sale.paymentMethod] || sale.paymentMethod}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-brand-text text-right">{formatCurrency(sale.total)}</td>
-                      <td className="px-6 py-4"><StatusBadge status={sale.status} /></td>
+                      <td className="px-6 py-4"><Badge variant={statusVariant[sale.status] || 'warning'}>{STATUS_LABELS[sale.status] || sale.status}</Badge></td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => setSelectedSale(sale)}
-                          className="inline-flex items-center gap-1.5 text-sm text-brand hover:text-brand-dark font-medium transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Detalle
-                        </button>
+                        <Tooltip content="Detalle">
+                          <button
+                            onClick={() => setSelectedSale(sale)}
+                            className="p-2.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
                       </td>
                     </tr>
                   ))

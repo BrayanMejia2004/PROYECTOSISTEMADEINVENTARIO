@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useTenant, useUpdateTenant, useUploadLogo } from '@/features/settings/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { Image, Loader2 } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/utils';
 
 export const BrandingTab = () => {
   const { refreshTenant } = useAuth();
-  const { data: tenant } = useTenant();
+  const { data: tenant, isLoading } = useTenant();
   const { mutate: updateTenant } = useUpdateTenant();
   const { mutateAsync: uploadLogoMutation, isPending: isUploadingLogo } = useUploadLogo();
   const [showSuccess, setShowSuccess] = useState('');
@@ -35,6 +36,8 @@ export const BrandingTab = () => {
       onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el color')),
     });
   };
+
+  if (isLoading) return <CardSkeleton lines={3} />;
 
   const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

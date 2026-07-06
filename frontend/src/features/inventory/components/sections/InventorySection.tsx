@@ -47,11 +47,7 @@ export const InventorySection = ({ register, control, errors, allowsDiscount }: 
         {errors.unit && <p className="text-red-500 text-xs mt-1">{errors.unit.message}</p>}
       </div>
     </div>
-    <label className="flex items-center gap-2.5 cursor-pointer mb-4">
-      <input {...register('sellOutOfStock')} type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand/20" />
-      <span className="text-sm text-brand-text">Permitir venta sin stock</span>
-    </label>
-    <label className="flex items-center gap-2.5 cursor-pointer mb-4">
+<label className="flex items-center gap-2.5 cursor-pointer mb-4">
       <input {...register('allowsDiscount')} type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand/20" />
       <span className="text-sm text-brand-text">Permite descuento</span>
     </label>

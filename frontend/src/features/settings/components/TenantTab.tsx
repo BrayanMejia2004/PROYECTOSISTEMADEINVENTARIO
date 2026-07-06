@@ -4,12 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTenant, useUpdateTenant } from '@/features/settings/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { tenantSettingsSchema, type TenantSettingsForm } from '@/features/settings/schemas';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 
 export const TenantTab = () => {
   const { refreshTenant } = useAuth();
-  const { data: tenant } = useTenant();
+  const { data: tenant, isLoading } = useTenant();
   const { mutate: updateTenant, isPending: isUpdatingTenant } = useUpdateTenant();
   const [confirmSave, setConfirmSave] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
@@ -55,6 +56,8 @@ export const TenantTab = () => {
   };
 
   const inputClass = "w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all";
+
+  if (isLoading) return <CardSkeleton lines={5} />;
 
   return (
     <div className="space-y-6">

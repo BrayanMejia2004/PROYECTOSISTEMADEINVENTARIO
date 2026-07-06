@@ -3,6 +3,11 @@ import { Wallet, Filter } from 'lucide-react';
 import { useShifts } from '@/features/sales/hooks';
 import { AdminShiftDetail } from '@/features/sales/components/AdminShiftDetail';
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { Badge } from '@/components/ui/Badge';
+import { Select } from '@/components/ui/Select';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { CashierShift } from '@/types';
 
 const STATUS_OPTIONS = [
@@ -15,7 +20,7 @@ export const AdminShiftHistory = () => {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
   const [selectedShift, setSelectedShift] = useState<CashierShift | null>(null);
-  const { data: shiftsData, isLoading } = useShifts(filters);
+  const { data: shiftsData, isLoading, isError, error, refetch } = useShifts(filters);
 
   const shifts = shiftsData?.data || [];
   const meta = shiftsData?.meta;
@@ -60,15 +65,12 @@ export const AdminShiftHistory = () => {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1.5">Estado</label>
-              <select
+              <Select
                 value={filters.status || ''}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+                options={STATUS_OPTIONS.filter(o => o.value !== '').map(o => ({ value: o.value, label: o.label }))}
+                placeholder="Todos"
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1.5">Desde</label>
@@ -103,11 +105,14 @@ export const AdminShiftHistory = () => {
         </div>
       )}
 
+      {isLoading ? (
+        <TableSkeleton rows={5} columns={11} />
+      ) : isError ? (
+        <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
+      ) : (
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-sm text-brand-muted">Cargando...</div>
-        ) : shifts.length === 0 ? (
-          <div className="p-8 text-center text-sm text-brand-muted">No hay turnos registrados</div>
+        {shifts.length === 0 ? (
+          <EmptyState icon={Wallet} title="Sin turnos registrados" description="No hay turnos de caja en el período seleccionado" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -152,13 +157,9 @@ export const AdminShiftHistory = () => {
                     <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">{formatCurrency(s.totalSales)}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right">{formatCurrency(s.totalProfit)}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                        s.status === 'open'
-                          ? 'bg-green-50 text-green-600'
-                          : 'bg-gray-100 text-brand-muted'
-                      }`}>
+                      <Badge variant={s.status === 'open' ? 'success' : 'neutral'}>
                         {s.status === 'open' ? 'Abierta' : 'Cerrada'}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 ))}
@@ -167,6 +168,7 @@ export const AdminShiftHistory = () => {
           </div>
         )}
       </div>
+      )}
 
       {meta && (
         <div className="flex items-center justify-between text-sm text-brand-muted">

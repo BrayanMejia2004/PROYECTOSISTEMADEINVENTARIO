@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { Banknote, CreditCard, Building2, RotateCcw, X, ArrowRight, CheckCircle, Hash, Search, AlertCircle, Loader2 } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
 import { useSaleByNumber } from '@/features/sales/hooks';
 import { Sale } from '@/types';
 
@@ -263,14 +264,12 @@ export const PaymentModal = ({ total, onConfirm, onCancel, isPending }: PaymentM
 
               {extraPaymentMethod === 'transfer' && (
                 <div className="space-y-2">
-                  <select
+                  <Select
                     value={extraTransferBank}
                     onChange={(e) => setExtraTransferBank(e.target.value)}
-                    className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  >
-                    <option value="">Seleccionar banco</option>
-                    {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
-                  </select>
+                    placeholder="Seleccionar banco"
+                    options={BANKS.map((b) => ({ value: b, label: b }))}
+                  />
                   <input
                     type="text"
                     value={extraTransferReference}
@@ -283,14 +282,12 @@ export const PaymentModal = ({ total, onConfirm, onCancel, isPending }: PaymentM
 
               {extraPaymentMethod === 'card' && (
                 <div className="space-y-2">
-                  <select
+                  <Select
                     value={extraCardBank}
                     onChange={(e) => setExtraCardBank(e.target.value)}
-                    className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  >
-                    <option value="">Seleccionar banco o entidad</option>
-                    {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
-                  </select>
+                    placeholder="Seleccionar banco o entidad"
+                    options={BANKS.map((b) => ({ value: b, label: b }))}
+                  />
                   <input
                     type="text"
                     value={extraCardReference}
@@ -411,21 +408,14 @@ export const PaymentModal = ({ total, onConfirm, onCancel, isPending }: PaymentM
                     <label className="text-sm font-medium text-brand-text">
                       {isCard ? 'Banco o entidad' : 'Banco de origen'}
                     </label>
-                    <select
+                    <Select
                       value={isCard ? cardBank : transferBank}
                       onChange={(e) => isCard ? setCardBank(e.target.value) : setTransferBank(e.target.value)}
                       disabled={isPending}
-                      className={`w-full px-4 py-3 text-sm text-brand-text rounded-xl border outline-none transition-all bg-white appearance-none ${
-                        error && !(isCard ? cardBank : transferBank)
-                          ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-                          : 'border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20'
-                      }`}
-                    >
-                      <option value="">Seleccionar banco</option>
-                      {BANKS.map((bank) => (
-                        <option key={bank} value={bank}>{bank}</option>
-                      ))}
-                    </select>
+                      placeholder="Seleccionar banco"
+                      options={BANKS.map((b) => ({ value: b, label: b }))}
+                      error={error && !(isCard ? cardBank : transferBank) ? (isCard ? 'Selecciona un banco' : 'Selecciona un banco') : undefined}
+                    />
                   </div>
 
                   <div className="space-y-2">

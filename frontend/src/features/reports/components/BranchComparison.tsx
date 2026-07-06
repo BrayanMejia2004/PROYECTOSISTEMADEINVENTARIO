@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getBranchComparison } from '@/features/reports/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Building2 } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import type { BranchComparisonData } from '@/types';
 
 export const BranchComparison = () => {
@@ -25,7 +26,7 @@ export const BranchComparison = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div className="text-sm text-brand-muted">Cargando...</div>;
+  if (loading) return <CardSkeleton lines={2} />;
 
   return (
     <div>

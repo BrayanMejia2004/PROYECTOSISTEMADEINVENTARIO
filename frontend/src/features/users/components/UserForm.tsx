@@ -11,7 +11,7 @@ interface Props {
   branchOptions?: Array<{ _id: string; name: string }>;
 }
 
-export const UserFormComponent = ({ defaultValues, isPending, onSubmit, onCancel, branchOptions }: Props) => {
+export const UserFormComponent = ({ defaultValues, isPending, editingId, onSubmit, onCancel, branchOptions }: Props) => {
   const {
     register,
     handleSubmit,

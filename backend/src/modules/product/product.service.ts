@@ -99,13 +99,15 @@ const buildProductAggregationPipeline = (query: ProductFilter, page: number, lim
   pipeline.push(
     { $lookup: { from: 'stocks', let: { productId: '$_id' }, pipeline: stockLookupPipeline, as: 'stockInfo' } },
     { $lookup: { from: 'departments', localField: 'departmentId', foreignField: '_id', as: 'department' } },
+    { $lookup: { from: 'brands', localField: 'brandId', foreignField: '_id', as: 'brand' } },
     {
       $addFields: {
         departmentName: { $arrayElemAt: ['$department.name', 0] },
+        brandName: { $arrayElemAt: ['$brand.name', 0] },
         stock: { $cond: [{ $gt: [{ $size: '$stockInfo' }, 0] }, { $sum: '$stockInfo.quantity' }, 0] },
       },
     },
-    { $project: { department: 0, stockInfo: 0 } },
+    { $project: { department: 0, brand: 0, stockInfo: 0 } },
   );
 
   return pipeline;
@@ -147,6 +149,12 @@ const enrichSingleProduct = async (product: Record<string, any>, tenantId: strin
     departmentName = dept?.name || null;
   }
 
+  let brandName: string | null = null;
+  if (product.brandId) {
+    const brand = await Brand.findById(product.brandId).select('name').lean();
+    brandName = brand?.name || null;
+  }
+
   let stock = 0;
   if (branchId) {
     const stockDoc = await Stock.findOne({ tenantId, branchId, productId: product._id.toString() }).lean();
@@ -167,6 +175,7 @@ const enrichSingleProduct = async (product: Record<string, any>, tenantId: strin
     departmentId: product.departmentId,
     departmentName,
     brandId: product.brandId,
+    brandName: brandName || product.brandId?.toString() || '',
     supplierId: product.supplierId,
     image: product.image,
     costPrice: product.costPrice,

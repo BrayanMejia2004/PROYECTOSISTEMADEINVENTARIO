@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
 import { Store, Plus, Package, Upload, Download } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
 
 export const InventoryPage = () => {
   const { user } = useAuth();
@@ -72,16 +73,13 @@ export const InventoryPage = () => {
           <div className="flex items-center gap-3">
             <Store className="w-4 h-4 text-brand-muted" />
             <label className="text-sm font-medium text-brand-text">Sucursal:</label>
-            <select
+            <Select
               value={selectedBranchId || ''}
               onChange={(e) => setSelectedBranchId(e.target.value || undefined)}
-              className="flex-1 max-w-xs px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-            >
-              <option value="">Seleccionar sucursal</option>
-              {branches?.data?.map((b: any) => (
-                <option key={b._id} value={b._id}>{b.name}</option>
-              ))}
-            </select>
+              placeholder="Seleccionar sucursal"
+              options={branches?.data?.map((b: any) => ({ value: b._id, label: b.name })) || []}
+              wrapperClassName="flex-1 max-w-xs"
+            />
           </div>
         </div>
       )}

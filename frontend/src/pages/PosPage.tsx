@@ -81,7 +81,7 @@ export const PosPage = () => {
 
   if (shiftLoading) {
     return (
-      <div className="h-[calc(100vh-5rem)] flex items-center justify-center">
+      <div className="h-[calc(100vh-5rem)] -mt-4 -mb-4 lg:-mt-6 lg:-mb-6 flex items-center justify-center">
         <p className="text-sm text-brand-muted">Cargando...</p>
       </div>
     );
@@ -89,7 +89,7 @@ export const PosPage = () => {
 
   if (!isShiftOpen) {
     return (
-      <div className="h-[calc(100vh-5rem)] flex flex-col items-center justify-center">
+      <div className="h-[calc(100vh-5rem)] -mt-4 -mb-4 lg:-mt-6 lg:-mb-6 flex flex-col items-center justify-center">
         <div className="max-w-md text-center">
           <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
             <Wallet className="w-10 h-10 text-red-400" />
@@ -118,7 +118,7 @@ export const PosPage = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-5rem)] flex flex-col">
+    <div className="h-[calc(100vh-5rem)] -mt-4 -mb-4 lg:-mt-6 lg:-mb-6 flex flex-col overflow-hidden">
       {saleError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSaleError(null)}>
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
@@ -148,10 +148,10 @@ export const PosPage = () => {
         </div>
       )}
       <div className="flex-1 flex flex-col lg:flex-row gap-2 min-h-0">
-        <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col">
+        <div className="w-full lg:flex-[2] bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col min-h-0">
           <PosProductSearch onAddToCart={handleAddToCart} cartItems={cartItems} />
         </div>
-        <div className="w-full lg:flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col">
+        <div className="w-full lg:flex-1 bg-white rounded-xl border border-gray-100 shadow-sm p-3 overflow-hidden flex flex-col min-h-0">
           <PosCart
             key={`cart-${cartId}-${saleKey}`}
             items={cartItems}

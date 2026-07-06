@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const cashMovementSchema = new mongoose.Schema({
   tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', required: true },
   shiftId: { type: mongoose.Schema.Types.ObjectId, ref: 'CashierShift', required: true },
   type: { type: String, enum: ['entry', 'exit'], required: true },
   amount: { type: Number, required: true },

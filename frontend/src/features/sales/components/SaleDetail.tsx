@@ -3,6 +3,7 @@ import { X, Download, RotateCcw } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { useRefundSale } from '@/features/sales/hooks';
 import { getSalePdf } from '@/features/sales/api';
+import { Badge } from '@/components/ui/Badge';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
@@ -76,15 +77,14 @@ export const SaleDetail = ({ sale, onClose, onAction }: SaleDetailProps) => {
               </div>
               <div>
                 <p className="text-xs font-medium text-brand-muted uppercase tracking-wider mb-1">Estado</p>
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                  sale.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                  sale.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
-                  sale.status === 'refunded' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                  sale.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                  'bg-blue-50 text-blue-700 border-blue-200'
-                }`}>
+                <Badge variant={
+                  sale.status === 'completed' ? 'success' :
+                  sale.status === 'cancelled' ? 'danger' :
+                  sale.status === 'refunded' ? 'warning' :
+                  'info'
+                }>
                   {STATUS_LABELS[sale.status] || sale.status}
-                </span>
+                </Badge>
               </div>
               {sale.paymentMethod === 'transfer' && (
                 <>

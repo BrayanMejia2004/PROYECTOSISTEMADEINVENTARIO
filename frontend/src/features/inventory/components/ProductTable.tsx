@@ -5,9 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useDebouncedValue } from '@/hooks/useDebounce';
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Loader2, Search, X } from 'lucide-react';
+import { Pencil, Trash2, Package, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const PAGE_SIZE = 25;
 
@@ -27,7 +30,7 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
   const debouncedSearch = useDebouncedValue(search, 800);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string }>({ open: false });
   const [showSuccess, setShowSuccess] = useState(false);
-  const { data, isLoading } = useProducts({ page, limit: PAGE_SIZE, branchId, search: debouncedSearch || undefined });
+  const { data, isLoading, isError, error, refetch } = useProducts({ page, limit: PAGE_SIZE, branchId, search: debouncedSearch || undefined });
   const noBranchSelected = branchId === undefined;
   const { mutate: deleteProduct } = useDeleteProduct();
   const navigate = useNavigate();
@@ -114,13 +117,8 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 text-brand animate-spin" />
-      </div>
-    );
-  }
+  if (isLoading) return <TableSkeleton rows={8} columns={columns.length + 1} />;
+  if (isError) return <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />;
 
   return (
     <div>
@@ -193,20 +191,24 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
                   {!readOnly && (
                   <div className="flex items-center justify-center gap-1">
                     {hasPermission('inventory:update') && (
-                      <button
-                        onClick={() => navigate(`/inventory/${product.id}/edit`)}
-                        className="p-2.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                      <Tooltip content="Editar">
+                        <button
+                          onClick={() => navigate(`/inventory/${product.id}/edit`)}
+                          className="p-2.5 rounded-lg text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </Tooltip>
                     )}
                     {hasPermission('inventory:delete') && (
-                      <button
-                        onClick={() => setConfirmDelete({ open: true, id: product.id })}
-                        className="p-2.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <Tooltip content="Eliminar">
+                        <button
+                          onClick={() => setConfirmDelete({ open: true, id: product.id })}
+                          className="p-2.5 rounded-lg text-brand-muted hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </Tooltip>
                     )}
                   </div>
                   )}
@@ -224,15 +226,16 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
             {formatNumber(meta.total)} producto(s) — Página {formatNumber(meta.page)} de {formatNumber(meta.totalPages)}
           </p>
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage(1)}
-              disabled={meta.page <= 1}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-              title="Primera página"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <ChevronLeft className="w-3.5 h-3.5 -ml-1.5" />
-            </button>
+            <Tooltip content="Primera página">
+              <button
+                onClick={() => setPage(1)}
+                disabled={meta.page <= 1}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-xs text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-3.5 h-3.5 -ml-1.5" />
+              </button>
+            </Tooltip>
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={meta.page <= 1}
@@ -264,15 +267,16 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setPage(meta.totalPages)}
-              disabled={meta.page >= meta.totalPages}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
-              title="Última página"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-              <ChevronRight className="w-3.5 h-3.5 -ml-1.5" />
-            </button>
+            <Tooltip content="Última página">
+              <button
+                onClick={() => setPage(meta.totalPages)}
+                disabled={meta.page >= meta.totalPages}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-brand-muted hover:text-brand hover:bg-brand/5 transition-colors disabled:opacity-30"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3.5 h-3.5 -ml-1.5" />
+              </button>
+            </Tooltip>
           </div>
         </div>
       )}

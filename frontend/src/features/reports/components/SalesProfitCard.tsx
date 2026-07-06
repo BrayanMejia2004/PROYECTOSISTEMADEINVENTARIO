@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getProfitabilityReport, getHistoricalSummary } from '@/features/reports/api';
 import { formatCurrency } from '@/lib/utils';
 import { DollarSign, AlertCircle } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 
 export const SalesProfitCard = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -37,7 +38,7 @@ export const SalesProfitCard = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"><p className="text-sm text-brand-muted">Cargando...</p></div>;
+  if (loading) return <CardSkeleton />;
 
   if (error) {
     return (

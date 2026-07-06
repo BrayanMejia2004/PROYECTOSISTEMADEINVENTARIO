@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBranches } from '@/features/settings/hooks';
 import { formatNumber } from '@/lib/utils';
 import { PackageX, Store, Filter } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
 
 export const OutOfStockCard = () => {
   const { user } = useAuth();
@@ -46,17 +47,15 @@ export const OutOfStockCard = () => {
 
       {isOwner && (
         <div className="mt-3 flex items-center gap-2">
-          <Filter className="w-3.5 h-3.5 text-brand-muted" />
-          <select
+          <Filter className="w-3.5 h-3.5 text-brand-muted shrink-0" />
+          <Select
             value={selectedBranchId || ''}
             onChange={(e) => setSelectedBranchId(e.target.value || undefined)}
-            className="flex-1 px-2 py-2 rounded-lg border border-gray-200 text-xs text-brand-text focus:border-brand focus:ring-1 focus:ring-brand/20 outline-none"
-          >
-            <option value="">Todas las sucursales</option>
-            {branches?.data?.map((b: any) => (
-              <option key={b._id} value={b._id}>{b.name}</option>
-            ))}
-          </select>
+            placeholder="Todas las sucursales"
+            options={branches?.data?.map((b: any) => ({ value: b._id, label: b.name })) || []}
+            className="text-xs"
+            wrapperClassName="flex-1"
+          />
         </div>
       )}
 

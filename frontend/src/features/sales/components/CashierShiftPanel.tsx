@@ -12,6 +12,7 @@ import { ShiftCloseReceipt } from '@/features/sales/components/ShiftCloseReceipt
 import { CashMovements } from '@/features/sales/components/CashMovements';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import type { CloseShiftData } from '@/types';
 
 export const CashierShiftPanel = () => {
@@ -79,9 +80,7 @@ export const CashierShiftPanel = () => {
       </div>
 
       {shiftLoading ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
-          <p className="text-sm text-brand-muted">Cargando...</p>
-        </div>
+        <CardSkeleton lines={2} />
       ) : !isOpen ? (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center max-w-lg mx-auto">
           <Wallet className="w-16 h-16 text-brand-muted/30 mx-auto mb-4" />

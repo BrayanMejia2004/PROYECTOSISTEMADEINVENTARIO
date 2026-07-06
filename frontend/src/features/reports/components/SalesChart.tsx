@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getSalesReport } from '@/features/reports/api';
 import { TrendingUp } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import type { DailySalesData } from '@/types';
 
 export const SalesChart = () => {
@@ -25,7 +26,7 @@ export const SalesChart = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div className="text-sm text-brand-muted">Cargando...</div>;
+  if (loading) return <CardSkeleton lines={2} />;
 
   return (
     <div>

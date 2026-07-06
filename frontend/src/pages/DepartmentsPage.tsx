@@ -3,9 +3,14 @@ import { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Tag, Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import { Pagination } from '@/components/ui/Pagination';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { DepartmentFormComponent } from '@/features/departments/components/DepartmentForm';
 import type { Department } from '@/types';
 import type { DepartmentForm } from '@/features/departments/schemas';
@@ -15,7 +20,7 @@ export const DepartmentsPage = () => {
   if (user?.role === 'owner') return <Navigate to="/" replace />;
 
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useDepartments({ page, limit: 10 });
+  const { data, isLoading, isError, error, refetch } = useDepartments({ page, limit: 10 });
   const { mutate: createDepartment, isPending: isCreating } = useCreateDepartment();
   const { mutate: updateDepartment, isPending: isUpdating } = useUpdateDepartment();
   const { mutate: deleteDepartment } = useDeleteDepartment();
@@ -56,7 +61,8 @@ export const DepartmentsPage = () => {
     setConfirmDelete({ open: true, id: department._id, name: department.name });
   };
 
-  if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
+  if (isLoading) return <TableSkeleton rows={5} columns={3} />;
+  if (isError) return <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />;
 
   return (
     <div>
@@ -105,35 +111,37 @@ export const DepartmentsPage = () => {
             <tbody className="divide-y divide-gray-50">
               {data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-brand-muted">No hay departamentos registrados</td>
+                  <td colSpan={3}>
+                    <EmptyState icon={Tag} title="Sin departamentos" description="Crea el primer departamento para comenzar" />
+                  </td>
                 </tr>
               ) : (
                 data?.data?.map((department: Department) => (
                   <tr key={department._id} className="hover:bg-brand-bg/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-brand-text">{department.name}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        department.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-                      }`}>
+                      <Badge variant={department.isActive ? 'success' : 'danger'}>
                         {department.isActive ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(department)}
-                          className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
-                          title="Editar"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(department)}
-                          className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-600"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <Tooltip content="Editar">
+                          <button
+                            onClick={() => handleEdit(department)}
+                            className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Eliminar">
+                          <button
+                            onClick={() => handleDelete(department)}
+                            className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>

@@ -4,6 +4,7 @@ import { getProductByBarcode } from '@/features/inventory/api';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { CartItem } from '@/features/sales/types';
 import { Search, Barcode, Plus, Package, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
 
 interface PosProductSearchProps {
   onAddToCart: (item: CartItem) => void;
@@ -80,6 +81,12 @@ export const PosProductSearch = ({ onAddToCart, cartItems = [] }: PosProductSear
     barcodeInputRef.current?.focus();
   };
 
+  const stockVariant: Record<string, 'danger' | 'warning' | 'success'> = {
+    empty: 'danger',
+    low: 'warning',
+    ok: 'success',
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="space-y-2 mb-4 shrink-0">
@@ -107,18 +114,11 @@ export const PosProductSearch = ({ onAddToCart, cartItems = [] }: PosProductSear
             autoFocus
           />
           {barcodeFeedback && (
-            <div
-              className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
-                barcodeFeedback.ok
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-600'
-              }`}
-            >
-              {barcodeFeedback.ok ? (
-                <><span className="w-1.5 h-1.5 rounded-full bg-green-500" />{barcodeFeedback.msg}</>
-              ) : (
-                <>{barcodeFeedback.msg}</>
-              )}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Badge variant={barcodeFeedback.ok ? 'success' : 'danger'}>
+                {barcodeFeedback.ok && <><span className="w-1.5 h-1.5 rounded-full bg-green-500" /> </>}
+                {barcodeFeedback.msg}
+              </Badge>
             </div>
           )}
         </div>
@@ -141,11 +141,6 @@ export const PosProductSearch = ({ onAddToCart, cartItems = [] }: PosProductSear
             {products.map((product: any) => {
               const outOfStock = (product.stock ?? 0) <= 0;
               const stockLevel = (product.stock ?? 0) <= 0 ? 'empty' : (product.stock ?? 0) <= product.minStock ? 'low' : 'ok';
-              const stockColors = {
-                empty: 'bg-red-50 text-red-600 border-red-200',
-                low: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-                ok: 'bg-green-50 text-green-700 border-green-200',
-              };
               return (
                 <button
                   key={product._id}
@@ -186,19 +181,15 @@ export const PosProductSearch = ({ onAddToCart, cartItems = [] }: PosProductSear
                       {formatCurrency(product.price)}
                     </p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-1">
-                      <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${stockColors[stockLevel]}`}>
+                      <Badge variant={stockVariant[stockLevel]}>
                         <Package className="w-3 h-3" />
-                        {formatNumber(product.stock ?? 0)} uds
-                      </div>
+                        {' '}{formatNumber(product.stock ?? 0)} uds
+                      </Badge>
                       {product.applyTax && product.taxPercentage > 0 && (
-                        <div className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-                          IVA {product.taxPercentage}%
-                        </div>
+                        <Badge variant="info">IVA {product.taxPercentage}%</Badge>
                       )}
                       {product.allowsDiscount && product.maxDiscount > 0 && (
-                        <div className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
-                          Dcto {product.maxDiscount}%
-                        </div>
+                        <Badge variant="purple">Dcto {product.maxDiscount}%</Badge>
                       )}
                     </div>
                   </div>

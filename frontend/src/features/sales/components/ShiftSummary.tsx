@@ -18,7 +18,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
     <div>
       <div className={`grid grid-cols-1 sm:grid-cols-2 ${user?.role === 'cashier' ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} gap-4 mb-6`}>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-medium text-brand-muted uppercase tracking-wider mb-3">Dinero en Caja</p>
+          <p className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 text-center">Dinero en Caja</p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-brand-muted">Apertura</span>
@@ -54,7 +54,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-medium text-brand-muted uppercase tracking-wider mb-3">Ventas del Día</p>
+          <p className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 text-center">Ventas del Día</p>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
 
         {user?.role !== 'cashier' && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <p className="text-xs font-medium text-brand-muted uppercase tracking-wider mb-3">Ganancias</p>
+            <p className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 text-center">Ganancias</p>
             <div className="flex items-center justify-between mb-3">
               <p className="text-2xl font-sans font-bold text-green-600">{formatCurrency(summary.totalProfit)}</p>
               <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
@@ -122,7 +122,7 @@ export const ShiftSummary = ({ shift, summary }: ShiftSummaryProps) => {
         )}
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <p className="text-xs font-medium text-brand-muted uppercase tracking-wider mb-3">Resumen</p>
+          <p className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 text-center">Resumen</p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-brand-muted">Ventas hoy</span>

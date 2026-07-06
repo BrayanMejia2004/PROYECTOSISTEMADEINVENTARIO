@@ -6,6 +6,7 @@ import { useDepartments } from '@/features/departments/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Package } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import toast from 'react-hot-toast';
@@ -21,7 +22,7 @@ interface ProductFormProps {
 
 export const ProductForm = ({ productId }: ProductFormProps) => {
   const navigate = useNavigate();
-  const { data: productData } = useProduct(productId || '');
+  const { data: productData, isLoading: productLoading } = useProduct(productId || '');
   const { data: departments } = useDepartments();
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
@@ -67,7 +68,7 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
       reset({
         sku: d.sku, barcode: d.barcode || '', name: d.name,
         description: d.description || '', departmentId: d.departmentId || '',
-        brandId: d.brandId || '', supplierId: d.supplierId || '', image: d.image || '',
+        brandId: d.brandName || d.brandId || '', supplierId: d.supplierId || '', image: d.image || '',
         costPrice: d.costPrice, profitPercent: d.price > d.costPrice ? Math.round((1 - d.costPrice / d.price) * 1000) / 10 : 0,
         price: d.price, wholesalePrice: d.wholesalePrice || undefined,
         specialPrice: d.specialPrice || undefined, applyTax: d.applyTax,
@@ -105,6 +106,8 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   const handleRemoveImage = () => setValue('image', '');
 
   const sectionProps = { register, control, errors, setValue, departments, uploading, imageUrl, onImageSelect: handleImageSelect, onRemoveImage: handleRemoveImage };
+
+  if (productId && productLoading) return <CardSkeleton lines={6} />;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">

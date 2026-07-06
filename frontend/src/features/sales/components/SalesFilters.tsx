@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Filter, X, Search } from 'lucide-react';
 import { useUsers } from '@/features/users/hooks';
+import { Select } from '@/components/ui/Select';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { NumberInput } from '@/components/ui/NumberInput';
 
 export interface SalesFilterState {
@@ -55,17 +57,20 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
             className="w-full pl-9 pr-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
           />
         </div>
-        <button
-          onClick={() => setOpen(!open)}
-          className={`p-2.5 rounded-lg border transition-colors text-sm ${open ? 'bg-brand text-white border-brand' : 'border-gray-200 text-brand-muted hover:text-brand-text'}`}
-          title="Filtros"
-        >
-          <Filter className="w-4 h-4" />
-        </button>
-        {hasFilters && (
-          <button onClick={clear} className="p-2.5 rounded-lg border border-gray-200 text-brand-muted hover:text-red-500 transition-colors text-sm" title="Limpiar filtros">
-            <X className="w-4 h-4" />
+        <Tooltip content="Filtros">
+          <button
+            onClick={() => setOpen(!open)}
+            className={`p-2.5 rounded-lg border transition-colors text-sm ${open ? 'bg-brand text-white border-brand' : 'border-gray-200 text-brand-muted hover:text-brand-text'}`}
+          >
+            <Filter className="w-4 h-4" />
           </button>
+        </Tooltip>
+        {hasFilters && (
+          <Tooltip content="Limpiar filtros">
+            <button onClick={clear} className="p-2.5 rounded-lg border border-gray-200 text-brand-muted hover:text-red-500 transition-colors text-sm">
+              <X className="w-4 h-4" />
+            </button>
+          </Tooltip>
         )}
       </div>
       {open && (
@@ -73,42 +78,38 @@ export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Estado</label>
-              <select
+              <Select
                 value={filters.status || ''}
                 onChange={(e) => update('status', e.target.value)}
-                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-              >
-                <option value="">Todos</option>
-                <option value="completed">Completada</option>
-                <option value="refunded">Devuelta</option>
-              </select>
+                placeholder="Todos"
+                options={[
+                  { value: 'completed', label: 'Completada' },
+                  { value: 'refunded', label: 'Devuelta' },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Método de Pago</label>
-              <select
+              <Select
                 value={filters.paymentMethod || ''}
                 onChange={(e) => update('paymentMethod', e.target.value)}
-                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-              >
-                <option value="">Todos</option>
-                <option value="cash">Efectivo</option>
-                <option value="card">Tarjeta</option>
-                <option value="transfer">Transferencia</option>
-                <option value="exchange">Intercambio</option>
-              </select>
+                placeholder="Todos"
+                options={[
+                  { value: 'cash', label: 'Efectivo' },
+                  { value: 'card', label: 'Tarjeta' },
+                  { value: 'transfer', label: 'Transferencia' },
+                  { value: 'exchange', label: 'Intercambio' },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Vendedor</label>
-              <select
+              <Select
                 value={filters.userId || ''}
                 onChange={(e) => update('userId', e.target.value)}
-                className="w-full px-3 py-3 rounded-lg border border-gray-200 text-sm text-brand-text focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-              >
-                <option value="">Todos</option>
-                {users?.data?.map((u: any) => (
-                  <option key={u._id} value={u._id}>{u.firstName} {u.lastName}</option>
-                ))}
-              </select>
+                placeholder="Todos"
+                options={users?.data?.map((u: any) => ({ value: u._id, label: `${u.firstName} ${u.lastName}` })) || []}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-brand-muted mb-1">Cliente</label>

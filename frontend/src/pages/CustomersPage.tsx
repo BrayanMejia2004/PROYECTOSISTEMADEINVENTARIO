@@ -5,6 +5,10 @@ import { Plus, Users, X, Pencil, Trash2, Search } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import { Pagination } from '@/components/ui/Pagination';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { CustomerFormComponent } from '@/features/customers/components/CustomerForm';
 import type { Customer } from '@/types';
 import type { CustomerForm } from '@/features/customers/schemas';
@@ -12,7 +16,7 @@ import type { CustomerForm } from '@/features/customers/schemas';
 export const CustomersPage = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useCustomers({ search: search || undefined, page, limit: 10 });
+  const { data, isLoading, isError, error, refetch } = useCustomers({ search: search || undefined, page, limit: 10 });
   const { mutate: createCustomer, isPending: isCreating } = useCreateCustomer();
   const { mutate: updateCustomer, isPending: isUpdating } = useUpdateCustomer();
   const { mutate: deleteCustomer } = useDeleteCustomer();
@@ -54,7 +58,8 @@ export const CustomersPage = () => {
     setEditingCustomer(null);
   }, []);
 
-  if (isLoading) return <div className="text-sm text-brand-muted p-4">Cargando...</div>;
+  if (isLoading) return <TableSkeleton rows={5} columns={7} />;
+  if (isError) return <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />;
 
   return (
     <div>
@@ -119,7 +124,9 @@ export const CustomersPage = () => {
             <tbody className="divide-y divide-gray-50">
               {data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-brand-muted">No hay clientes registrados</td>
+                  <td colSpan={7}>
+                    <EmptyState icon={Users} title="Sin clientes" description="Crea tu primer cliente para comenzar" />
+                  </td>
                 </tr>
               ) : (
                 data?.data?.map((customer: Customer) => (
@@ -132,12 +139,16 @@ export const CustomersPage = () => {
                     <td className="px-6 py-4 text-sm text-brand-muted">{customer.lastPurchaseDate ? formatDate(customer.lastPurchaseDate) : '—'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleEdit(customer)} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text" title="Editar">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(customer)} className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500" title="Eliminar">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <Tooltip content="Editar">
+                          <button onClick={() => handleEdit(customer)} className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors text-brand-muted hover:text-brand-text">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Eliminar">
+                          <button onClick={() => handleDelete(customer)} className="p-2.5 rounded-lg hover:bg-red-50 transition-colors text-brand-muted hover:text-red-500">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
