@@ -1,5 +1,4 @@
 import Branch from '../../shared/models/branch/branch.model';
-import Tenant from '../../shared/models/tenant/tenant.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 
 interface CreateBranchInput {

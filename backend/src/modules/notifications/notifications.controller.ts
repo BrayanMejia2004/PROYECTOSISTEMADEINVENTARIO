@@ -10,7 +10,7 @@ export const getNotifications = asyncHandler(async (req: AuthRequest, res: Respo
   const tenantId = req.user?.tenantId;
   if (!tenantId) throw ApiError.unauthorized('Tenant ID requerido');
 
-  const limit = Math.min(100, parseInt(req.query.limit as string) || 50); // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- 0 is invalid here
+  const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
 
   const notifications = await Notification.find({
     tenantId,

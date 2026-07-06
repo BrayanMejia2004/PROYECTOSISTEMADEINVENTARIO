@@ -1,9 +1,9 @@
-import app from './src/app';
-import { connectDB } from './src/config/database/database';
-import { env } from './src/config/env/env';
-import { logger } from './src/config/logger/logger';
-import { startStockAlertJob } from './src/jobs/stockAlert/stockAlert.job';
-import { registerSaleListeners, registerStockListeners, registerAuthListeners } from './src/shared/utils/eventBus';
+import app from './app';
+import { connectDB } from './config/database/database';
+import { env } from './config/env/env';
+import { logger } from './config/logger/logger';
+import { startStockAlertJob } from './jobs/stockAlert/stockAlert.job';
+import { registerSaleListeners, registerStockListeners, registerAuthListeners } from './shared/utils/eventBus';
 
 const startServer = async (): Promise<void> => {
   await connectDB();
