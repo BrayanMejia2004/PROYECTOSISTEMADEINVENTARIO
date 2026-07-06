@@ -1,5 +1,4 @@
 import api from '@/api/axios';
-import { ENDPOINTS } from '@/api/endpoints';
 import { ApiResponse } from '@/types';
 import { Customer } from './types';
 

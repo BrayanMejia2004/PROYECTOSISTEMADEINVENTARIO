@@ -152,7 +152,7 @@ export const SalesPage = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100">
               <span className="text-xs text-brand-muted">
-                Página {formatNumber(meta?.page)} de {formatNumber(totalPages)}
+                Página {formatNumber(meta?.page ?? 1)} de {formatNumber(totalPages)}
               </span>
               <div className="flex items-center gap-1">
                 <button

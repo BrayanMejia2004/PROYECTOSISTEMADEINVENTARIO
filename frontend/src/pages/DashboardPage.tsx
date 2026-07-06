@@ -73,7 +73,7 @@ export const DashboardPage = () => {
     );
   }
 
-  const { data: productsData, isLoading: productsLoading, isError: productsError, error: productsErr, refetch: refetchProducts } = useProducts();
+  const { data: productsData, isLoading: productsLoading } = useProducts();
   const { data: salesData, isLoading: salesLoading, isError: salesError, error: salesErr, refetch: refetchSales } = useSales({ limit: 0 });
   const [ventasPage, setVentasPage] = useState(1);
   const VENTAS_PER_PAGE = 3;
@@ -86,12 +86,12 @@ export const DashboardPage = () => {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-3">
         <h1 className="text-2xl font-sans font-bold text-brand-text">Dashboard</h1>
         <p className="text-sm text-brand-muted mt-1">Resumen general de tu inventario</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
         <StatCard
           icon={<Package className="w-5 h-5" />}
           label="Productos registrados"
@@ -120,14 +120,14 @@ export const DashboardPage = () => {
       </div>
 
       {(user?.role === 'owner' || user?.role === 'admin') && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
           <OutOfStockCard />
           <LowStockCard />
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
           <h3 className="font-sans font-semibold text-brand-text mb-4">Accesos Rápidos</h3>
           <div className="grid grid-cols-2 gap-3">
             <QuickLink href="/inventory/new" icon={<Package className="w-4 h-4" />} label="Nuevo Producto" />
@@ -137,12 +137,12 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-sans font-semibold text-brand-text mb-4">Últimas Ventas</h3>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <h3 className="font-sans font-semibold text-brand-text mb-3">Últimas Ventas</h3>
           {salesError ? (
             <ErrorState message={(salesErr as Error)?.message} onRetry={() => refetchSales()} />
           ) : salesLoading ? (
-            <div className="space-y-3 min-h-[200px]">
+            <div className="space-y-3 min-h-[120px]">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center justify-between py-2">
                   <div className="space-y-1">
@@ -155,11 +155,11 @@ export const DashboardPage = () => {
             </div>
           ) : salesData?.data?.length ? (
             <>
-              <div className="space-y-3 min-h-[200px]">
+              <div className="space-y-2 min-h-[120px]">
                 {salesData.data
                   .slice((ventasPage - 1) * VENTAS_PER_PAGE, ventasPage * VENTAS_PER_PAGE)
                   .map((sale: Sale) => (
-                    <div key={sale._id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <div key={sale._id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-brand-text">{sale.saleNumber}</p>
                         <p className="text-xs text-brand-muted">{new Date(sale.createdAt).toLocaleDateString()}</p>

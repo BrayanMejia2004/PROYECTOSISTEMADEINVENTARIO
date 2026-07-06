@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { useImportProducts } from '@/features/inventory/hooks';
 import { Upload, FileSpreadsheet, ArrowLeft, CheckCircle2, XCircle, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const SYSTEM_FIELDS = [
   { key: 'sku', label: 'SKU', required: true },
@@ -64,18 +65,16 @@ export const ImportModal = ({ onClose }: ImportModalProps) => {
   const [rawData, setRawData] = useState<any[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ created: number; errors: Array<{ row: number; message: string }> } | null>(null);
-  const [fileError, setFileError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { mutate: importProducts, isPending } = useImportProducts();
 
   const handleFile = (file: File) => {
-    setFileError('');
     if (file.size > MAX_FILE_SIZE) {
-      setFileError(`El archivo excede el límite de 5 MB`);
+      toast.error(`El archivo excede el límite de 5 MB`);
       return;
     }
     if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
-      setFileError('Formato no soportado. Usa .xlsx, .xls o .csv');
+      toast.error('Formato no soportado. Usa .xlsx, .xls o .csv');
       return;
     }
     setFileName(file.name);
@@ -86,11 +85,11 @@ export const ImportModal = ({ onClose }: ImportModalProps) => {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
       if (json.length === 0) {
-        setFileError('El archivo está vacío');
+        toast.error('El archivo está vacío');
         return;
       }
       if (json.length > MAX_ROWS) {
-        setFileError(`El archivo tiene más de ${MAX_ROWS.toLocaleString()} filas. Reduce la cantidad e intenta de nuevo`);
+        toast.error(`El archivo tiene más de ${MAX_ROWS.toLocaleString()} filas. Reduce la cantidad e intenta de nuevo`);
         return;
       }
       const hdrs = Object.keys(json[0] as object);

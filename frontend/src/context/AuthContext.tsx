@@ -68,16 +68,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.data) {
         setTenant(data.data);
       }
-    } catch {
-      // Ignorar error
+    } catch (err) {
+      console.warn('Error al refrescar datos del tenant:', err);
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
       await api.post(ENDPOINTS.LOGOUT);
-    } catch {
-      // Ignorar error en logout
+    } catch (err) {
+      console.warn('Error en logout del servidor:', err);
     }
     setAccessToken(null);
     sessionStorage.removeItem('pos-carts');

@@ -45,6 +45,7 @@ export interface Product {
   departmentName?: string;
   stock?: number;
   brandId?: string;
+  brandName?: string;
   supplierId?: string;
   image?: string;
   costPrice: number;

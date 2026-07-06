@@ -75,38 +75,40 @@ export const BrandingTab = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h3 className="font-sans font-semibold text-brand-text mb-4">Color Corporativo</h3>
-        <p className="text-sm text-brand-muted mb-4">Elige el color principal que identificará a tu empresa en el sistema.</p>
-        <div className="flex items-center gap-4">
-          <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0" />
-          <div className="flex-1">
-            <input type="text" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#2D8A4E" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <h3 className="font-sans font-semibold text-brand-text mb-4">Color Corporativo</h3>
+          <p className="text-sm text-brand-muted mb-4">Elige el color principal que identificará a tu empresa en el sistema.</p>
+          <div className="flex items-center gap-4">
+            <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0" />
+            <div className="flex-1">
+              <input type="text" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#2D8A4E" />
+            </div>
+            <button onClick={handleSaveBrandColor} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0">Guardar color</button>
           </div>
-          <button onClick={handleSaveBrandColor} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0">Guardar color</button>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="text-sm text-brand-muted">Vista previa:</span>
-          <div className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: brandColor }}>
-            <span className="text-white text-sm font-medium">InventoPro</span>
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-brand-muted">Vista previa:</span>
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: brandColor }}>
+              <span className="text-white text-sm font-medium">InventoPro</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h3 className="font-sans font-semibold text-brand-text mb-4">Color del Menú Lateral</h3>
-        <p className="text-sm text-brand-muted mb-4">Personaliza el color de fondo del menú de navegación.</p>
-        <div className="flex items-center gap-4">
-          <input type="color" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0" />
-          <div className="flex-1">
-            <input type="text" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#1E293B" />
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+          <h3 className="font-sans font-semibold text-brand-text mb-4">Color del Menú Lateral</h3>
+          <p className="text-sm text-brand-muted mb-4">Personaliza el color de fondo del menú de navegación.</p>
+          <div className="flex items-center gap-4">
+            <input type="color" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0" />
+            <div className="flex-1">
+              <input type="text" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#1E293B" />
+            </div>
+            <button onClick={handleSaveSidebarColor} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0">Guardar color</button>
           </div>
-          <button onClick={handleSaveSidebarColor} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0">Guardar color</button>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="text-sm text-brand-muted">Vista previa:</span>
-          <div className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: brandSidebar }}>
-            <span className="text-white text-sm font-medium">Menú</span>
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-brand-muted">Vista previa:</span>
+            <div className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: brandSidebar }}>
+              <span className="text-white text-sm font-medium">Menú</span>
+            </div>
           </div>
         </div>
       </div>

@@ -43,7 +43,6 @@ export const PosPage = () => {
     exchangeFromSaleId?: string;
     exchangeCredit?: number;
   }) => {
-    const discount = data.discountAmount || 0;
     createSale(
       {
         items: cartItems.map((item) => ({

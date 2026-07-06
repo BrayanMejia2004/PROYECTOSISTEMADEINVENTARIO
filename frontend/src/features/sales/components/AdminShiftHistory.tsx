@@ -41,19 +41,15 @@ export const AdminShiftHistory = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-            <Wallet className="w-5 h-5 text-brand" />
-          </div>
           <div>
-            <h1 className="text-xl font-sans font-bold text-brand-text">Historial de Cajas</h1>
+            <h1 className="text-2xl font-sans font-bold text-brand-text">Historial de Cajas</h1>
             <p className="text-sm text-brand-muted">Turnos de cajeros del día</p>
           </div>
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            showFilters ? 'bg-brand/10 text-brand' : 'bg-gray-100 text-brand-muted hover:text-brand-text'
-          }`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-brand/10 text-brand' : 'bg-gray-100 text-brand-muted hover:text-brand-text'
+            }`}
         >
           <Filter className="w-4 h-4" />
           Filtros
@@ -110,64 +106,64 @@ export const AdminShiftHistory = () => {
       ) : isError ? (
         <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
       ) : (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        {shifts.length === 0 ? (
-          <EmptyState icon={Wallet} title="Sin turnos registrados" description="No hay turnos de caja en el período seleccionado" />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Cajero</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Sucursal</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Apertura</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Hora Apertura</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Cierre</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Hora Cierre</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Entradas</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Salidas</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Ventas</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Ganancia</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {shifts.map((s: CashierShift) => (
-                  <tr
-                    key={s._id}
-                    onClick={() => setSelectedShift(s)}
-                    className="hover:bg-brand/5 transition-colors cursor-pointer"
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-brand underline underline-offset-2 decoration-brand/30 hover:decoration-brand">
-                      {s.userName || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-brand-muted">{s.branchName || '—'}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">{formatCurrency(s.openingBalance)}</td>
-                    <td className="px-4 py-3 text-sm text-brand-muted">
-                      {s.openedAt ? new Date(s.openedAt).toLocaleTimeString() : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">
-                      {s.closingBalance != null ? formatCurrency(s.closingBalance) : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-brand-muted">
-                      {s.closedAt ? new Date(s.closedAt).toLocaleTimeString() : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right">{formatCurrency(s.totalEntries || 0)}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-red-500 text-right">{formatCurrency(s.totalExits || 0)}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">{formatCurrency(s.totalSales)}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right">{formatCurrency(s.totalProfit)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <Badge variant={s.status === 'open' ? 'success' : 'neutral'}>
-                        {s.status === 'open' ? 'Abierta' : 'Cerrada'}
-                      </Badge>
-                    </td>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          {shifts.length === 0 ? (
+            <EmptyState icon={Wallet} title="Sin turnos registrados" description="No hay turnos de caja en el período seleccionado" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Cajero</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Sucursal</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Apertura</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Hora Apertura</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Cierre</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Hora Cierre</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Entradas</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Salidas</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Ventas</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Ganancia</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-brand-muted uppercase tracking-wider">Estado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {shifts.map((s: CashierShift) => (
+                    <tr
+                      key={s._id}
+                      onClick={() => setSelectedShift(s)}
+                      className="hover:bg-brand/5 transition-colors cursor-pointer"
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-brand underline underline-offset-2 decoration-brand/30 hover:decoration-brand">
+                        {s.userName || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-brand-muted">{s.branchName || '—'}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">{formatCurrency(s.openingBalance)}</td>
+                      <td className="px-4 py-3 text-sm text-brand-muted">
+                        {s.openedAt ? new Date(s.openedAt).toLocaleTimeString() : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">
+                        {s.closingBalance != null ? formatCurrency(s.closingBalance) : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-brand-muted">
+                        {s.closedAt ? new Date(s.closedAt).toLocaleTimeString() : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right">{formatCurrency(s.totalEntries || 0)}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-red-500 text-right">{formatCurrency(s.totalExits || 0)}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-brand-text text-right">{formatCurrency(s.totalSales)}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-green-600 text-right">{formatCurrency(s.totalProfit)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge variant={s.status === 'open' ? 'success' : 'neutral'}>
+                          {s.status === 'open' ? 'Abierta' : 'Cerrada'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {meta && (

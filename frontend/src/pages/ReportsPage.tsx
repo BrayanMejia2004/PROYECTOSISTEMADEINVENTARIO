@@ -4,7 +4,6 @@ import { StockPriceValueCard } from '@/features/reports/components/StockPriceVal
 import { InventoryCostCard } from '@/features/reports/components/InventoryCostCard';
 import { SalesProfitCard } from '@/features/reports/components/SalesProfitCard';
 import { BranchComparison } from '@/features/reports/components/BranchComparison';
-import { BarChart3 } from 'lucide-react';
 
 export const ReportsPage = () => {
   return (
