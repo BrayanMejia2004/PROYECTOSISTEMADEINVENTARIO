@@ -1,12 +1,22 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'react-hot-toast';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import toast, { Toaster } from 'react-hot-toast';
 import { AuthProvider, BranchProvider } from './context';
 import { AppRouter } from './router';
+import { getErrorMessage } from './lib/utils';
 import './index.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      const axiosErr = error as { response?: { status?: number; data?: { message?: string } } } | undefined;
+      const message = axiosErr?.response?.data?.message?.toLowerCase() ?? '';
+      if (axiosErr?.response?.status === 403 && message.includes('suscripción')) return;
+      toast.error(getErrorMessage(error, 'Ocurrió un error inesperado'));
+    },
+  }),
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

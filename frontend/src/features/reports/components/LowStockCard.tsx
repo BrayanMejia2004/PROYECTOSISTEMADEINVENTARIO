@@ -24,19 +24,21 @@ export const LowStockCard = () => {
   const hasLowStock = count > 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-brand-muted uppercase tracking-wider">Productos Bajo Stock</p>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${hasLowStock ? 'bg-red-50' : 'bg-yellow-50'}`}>
-          {hasLowStock ? <AlertTriangle className="w-4 h-4 text-red-500" /> : <Package className="w-4 h-4 text-yellow-600" />}
+    <div className="bg-white rounded-xl border border-border-light shadow-soft p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-brand-muted">Bajo stock</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${hasLowStock ? 'text-stock-low' : 'text-stock-ok'}`}>
+            {count}
+          </p>
+        </div>
+        <div className={`mt-0.5 p-1.5 rounded-lg ${hasLowStock ? 'bg-stock-low-soft text-stock-low' : 'bg-stock-ok-soft text-stock-ok'}`}>
+          {hasLowStock ? <AlertTriangle className="w-4 h-4" /> : <Package className="w-4 h-4" />}
         </div>
       </div>
-      <p className={`text-2xl font-sans font-bold ${hasLowStock ? 'text-red-600' : 'text-yellow-600'}`}>
-        {count}
-      </p>
-      <p className="text-xs text-brand-muted mt-1">
+      <p className="text-xs text-brand-muted mt-2">
         {hasLowStock
-          ? `${count} producto${count !== 1 ? 's' : ''} por debajo del stock mínimo`
+          ? 'por debajo del stock mínimo'
           : 'Todos los productos tienen stock suficiente'}
       </p>
 
@@ -57,9 +59,9 @@ export const LowStockCard = () => {
       {hasLowStock && (
         <div className="mt-3 space-y-1.5 max-h-32 overflow-y-auto">
           {items.slice(0, 5).map((item: any) => (
-            <div key={item._id} className="flex items-center justify-between text-xs">
+            <div key={item._id} className="flex items-center justify-between rounded-lg bg-stock-low-soft px-2.5 py-1.5 text-xs">
               <span className="text-brand-text truncate mr-2">{item.productName || item.sku || '—'}</span>
-              <span className="text-red-500 font-medium shrink-0">{formatNumber(item.quantity)} / {formatNumber(item.minStock || 0)}</span>
+              <span className="text-stock-low font-medium tabular-nums shrink-0">{formatNumber(item.quantity)} / {formatNumber(item.minStock || 0)}</span>
             </div>
           ))}
           {count > 5 && (

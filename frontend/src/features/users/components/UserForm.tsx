@@ -6,12 +6,13 @@ interface Props {
   defaultValues?: Partial<UserForm>;
   isPending: boolean;
   editingId?: string;
+  serverError?: string;
   onSubmit: (data: UserForm) => void;
   onCancel: () => void;
   branchOptions?: Array<{ _id: string; name: string }>;
 }
 
-export const UserFormComponent = ({ defaultValues, isPending, editingId, onSubmit, onCancel, branchOptions }: Props) => {
+export const UserFormComponent = ({ defaultValues, isPending, editingId, serverError, onSubmit, onCancel, branchOptions }: Props) => {
   const {
     register,
     handleSubmit,
@@ -26,6 +27,11 @@ export const UserFormComponent = ({ defaultValues, isPending, editingId, onSubmi
       <h3 className="font-sans font-semibold text-brand-text mb-4">
         {editingId ? 'Editar Usuario' : 'Nuevo Usuario'}
       </h3>
+      {serverError && (
+        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 mb-4">
+          {serverError}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-brand-text mb-1.5">Nombre</label>

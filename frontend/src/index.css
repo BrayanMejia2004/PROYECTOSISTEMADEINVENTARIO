@@ -1,33 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand tokens */
-  --color-brand: #2D8A4E;
-  --color-brand-light: #6ABF8A;
-  --color-brand-dark: #1E5A32;
-  --color-brand-bg: #F0F4F2;
-  --color-brand-sidebar: #1E293B;
-  --color-brand-text: #0F172A;
-  --color-brand-muted: #64748B;
-  --color-brand-success: #16A34A;
-  --color-brand-warning: #D97706;
-  --color-brand-danger: #DC2626;
+  /* Marca: azul acero de almacén */
+  --color-brand: #2F6F9E;
+  --color-brand-light: #5FA3CC;
+  --color-brand-dark: #1E4E73;
+  --color-brand-bg: #F4F4F0;
+  --color-brand-sidebar: #16232F;
+  --color-brand-text: #101418;
+  --color-brand-muted: #5A6472;
 
-  /* Surface tokens */
+  /* Semánticos de stock: no dependen del color de marca */
+  --color-stock-ok: #2E8B57;
+  --color-stock-ok-soft: #E6F2EB;
+  --color-stock-low: #E8A33D;
+  --color-stock-low-soft: #FBF3E3;
+  --color-stock-out: #D64541;
+  --color-stock-out-soft: #F9E8E7;
+  --color-stock-move: #3D6FA3;
+  --color-stock-move-soft: #E8EFF6;
+
+  --color-brand-success: #2E8B57;
+  --color-brand-warning: #E8A33D;
+  --color-brand-danger: #D64541;
+
+  /* Superficies (neutros cálidos tipo kraft) */
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F8FAF8;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
+  --color-surface-hover: #FBFAF7;
+  --color-border: #E3DFD5;
+  --color-border-light: #F0EDE6;
 
-  /* Fonts */
+  /* Tipografías */
   --font-sans: "DM Sans", sans-serif;
   --font-body: "Outfit", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* Radius */
+  /* Radios */
   --radius-xs: 0.25rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
+
+  /* Elevación: sombras suaves apiladas sobre bordes sutiles */
+  --shadow-soft: 0 0 0 1px rgba(16, 20, 24, 0.06), 0 1px 2px -1px rgba(16, 20, 24, 0.06), 0 2px 4px rgba(16, 20, 24, 0.04);
+  --shadow-card: 0 0 0 1px rgba(16, 20, 24, 0.07), 0 1px 2px -1px rgba(16, 20, 24, 0.08), 0 4px 8px rgba(16, 20, 24, 0.06);
+  --shadow-pop: 0 0 0 1px rgba(16, 20, 24, 0.08), 0 2px 4px -1px rgba(16, 20, 24, 0.08), 0 8px 24px rgba(16, 20, 24, 0.12);
 
   /* Animations */
   --animate-fade-in: fade-in 0.2s ease-out;

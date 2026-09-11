@@ -1,6 +1,6 @@
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/features/users/hooks';
 import { useBranches } from '@/features/settings/hooks';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getErrorMessage } from '@/lib/utils';
 import { usePermission } from '@/hooks/usePermission';
 import { useState, useCallback } from 'react';
 import { UserCircle, Plus, X, Pencil, Trash2 } from 'lucide-react';
@@ -40,9 +40,11 @@ export const UsersPage = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
   const [showSuccess, setShowSuccess] = useState('');
+  const [serverError, setServerError] = useState('');
 
   const handleSubmitForm = useCallback((formData: UserForm) => {
     const { confirmPassword: _, ...payload } = formData;
+    setServerError('');
     if (editingUser) {
       const input: any = { ...payload };
       if (!input.password) delete input.password;
@@ -52,6 +54,7 @@ export const UsersPage = () => {
           setShowForm(false);
           setEditingUser(null);
         },
+        onError: (err: Error) => setServerError(getErrorMessage(err, 'No se pudo actualizar el usuario')),
       });
     } else {
       createUser(payload, {
@@ -59,6 +62,7 @@ export const UsersPage = () => {
           setShowSuccess('Usuario creado exitosamente');
           setShowForm(false);
         },
+        onError: (err: Error) => setServerError(getErrorMessage(err, 'No se pudo crear el usuario')),
       });
     }
   }, [editingUser, updateUser, createUser]);
@@ -75,6 +79,7 @@ export const UsersPage = () => {
   const handleCancel = useCallback(() => {
     setShowForm(false);
     setEditingUser(null);
+    setServerError('');
   }, []);
 
   if (isLoading) return <TableSkeleton rows={5} columns={7} />;
@@ -117,6 +122,7 @@ export const UsersPage = () => {
           editingId={editingUser?._id}
           onSubmit={handleSubmitForm}
           onCancel={handleCancel}
+          serverError={serverError}
           branchOptions={branches?.data}
         />
       )}
@@ -192,7 +198,11 @@ export const UsersPage = () => {
         open={confirmDelete.open}
         onClose={() => setConfirmDelete({ open: false })}
         onConfirm={() => {
-          if (confirmDelete.id) deleteUser(confirmDelete.id);
+          if (confirmDelete.id) {
+            deleteUser(confirmDelete.id, {
+              onSuccess: () => setShowSuccess('Usuario eliminado exitosamente'),
+            });
+          }
           setConfirmDelete({ open: false });
         }}
         title="Eliminar usuario"

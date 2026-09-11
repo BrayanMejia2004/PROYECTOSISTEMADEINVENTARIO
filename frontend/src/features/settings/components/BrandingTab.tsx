@@ -5,7 +5,6 @@ import { Image, Loader2 } from 'lucide-react';
 import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '@/lib/utils';
 
 export const BrandingTab = () => {
   const { refreshTenant } = useAuth();
@@ -13,8 +12,8 @@ export const BrandingTab = () => {
   const { mutate: updateTenant } = useUpdateTenant();
   const { mutateAsync: uploadLogoMutation, isPending: isUploadingLogo } = useUploadLogo();
   const [showSuccess, setShowSuccess] = useState('');
-  const [brandColor, setBrandColor] = useState('#2D8A4E');
-  const [brandSidebar, setBrandSidebar] = useState('#1E293B');
+  const [brandColor, setBrandColor] = useState('#2F6F9E');
+  const [brandSidebar, setBrandSidebar] = useState('#16232F');
 
   useEffect(() => {
     if (tenant?.data) {
@@ -26,14 +25,12 @@ export const BrandingTab = () => {
   const handleSaveBrandColor = () => {
     updateTenant({ brandColor } as any, {
       onSuccess: () => { setShowSuccess('Color guardado exitosamente'); refreshTenant(); },
-      onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el color')),
     });
   };
 
   const handleSaveSidebarColor = () => {
     updateTenant({ brandSidebar } as any, {
       onSuccess: () => { setShowSuccess('Color del menú guardado exitosamente'); refreshTenant(); },
-      onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el color')),
     });
   };
 
@@ -82,7 +79,7 @@ export const BrandingTab = () => {
           <div className="flex items-center gap-4">
             <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0" />
             <div className="flex-1">
-              <input type="text" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#2D8A4E" />
+              <input type="text" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#2F6F9E" />
             </div>
             <button onClick={handleSaveBrandColor} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0">Guardar color</button>
           </div>
@@ -100,7 +97,7 @@ export const BrandingTab = () => {
           <div className="flex items-center gap-4">
             <input type="color" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer shrink-0" />
             <div className="flex-1">
-              <input type="text" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#1E293B" />
+              <input type="text" value={brandSidebar} onChange={(e) => setBrandSidebar(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-brand-text font-mono focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all" placeholder="#16232F" />
             </div>
             <button onClick={handleSaveSidebarColor} className="bg-brand text-white px-5 py-3 rounded-lg hover:bg-brand-dark transition-colors text-sm font-medium shrink-0">Guardar color</button>
           </div>

@@ -30,14 +30,16 @@ export const StockPriceValueCard = () => {
   if (loading) return <CardSkeleton />;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 h-full">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-brand-muted uppercase tracking-wider">Valor del Inventario (Precio)</p>
-        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-          <Package className="w-4 h-4 text-blue-600" />
+    <div className="bg-white rounded-xl border border-border-light shadow-soft p-6 h-full">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-brand-muted">Valor del inventario (precio)</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-brand-text">{formatCurrency(totalValue)}</p>
+        </div>
+        <div className="mt-0.5 p-1.5 rounded-lg bg-brand-bg text-brand">
+          <Package className="w-4 h-4" />
         </div>
       </div>
-      <p className="text-2xl font-sans font-bold text-brand-text">{formatCurrency(totalValue)}</p>
       <p className="text-xs text-brand-muted mt-2">{formatNumber(totalItems)} productos en total</p>
     </div>
   );

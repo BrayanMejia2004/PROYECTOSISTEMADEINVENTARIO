@@ -11,6 +11,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { StockLevel } from './StockLevel';
 
 const PAGE_SIZE = 25;
 
@@ -24,7 +25,7 @@ const UNIT_LABELS: Record<string, string> = {
   pack: 'Paquete',
 };
 
-export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: string; readOnly?: boolean; userRole?: string }) => {
+export const ProductTable = ({ branchId, readOnly }: { branchId?: string; readOnly?: boolean }) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 800);
@@ -35,7 +36,6 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
   const { mutate: deleteProduct } = useDeleteProduct();
   const navigate = useNavigate();
   const { hasPermission } = usePermission();
-  const isAdmin = userRole === 'admin';
 
   const products: Product[] = data?.data || [];
   const meta = data?.meta;
@@ -55,9 +55,7 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
       key: 'stock',
       label: 'Stock',
       render: (p: Product) => (
-        <span className={`font-semibold text-sm ${(p.stock ?? 0) > 0 ? 'text-brand' : 'text-brand-muted'}`}>
-          {formatNumber(p.stock ?? 0)}
-        </span>
+        <StockLevel stock={p.stock ?? 0} minStock={p.minStock} maxStock={p.maxStock} unit={p.unit} />
       ),
     },
     {
@@ -73,7 +71,7 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
       label: 'Costo',
       hideOnMobile: true,
       render: (p: Product) => (
-        <span className="text-brand-muted">{formatCurrency(p.costPrice)}</span>
+        <span className="text-brand-muted tabular-nums">{formatCurrency(p.costPrice)}</span>
       ),
     },
     {
@@ -83,14 +81,14 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
       render: (p: Product) => {
         if (p.price <= p.costPrice) return <span className="text-brand-muted">—</span>;
         const percent = ((1 - p.costPrice / p.price) * 100).toFixed(1);
-        return <span className="font-medium text-green-600">{percent}%</span>;
+        return <span className="font-medium text-stock-ok tabular-nums">{percent}%</span>;
       },
     },
     {
       key: 'price',
       label: 'Precio',
       render: (p: Product) => (
-        <span className="font-semibold text-brand-text">{formatCurrency(p.price)}</span>
+        <span className="font-semibold text-brand-text tabular-nums">{formatCurrency(p.price)}</span>
       ),
     },
     {
@@ -98,7 +96,7 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
       label: 'Precio Mayor',
       hideOnMobile: true,
       render: (p: Product) => (
-        <span className="text-brand-muted">
+        <span className="text-brand-muted tabular-nums">
           {p.wholesalePrice ? formatCurrency(p.wholesalePrice) : '—'}
         </span>
       ),
@@ -122,29 +120,27 @@ export const ProductTable = ({ branchId, readOnly, userRole }: { branchId?: stri
 
   return (
     <div>
-      {isAdmin && (
-        <div className="px-4 py-3 border-b border-gray-100">
-          <div className="relative max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre o SKU..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-9 py-2 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => { setSearch(''); setPage(1); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+      <div className="px-4 py-3 border-b border-gray-100">
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre o SKU..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full pl-9 pr-9 py-2 rounded-lg border border-gray-200 text-sm text-brand-text placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setPage(1); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-brand-muted hover:text-brand hover:bg-brand/10 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {products.length === 0 ? (
         <div className="p-12 flex flex-col items-center justify-center text-center">

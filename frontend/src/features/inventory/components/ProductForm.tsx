@@ -10,7 +10,6 @@ import { CardSkeleton } from '@/components/ui/CardSkeleton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SuccessToast } from '@/components/ui/SuccessToast';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '@/lib/utils';
 import { BasicInfoSection } from './sections/BasicInfoSection';
 import { PriceSection } from './sections/PriceSection';
 import { TaxSection } from './sections/TaxSection';
@@ -86,7 +85,6 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
     if (!data) return;
     const cb = {
       onSuccess: () => { setShowSuccess(productId ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente'); setTimeout(() => navigate('/inventory'), 1500); },
-      onError: (err: Error) => toast.error(getErrorMessage(err, 'Error al guardar el producto')),
     };
     if (productId) updateProduct({ id: productId, input: data }, cb);
     else createProduct(data, cb);
@@ -112,9 +110,13 @@ export const ProductForm = ({ productId }: ProductFormProps) => {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
-          <Package className="w-5 h-5 text-brand" />
-        </div>
+        {imageUrl ? (
+          <img src={imageUrl} alt="Producto" className="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-gray-50" />
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
+            <Package className="w-5 h-5 text-brand" />
+          </div>
+        )}
         <div>
           <h3 className="font-sans font-semibold text-brand-text">{productId ? 'Editar Producto' : 'Nuevo Producto'}</h3>
           <p className="text-xs text-brand-muted">{productId ? 'Actualiza los datos del producto' : 'Ingresa los datos del nuevo producto'}</p>

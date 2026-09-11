@@ -29,19 +29,21 @@ export const OutOfStockCard = () => {
   }, {});
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-brand-muted uppercase tracking-wider">Productos Agotados</p>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${hasOutOfStock ? 'bg-red-50' : 'bg-green-50'}`}>
-          <PackageX className={`w-4 h-4 ${hasOutOfStock ? 'text-red-500' : 'text-green-600'}`} />
+    <div className="bg-white rounded-xl border border-border-light shadow-soft p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-brand-muted">Agotados</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${hasOutOfStock ? 'text-stock-out' : 'text-stock-ok'}`}>
+            {count}
+          </p>
+        </div>
+        <div className={`mt-0.5 p-1.5 rounded-lg ${hasOutOfStock ? 'bg-stock-out-soft text-stock-out' : 'bg-stock-ok-soft text-stock-ok'}`}>
+          <PackageX className="w-4 h-4" />
         </div>
       </div>
-      <p className={`text-2xl font-sans font-bold ${hasOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
-        {count}
-      </p>
-      <p className="text-xs text-brand-muted mt-1">
+      <p className="text-xs text-brand-muted mt-2">
         {hasOutOfStock
-          ? `${count} producto${count !== 1 ? 's' : ''} sin stock`
+          ? `${count} producto${count !== 1 ? 's' : ''} sin existencias`
           : 'Todos los productos tienen stock'}
       </p>
 
@@ -68,9 +70,9 @@ export const OutOfStockCard = () => {
                 {branch} ({formatNumber(products.length)})
               </div>
               {products.map((item: any) => (
-                <div key={item._id} className="flex items-center justify-between text-xs py-0.5 pl-5">
+                <div key={item._id} className="flex items-center justify-between rounded-lg bg-stock-out-soft px-2.5 py-1.5 mb-1 ml-4 text-xs">
                   <span className="text-brand-text truncate mr-2">{item.productName || item.sku || '—'}</span>
-                  <span className="text-red-500 font-medium shrink-0">0/{formatNumber(item.minStock || 0)}</span>
+                  <span className="text-stock-out font-medium tabular-nums shrink-0">0/{formatNumber(item.minStock || 0)}</span>
                 </div>
               ))}
             </div>

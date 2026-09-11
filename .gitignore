@@ -1,5 +1,6 @@
 .agents/
 .opencode/
+.graphify-out/
 skills-lock.json
 
 # Environment files with secrets
@@ -7,4 +8,4 @@ backend/.env
 frontend/.env.local
 
 docs/*
-CLAUDE.md
+AGENTS.md

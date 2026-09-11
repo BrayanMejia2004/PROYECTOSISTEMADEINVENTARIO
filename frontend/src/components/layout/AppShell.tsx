@@ -12,9 +12,12 @@ export const AppShell = () => {
   const [sidebarDesktopOpen, setSidebarDesktopOpen] = useState(true);
 
   const brandStyle = useMemo(() => ({
-    '--color-brand': tenant?.brandColor || '#2D8A4E',
-    '--color-brand-light': tenant?.brandColorLight || '#6ABF8A',
-    '--color-brand-dark': tenant?.brandColorDark || '#1E5A32',
+    '--color-brand': tenant?.brandColor || '#2F6F9E',
+    '--color-brand-light': tenant?.brandColorLight || '#5FA3CC',
+    '--color-brand-dark': tenant?.brandColorDark || '#1E4E73',
+    '--color-stock-ok': '#2E8B57',
+    '--color-stock-low': '#E8A33D',
+    '--color-stock-out': '#D64541',
   } as React.CSSProperties), [tenant?.brandColor, tenant?.brandColorLight, tenant?.brandColorDark]);
 
   return (
