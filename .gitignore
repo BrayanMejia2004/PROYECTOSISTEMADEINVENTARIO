@@ -1,6 +1,6 @@
 .agents/
 .opencode/
-.graphify-out/
+graphify-out/
 skills-lock.json
 
 # Environment files with secrets
