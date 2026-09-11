@@ -1,8 +1,8 @@
 import { SalesChart } from '@/features/reports/components/SalesChart';
 import { StockValueCard } from '@/features/reports/components/StockValueCard';
 import { StockPriceValueCard } from '@/features/reports/components/StockPriceValueCard';
-import { InventoryCostCard } from '@/features/reports/components/InventoryCostCard';
-import { SalesProfitCard } from '@/features/reports/components/SalesProfitCard';
+import { GananciaTotalCard } from '@/features/reports/components/GananciaTotalCard';
+import { ProductosCard } from '@/features/reports/components/ProductosCard';
 import { BranchComparison } from '@/features/reports/components/BranchComparison';
 
 export const ReportsPage = () => {
@@ -16,8 +16,8 @@ export const ReportsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start mb-6">
         <StockValueCard />
         <StockPriceValueCard />
-        <InventoryCostCard />
-        <SalesProfitCard />
+        <GananciaTotalCard />
+        <ProductosCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
