@@ -14,6 +14,7 @@ import { logger } from '../../config/logger/logger';
 import { paymentContext } from './paymentStrategies';
 import type { PaymentInput } from './paymentStrategies';
 import { saleStateMachine } from './saleStateMachine';
+import { getBusinessDayRange } from '../../shared/utils/businessTime/businessTime';
 import type { CreateSaleInput, GetSalesFilters, SaleItemInput } from './sale.types';
 import type { PaymentMethodAggregation } from '../../shared/types/queries';
 
@@ -298,16 +299,15 @@ import type { SalesSummaryFilters } from './sale.types';
 const buildSummaryMatch = (tenantId: string, filters?: SalesSummaryFilters) => {
   const { branchId, startDate, endDate, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
 
-  const today = startDate || new Date();
-  if (!startDate) today.setHours(0, 0, 0, 0);
-  const endOfToday = endDate || new Date();
-  if (!endDate) endOfToday.setHours(23, 59, 59, 999);
-
   const toId = (id: string) => new mongoose.Types.ObjectId(id);
+
+  const defaultRange = !startDate || !endDate ? getBusinessDayRange() : null;
+  const gte = startDate ?? defaultRange?.start;
+  const lte = endDate ?? defaultRange?.end;
 
   const match: Record<string, any> = {
     tenantId: toId(tenantId),
-    createdAt: { $gte: today, $lte: endOfToday },
+    createdAt: { $gte: gte, $lte: lte },
   };
 
   Object.assign(match, buildCommonFilters({ branchId, paymentMethod, customerName, userId, search, minTotal, maxTotal }, toId));

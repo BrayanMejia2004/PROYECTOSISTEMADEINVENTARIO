@@ -3,7 +3,7 @@ import * as reportService from './report.service';
 import { sendSuccess } from '../../shared/utils/apiResponse/ApiResponse';
 import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
-import { resolveBranchId, endOfDay } from '../../shared/utils/requestHelpers/requestHelpers';
+import { resolveBranchId, startOfDay, endOfDay } from '../../shared/utils/requestHelpers/requestHelpers';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const getSalesReport = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -18,7 +18,7 @@ export const getSalesReport = asyncHandler(async (req: AuthRequest, res: Respons
   const report = await reportService.getSalesReport({
     tenantId: req.user!.tenantId,
     branchId,
-    startDate: new Date(startDate as string),
+    startDate: startOfDay(startDate as string),
     endDate: endOfDay(endDate as string),
   });
   sendSuccess(res, 'Reporte de ventas generado', report);
@@ -39,7 +39,7 @@ export const getProfitabilityReport = asyncHandler(async (req: AuthRequest, res:
   const branchId = resolveBranchId(req.user!.role, req.user!.branchId, queryBranchId as string);
   const report = await reportService.getProfitabilityReport(
     req.user!.tenantId,
-    startDate ? new Date(startDate as string) : undefined,
+    startDate ? startOfDay(startDate as string) : undefined,
     endDate ? endOfDay(endDate as string) : undefined,
     branchId
   );
@@ -56,7 +56,7 @@ export const getBranchComparison = asyncHandler(async (req: AuthRequest, res: Re
   }
   const report = await reportService.getBranchComparison(
     req.user!.tenantId,
-    new Date(startDate as string),
+    startOfDay(startDate as string),
     endOfDay(endDate as string)
   );
   sendSuccess(res, 'Comparación de sucursales generada', report);

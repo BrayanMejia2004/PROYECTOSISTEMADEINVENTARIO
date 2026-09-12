@@ -4,6 +4,7 @@ import CashMovement from '../../shared/models/cashMovement/cashMovement.model';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import * as saleService from '../sale/sale.service';
 import { shiftStateMachine } from './shiftStateMachine';
+import { startOfDay, endOfDay } from '../../shared/utils/businessTime/businessTime';
 import type { ShiftMovementAggregation, ShiftFilter } from '../../shared/types/queries';
 
 interface OpenShiftInput {
@@ -63,12 +64,8 @@ const buildShiftFilter = (tenantId: string, filters: GetShiftsFilters): ShiftFil
   if (status) match.status = status;
   if (startDate || endDate) {
     match.openedAt = {};
-    if (startDate) match.openedAt.$gte = new Date(startDate);
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      match.openedAt.$lte = end;
-    }
+    if (startDate) match.openedAt.$gte = startOfDay(startDate);
+    if (endDate) match.openedAt.$lte = endOfDay(endDate);
   }
   return match;
 };

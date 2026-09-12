@@ -1,3 +1,5 @@
+import * as businessTime from '../businessTime/businessTime';
+
 export const parsePagination = (page?: string, limit?: string): { page?: number; limit?: number } => ({
   page: page ? parseInt(page, 10) : undefined,
   limit: limit ? parseInt(limit, 10) : undefined,
@@ -12,7 +14,9 @@ export const resolveBranchId = (role: string, userBranchId?: string, queryBranch
   role === 'owner' ? (queryBranchId || userBranchId) : userBranchId;
 
 export const endOfDay = (date: string): Date => {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
+  return businessTime.endOfDay(date);
+};
+
+export const startOfDay = (date: string): Date => {
+  return businessTime.startOfDay(date);
 };

@@ -2,7 +2,7 @@ import { Response } from 'express';
 import * as saleService from './sale.service';
 import { sendSuccess, sendPaginated } from '../../shared/utils/apiResponse/ApiResponse';
 import { asyncHandler } from '../../shared/utils/asyncHandler/asyncHandler';
-import { parsePagination, parsePaginationOrDefault, resolveBranchId, endOfDay } from '../../shared/utils/requestHelpers/requestHelpers';
+import { parsePagination, parsePaginationOrDefault, resolveBranchId, startOfDay, endOfDay } from '../../shared/utils/requestHelpers/requestHelpers';
 import { AuthRequest } from '../../shared/types/express/express';
 
 export const createSale = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -24,7 +24,7 @@ export const getSales = asyncHandler(async (req: AuthRequest, res: Response) => 
 
   const branchId = resolveBranchId(req.user!.role, req.user!.branchId, queryBranchId as string);
   const result = await saleService.getSales(req.user!.tenantId, branchId, {
-    startDate: startDate ? new Date(startDate as string) : undefined,
+    startDate: startDate ? startOfDay(startDate as string) : undefined,
     endDate: endDate ? endOfDay(endDate as string) : undefined,
     ...parsePagination(page as string, limit as string),
     status: status as string | undefined,
@@ -48,7 +48,7 @@ export const getSalesSummary = asyncHandler(async (req: AuthRequest, res: Respon
 
   const summary = await saleService.getSalesSummary(req.user!.tenantId, {
     branchId,
-    startDate: startDate ? new Date(startDate as string) : undefined,
+    startDate: startDate ? startOfDay(startDate as string) : undefined,
     endDate: endDate ? endOfDay(endDate as string) : undefined,
     status: status as string | undefined,
     paymentMethod: paymentMethod as string | undefined,
