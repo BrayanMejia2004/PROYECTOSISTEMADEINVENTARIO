@@ -72,6 +72,12 @@ const buildProductSearchQuery = async (options: GetProductsOptions): Promise<{ q
         { sku: { $regex: `^${escaped}`, $options: 'i' } },
         { barcode: { $regex: `^${escaped}`, $options: 'i' } },
       ];
+      const matchingDepartments = await Department.find({ tenantId, name: { $regex: escaped, $options: 'i' } })
+        .select('_id')
+        .lean();
+      if (matchingDepartments.length > 0) {
+        query.$or.push({ departmentId: { $in: matchingDepartments.map(d => d._id) } });
+      }
     }
   }
   if (departmentId) query.departmentId = new mongoose.Types.ObjectId(departmentId);

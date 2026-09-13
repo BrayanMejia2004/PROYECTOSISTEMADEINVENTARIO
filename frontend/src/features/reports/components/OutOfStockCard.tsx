@@ -18,7 +18,7 @@ export const OutOfStockCard = () => {
   if (isLoading) return <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"><p className="text-sm text-brand-muted">Cargando...</p></div>;
 
   const items = data?.data || [];
-  const count = items.length;
+  const count = data?.meta?.total ?? items.length;
   const hasOutOfStock = count > 0;
 
   const groupedByBranch = items.reduce<Record<string, any[]>>((acc, item) => {

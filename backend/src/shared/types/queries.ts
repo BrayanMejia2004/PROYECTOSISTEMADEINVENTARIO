@@ -45,6 +45,7 @@ export interface ProductFilter {
     name?: { $regex: string; $options: string };
     sku?: { $regex: string; $options: string };
     barcode?: { $regex: string; $options: string } | string;
+    departmentId?: { $in: MongoId[] };
   }>;
 }
 

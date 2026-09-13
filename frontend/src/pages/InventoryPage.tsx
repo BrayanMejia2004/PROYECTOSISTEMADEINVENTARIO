@@ -39,8 +39,8 @@ export const InventoryPage = () => {
   const branchesArr = inv?.data || [];
   const totalItems = branchesArr.reduce((sum: number, b: any) => sum + (b.totalItems || 0), 0);
   const totalCost = branchesArr.reduce((sum: number, b: any) => sum + (b.totalCost || 0), 0);
-  const lowCount = (lowData?.data || []).filter((i: any) => i.quantity > 0).length;
-  const outCount = (outData?.data || []).length;
+  const lowCount = (lowData?.meta?.total ?? 0) - (outData?.meta?.total ?? 0);
+  const outCount = outData?.meta?.total ?? 0;
 
   const handleExport = async () => {
     const token = localStorage.getItem('token');

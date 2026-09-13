@@ -1,4 +1,5 @@
 import { Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { verifyAccessToken } from '../../shared/utils/jwt/jwt';
 import { ApiError } from '../../shared/utils/apiError/ApiError';
 import { logger } from '../../config/logger/logger';
@@ -34,6 +35,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     next();
   } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(ApiError.unauthorized('Sesión expirada. Inicia sesión nuevamente.'));
+    }
     if (error instanceof ApiError) {
       logger.warn(`Error de autorización: ${error.message}`, {
         ip: req.ip,

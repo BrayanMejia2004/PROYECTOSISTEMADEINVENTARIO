@@ -80,8 +80,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn('Error en logout del servidor:', err);
     }
     setAccessToken(null);
-    sessionStorage.removeItem('pos-carts');
-    sessionStorage.removeItem('pos-cajas');
     sessionStorage.removeItem('tenant_blocked_message');
     setUser(null);
     setTenant(null);

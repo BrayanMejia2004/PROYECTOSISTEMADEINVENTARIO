@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, Filter } from 'lucide-react';
+import { Wallet, Filter, RotateCcw } from 'lucide-react';
 import { useShifts } from '@/features/sales/hooks';
 import { AdminShiftDetail } from '@/features/sales/components/AdminShiftDetail';
 import { formatCurrency, formatNumber } from '@/lib/utils';
@@ -24,6 +24,7 @@ export const AdminShiftHistory = () => {
 
   const shifts = shiftsData?.data || [];
   const meta = shiftsData?.meta;
+  const hasFilters = Object.entries(filters).some(([k, v]) => k !== 'page' && v);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => {
@@ -89,13 +90,16 @@ export const AdminShiftHistory = () => {
                 <p className="text-red-500 text-xs mt-1">La fecha de inicio debe ser anterior a la fecha fin</p>
               )}
             </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => setFilters({})}
-                className="px-4 py-2 text-sm text-brand-muted hover:text-brand-text transition-colors"
-              >
-                Limpiar
-              </button>
+            <div className="flex items-end justify-end">
+              {hasFilters && (
+                <button
+                  onClick={() => setFilters({})}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-brand-muted hover:text-red-500 hover:border-red-200 transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Limpiar
+                </button>
+              )}
             </div>
           </div>
         </div>

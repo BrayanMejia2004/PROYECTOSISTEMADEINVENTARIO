@@ -91,7 +91,7 @@ export const SalesPage = () => {
           </div>
         )}
         <SalesSummaryCards
-          filters={{ ...filters, branchId: isOwner && selectedBranchId ? selectedBranchId : undefined }}
+          filters={{ ...(debouncedFilters ?? {}), branchId: isOwner && selectedBranchId ? selectedBranchId : undefined }}
         />
 
         <SalesFilters filters={filters} onChange={handleFiltersChange} />

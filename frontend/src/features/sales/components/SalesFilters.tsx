@@ -24,7 +24,7 @@ interface SalesFiltersProps {
 
 export const SalesFilters = ({ filters, onChange }: SalesFiltersProps) => {
   const [open, setOpen] = useState(false);
-  const { data: users } = useUsers();
+  const { data: users } = useUsers({ role: 'cashier' });
   const hasFilters = Object.values(filters).some(v => v !== undefined && v !== '');
 
   const clear = () => {

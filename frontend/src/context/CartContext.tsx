@@ -9,6 +9,11 @@ export interface Caja {
   name: string;
 }
 
+export interface StoredCart {
+  items: CartItem[];
+  updatedAt: string;
+}
+
 interface CartActions {
   items: CartItem[];
   addToCart: (item: CartItem) => void;
@@ -22,7 +27,7 @@ interface CartActions {
 }
 
 interface CartSummary {
-  cartsWithItems: { id: string; name: string; count: number }[];
+  cartsWithItems: { id: string; name: string; count: number; updatedAt: string }[];
   totalItems: number;
 }
 
@@ -30,6 +35,7 @@ interface CajasContextType {
   cajas: Caja[];
   createCaja: (name: string) => string;
   removeCaja: (id: string) => void;
+  clearCajaCart: (id: string) => void;
   getCart: (cartId: string) => CartActions;
   summary: CartSummary;
 }
@@ -44,17 +50,24 @@ const DEFAULT_CAJAS: Caja[] = [
 
 const loadCajas = (): Caja[] => {
   try {
-    const stored = sessionStorage.getItem(CAJAS_KEY);
+    const stored = localStorage.getItem(CAJAS_KEY) ?? sessionStorage.getItem(CAJAS_KEY);
     return stored ? JSON.parse(stored) : [...DEFAULT_CAJAS];
   } catch {
     return [...DEFAULT_CAJAS];
   }
 };
 
-const loadCarts = (): Record<string, CartItem[]> => {
+const loadCarts = (): Record<string, StoredCart> => {
   try {
-    const stored = sessionStorage.getItem(CARTS_KEY);
-    return stored ? JSON.parse(stored) : {};
+    const stored = localStorage.getItem(CARTS_KEY) ?? sessionStorage.getItem(CARTS_KEY);
+    if (!stored) return {};
+    const raw = JSON.parse(stored) as Record<string, any>;
+    return Object.fromEntries(
+      Object.entries(raw).map(([id, value]) => [
+        id,
+        Array.isArray(value) ? { items: value as CartItem[], updatedAt: new Date().toISOString() } : value as StoredCart,
+      ])
+    );
   } catch {
     return {};
   }
@@ -62,20 +75,22 @@ const loadCarts = (): Record<string, CartItem[]> => {
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cajas, setCajas] = useState<Caja[]>(loadCajas);
-  const [carts, setCarts] = useState<Record<string, CartItem[]>>(loadCarts);
+  const [carts, setCarts] = useState<Record<string, StoredCart>>(loadCarts);
 
   useEffect(() => {
-    sessionStorage.setItem(CAJAS_KEY, JSON.stringify(cajas));
+    localStorage.setItem(CAJAS_KEY, JSON.stringify(cajas));
+    sessionStorage.removeItem(CAJAS_KEY);
   }, [cajas]);
 
   useEffect(() => {
-    sessionStorage.setItem(CARTS_KEY, JSON.stringify(carts));
+    localStorage.setItem(CARTS_KEY, JSON.stringify(carts));
+    sessionStorage.removeItem(CARTS_KEY);
   }, [carts]);
 
   const createCaja = useCallback((name: string): string => {
     const id = Date.now().toString();
     setCajas((prev) => [...prev, { id, name }]);
-    setCarts((prev) => ({ ...prev, [id]: [] }));
+    setCarts((prev) => ({ ...prev, [id]: { items: [], updatedAt: new Date().toISOString() } }));
     return id;
   }, []);
 
@@ -89,23 +104,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setCart = useCallback((cartId: string, updater: (prev: CartItem[]) => CartItem[]) => {
-    setCarts((prev) => ({ ...prev, [cartId]: updater(prev[cartId] || []) }));
+    setCarts((prev) => ({
+      ...prev,
+      [cartId]: { items: updater(prev[cartId]?.items || []), updatedAt: new Date().toISOString() },
+    }));
   }, []);
 
+  const clearCajaCart = useCallback((cartId: string) => {
+    setCart(cartId, () => []);
+  }, [setCart]);
+
   const summary: CartSummary = cajas
-    .filter((c) => (carts[c.id]?.length || 0) > 0)
+    .filter((c) => (carts[c.id]?.items?.length || 0) > 0)
     .reduce(
       (acc, c) => {
-        acc.cartsWithItems.push({ id: c.id, name: c.name, count: carts[c.id].length });
-        acc.totalItems += carts[c.id].length;
+        acc.cartsWithItems.push({ id: c.id, name: c.name, count: carts[c.id].items.length, updatedAt: carts[c.id].updatedAt });
+        acc.totalItems += carts[c.id].items.length;
         return acc;
       },
-      { cartsWithItems: [] as { id: string; name: string; count: number }[], totalItems: 0 }
+      { cartsWithItems: [] as { id: string; name: string; count: number; updatedAt: string }[], totalItems: 0 }
     );
 
   const getCart = useCallback(
     (cartId: string): CartActions => {
-      const items = carts[cartId] || [];
+      const items = carts[cartId]?.items || [];
 
       const addToCart = (newItem: CartItem) => {
         setCart(cartId, (prev) => {
@@ -166,7 +188,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 
   return (
-    <CartContext.Provider value={{ cajas, createCaja, removeCaja, getCart, summary }}>
+    <CartContext.Provider value={{ cajas, createCaja, removeCaja, clearCajaCart, getCart, summary }}>
       {children}
     </CartContext.Provider>
   );
@@ -175,7 +197,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 export const useCajas = () => {
   const context = useContext(CartContext);
   if (!context) throw new Error('useCajas must be used within CartProvider');
-  return { cajas: context.cajas, createCaja: context.createCaja, removeCaja: context.removeCaja };
+  return { cajas: context.cajas, createCaja: context.createCaja, removeCaja: context.removeCaja, clearCajaCart: context.clearCajaCart };
 };
 
 export const useCart = (cartId: string): CartActions => {

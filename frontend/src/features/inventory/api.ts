@@ -38,12 +38,12 @@ export const getStock = async (branchId?: string): Promise<ApiResponse<Stock[]>>
 };
 
 export const getLowStock = async (branchId?: string): Promise<ApiResponse<Stock[]>> => {
-  const { data } = await api.get<ApiResponse<Stock[]>>(ENDPOINTS.STOCK_LOW, { params: { branchId } });
+  const { data } = await api.get<ApiResponse<Stock[]>>(ENDPOINTS.STOCK_LOW, { params: { branchId, limit: 5000 } });
   return data;
 };
 
 export const getOutOfStock = async (branchId?: string): Promise<ApiResponse<any[]>> => {
-  const { data } = await api.get<ApiResponse<any[]>>(ENDPOINTS.STOCK_OUT, { params: { branchId } });
+  const { data } = await api.get<ApiResponse<any[]>>(ENDPOINTS.STOCK_OUT, { params: { branchId, limit: 5000 } });
   return data;
 };
 

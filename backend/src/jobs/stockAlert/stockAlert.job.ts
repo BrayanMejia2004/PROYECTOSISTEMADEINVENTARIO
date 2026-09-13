@@ -15,7 +15,7 @@ export const startStockAlertJob = (): ScheduledTask => {
 
       for (const tenant of tenants) {
         try {
-          const alerts = await getLowStockAlerts(tenant._id.toString());
+          const alerts = await getLowStockAlerts(tenant._id.toString(), undefined, 1, 5000);
           if (alerts.data.length > 0) {
             logger.warn(`Tenant ${tenant.slug}: ${alerts.data.length} productos con stock bajo`);
             alertCount += alerts.data.length;

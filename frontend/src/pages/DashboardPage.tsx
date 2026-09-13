@@ -16,27 +16,50 @@ import type { Sale, Product } from '@/types';
 
 export const DashboardPage = () => {
   const { user } = useAuth();
-  const { cajas, createCaja, removeCaja } = useCajas();
+  const { cajas, createCaja, removeCaja, clearCajaCart } = useCajas();
   const { cartsWithItems } = useCartSummary();
 
   if (user?.role === 'cashier') {
     const cajaItemsCount = (id: string) => cartsWithItems.find((c) => c.id === id)?.count || 0;
+    const hasPending = cartsWithItems.length > 0;
+    const formatSavedTime = (iso?: string) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
       <div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-sans font-bold text-brand-text">Caja</h1>
-          <p className="text-sm text-brand-muted mt-1">Selecciona una caja para iniciar la venta</p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-sans font-bold text-brand-text">Caja</h1>
+            <p className="text-sm text-brand-muted mt-1">Selecciona una caja para iniciar la venta</p>
+          </div>
+          {hasPending && (
+            <button
+              onClick={() => {
+                if (window.confirm('¿Limpiar los productos pendientes de todas las cajas?')) {
+                  cartsWithItems.forEach((c) => clearCajaCart(c.id));
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm font-medium text-brand-muted hover:text-red-500 hover:border-red-200 transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Limpiar pendientes
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {cajas.map((caja) => {
             const itemCount = cajaItemsCount(caja.id);
+            const savedAt = cartsWithItems.find((c) => c.id === caja.id)?.updatedAt;
             return (
               <div key={caja.id} className="relative group/card">
                 <Link
                   to={`/pos/${caja.id}`}
-                  className="block bg-white rounded-xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-brand/30 transition-all duration-200"
+                  className={`block bg-white rounded-xl border shadow-sm p-6 hover:shadow-md hover:border-brand/30 transition-all duration-200 ${itemCount > 0 ? 'border-brand/30 bg-brand/5' : 'border-gray-100'}`}
                 >
                   <div className="flex flex-col items-center text-center gap-4">
                     <div className="w-16 h-16 rounded-xl bg-brand/10 flex items-center justify-center group-hover/card:bg-brand/20 transition-colors">
@@ -45,7 +68,10 @@ export const DashboardPage = () => {
                     <div>
                       <h3 className="text-lg font-semibold text-brand-text">{caja.name}</h3>
                       {itemCount > 0 ? (
-                        <p className="text-sm text-brand mt-1">{itemCount} producto{itemCount !== 1 ? 's' : ''}</p>
+                        <>
+                          <p className="text-sm text-brand mt-1">{itemCount} producto{itemCount !== 1 ? 's' : ''}</p>
+                          <p className="text-[11px] text-brand-muted mt-0.5">Guardado {formatSavedTime(savedAt)}</p>
+                        </>
                       ) : (
                         <p className="text-sm text-brand-muted mt-1">Haz clic para abrir</p>
                       )}
@@ -73,8 +99,8 @@ export const DashboardPage = () => {
     );
   }
 
-  const { data: productsData, isLoading: productsLoading } = useProducts();
-  const { data: salesData, isLoading: salesLoading, isError: salesError, error: salesErr, refetch: refetchSales } = useSales({ limit: 0 });
+  const { data: productsData, isLoading: productsLoading } = useProducts({ limit: 5000 });
+  const { data: salesData, isLoading: salesLoading, isError: salesError, error: salesErr, refetch: refetchSales } = useSales({ limit: 5 });
   const [ventasPage, setVentasPage] = useState(1);
   const VENTAS_PER_PAGE = 3;
 

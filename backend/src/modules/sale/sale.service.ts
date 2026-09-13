@@ -297,20 +297,22 @@ export const getSales = async (
 import type { SalesSummaryFilters } from './sale.types';
 
 const buildSummaryMatch = (tenantId: string, filters?: SalesSummaryFilters) => {
-  const { branchId, startDate, endDate, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
+  const { branchId, startDate, endDate, status, paymentMethod, customerName, userId, search, minTotal, maxTotal } = filters || {};
 
   const toId = (id: string) => new mongoose.Types.ObjectId(id);
 
-  const defaultRange = !startDate || !endDate ? getBusinessDayRange() : null;
+  const hasNonDateFilters = Boolean(
+    status || paymentMethod || customerName || userId || search ||
+    minTotal !== undefined || maxTotal !== undefined
+  );
+  const defaultRange = !startDate || !endDate ? (hasNonDateFilters ? null : getBusinessDayRange()) : null;
   const gte = startDate ?? defaultRange?.start;
   const lte = endDate ?? defaultRange?.end;
 
-  const match: Record<string, any> = {
-    tenantId: toId(tenantId),
-    createdAt: { $gte: gte, $lte: lte },
-  };
+  const match: Record<string, any> = { tenantId: toId(tenantId) };
+  if (gte && lte) match.createdAt = { $gte: gte, $lte: lte };
 
-  Object.assign(match, buildCommonFilters({ branchId, paymentMethod, customerName, userId, search, minTotal, maxTotal }, toId));
+  Object.assign(match, buildCommonFilters({ branchId, status, paymentMethod, customerName, userId, search, minTotal, maxTotal }, toId));
 
   return match;
 };
@@ -375,14 +377,21 @@ const computePaymentBreakdown = (paymentAgg: PaymentMethodAggregation[]) => ({
 
 export const getSalesSummary = async (tenantId: string, filters?: SalesSummaryFilters) => {
   const match = buildSummaryMatch(tenantId, filters);
-  const matchCompleted = { ...match, status: 'completed' };
-  const matchRefunded = { ...match, status: 'refunded' };
-  const matchCancelledOrRefunded = { ...match, status: { $in: ['cancelled', 'refunded'] } };
+  const requestedStatus = filters?.status;
+
+  const statuslessMatch = { ...match };
+  delete statuslessMatch.status;
+
+  const matchCompleted = { ...statuslessMatch, status: requestedStatus || 'completed' };
+  const matchRefunded = { ...statuslessMatch, status: 'refunded' };
+  const matchCancelledOrRefunded = { ...statuslessMatch, status: { $in: ['cancelled', 'refunded'] } };
 
   const { salesToday, cancelledCount, totalAgg, productAgg, paymentAgg, profitAgg, refundedSales, exchangeRefundIds } =
     await runSalesAggregations(matchCompleted, matchRefunded, matchCancelledOrRefunded);
 
-  const { refundedRevenue, refundedCost } = computeRefundAdjustments(refundedSales, exchangeRefundIds);
+  const { refundedRevenue, refundedCost } = requestedStatus
+    ? { refundedRevenue: 0, refundedCost: 0 }
+    : computeRefundAdjustments(refundedSales, exchangeRefundIds);
 
   const completedRevenue = totalAgg[0]?.totalRevenue || 0;
   const totalSalesCount = totalAgg[0]?.totalSales || 0;
