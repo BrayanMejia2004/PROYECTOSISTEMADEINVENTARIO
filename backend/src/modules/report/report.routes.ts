@@ -9,7 +9,7 @@ const router = Router();
 router.use(authenticate, resolveTenantMiddleware);
 
 router.get('/sales', checkPermission('reports:branch'), reportController.getSalesReport);
-router.get('/inventory', checkPermission('reports:branch'), reportController.getInventoryReport);
+router.get('/inventory', checkPermission('inventory:view-cost'), reportController.getInventoryReport);
 router.get('/profitability', checkPermission('reports:branch'), reportController.getProfitabilityReport);
 router.get('/branches', checkPermission('reports:global'), reportController.getBranchComparison);
 router.get('/historical-summary', checkPermission('reports:branch'), reportController.getHistoricalSummary);
